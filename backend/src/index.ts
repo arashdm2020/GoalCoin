@@ -63,83 +63,40 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// SSL Configuration
-// In development, __dirname points to src/, in production to dist/
-const projectRoot = path.join(__dirname, '../..');
-const sslPath = path.join(projectRoot, 'ssl');
-const frontendSslPath = path.join(projectRoot, 'frontend/ssl');
+// Start server based on environment
+if (process.env.NODE_ENV === 'production') {
+  // In production (like on Render), start a simple HTTP server.
+  // Render handles SSL termination.
+  app.listen(PORT, () => {
+    console.log(`HTTP Server running on port ${PORT}`);
+  });
+} else {
+  // In development, start an HTTPS server for a local setup.
+  const projectRoot = path.join(__dirname, '../..');
+  const sslPath = path.join(projectRoot, 'ssl');
+  const frontendSslPath = path.join(projectRoot, 'frontend/ssl');
 
-console.log('Looking for SSL certificates...');
-console.log('   Backend SSL path:', sslPath);
-console.log('   Frontend SSL path:', frontendSslPath);
+  let keyPath = path.join(sslPath, 'localhost+2-key.pem');
+  let certPath = path.join(sslPath, 'localhost+2.pem');
 
-// Priority 1: Try mkcert certificates (trusted)
-let keyPath = path.join(sslPath, 'localhost+2-key.pem');
-let certPath = path.join(sslPath, 'localhost+2.pem');
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    keyPath = path.join(frontendSslPath, 'localhost-key.pem');
+    certPath = path.join(frontendSslPath, 'localhost-cert.pem');
+  }
 
-// Priority 2: Try frontend mkcert certificates
-if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-  keyPath = path.join(frontendSslPath, 'localhost+2-key.pem');
-  certPath = path.join(frontendSslPath, 'localhost+2.pem');
-}
-
-// Priority 3: Try self-signed certificates
-if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-  keyPath = path.join(sslPath, 'localhost-key.pem');
-  certPath = path.join(sslPath, 'localhost-cert.pem');
-}
-
-// Priority 4: Try frontend self-signed certificates
-if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-  keyPath = path.join(frontendSslPath, 'localhost-key.pem');
-  certPath = path.join(frontendSslPath, 'localhost-cert.pem');
-}
-
-// HTTPS Configuration
-if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-  try {
-    console.log('Loading SSL certificates...');
-    
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
     const httpsOptions = {
       key: fs.readFileSync(keyPath),
       cert: fs.readFileSync(certPath),
     };
 
-    const server = https.createServer(httpsOptions, app);
-    
-    server.on('error', (err: any) => {
-      console.error('HTTPS Server Error:', err.message);
-      if (err.code === 'EADDRINUSE') {
-        console.error(`   Port ${PORT} is already in use`);
-        process.exit(1);
-      }
-    });
-
-    server.listen(PORT, () => {
+    https.createServer(httpsOptions, app).listen(PORT, () => {
       console.log(`HTTPS Server running on https://localhost:${PORT}`);
-      
-      const usingMkcert = certPath.includes('localhost+2');
-      if (usingMkcert) {
-        console.log('Using locally trusted certificate (mkcert)');
-      } else {
-        console.log('Warning: Using self-signed certificate');
-      }
-      console.log(`Certificate: ${certPath}`);
-      console.log(`Private Key: ${keyPath}`);
     });
-  } catch (error: any) {
-    console.error('Failed to start HTTPS server:', error.message);
-    console.error('   Error details:', error.stack);
-    process.exit(1);
+  } else {
+    console.warn('SSL certificates not found. Starting HTTP server for development.');
+    app.listen(PORT, () => {
+      console.log(`HTTP Server running on http://localhost:${PORT}`);
+    });
   }
-} else {
-  console.error('SSL certificates not found!');
-  console.error('   Checked paths:');
-  console.error('   - Certificate:', certPath);
-  console.error('   - Private Key:', keyPath);
-  console.error('');
-  console.error('Please run mkcert to generate trusted certificates:');
-  console.error('   cd frontend/ssl');
-  console.error('   mkcert localhost 127.0.0.1 ::1');
-  process.exit(1);
 }
