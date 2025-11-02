@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env*.local
+backend/.env
+frontend/.env.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# SSL certificates (if sensitive)
+nginx/ssl/*.pem
+!nginx/ssl/.gitkeep
+
+# Database
+*.db
+*.sqlite
+
+# Docker/Nginx specific
+nginx/
+docker-compose.yml
+quick-start-https.bat
+start-http.bat

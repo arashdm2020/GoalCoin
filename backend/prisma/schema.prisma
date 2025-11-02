@@ -1,0 +1,16 @@
+// Prisma schema for GoalCoin MVP
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  address     String   @id
+  connectedAt DateTime @default(now())
+
+  @@map("users")
+}
