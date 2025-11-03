@@ -4,13 +4,15 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
   address     String   @id
   connectedAt DateTime @default(now())
+  isConnected Boolean  @default(true)
+  lastSeen    DateTime @updatedAt
 
   @@map("users")
 }
