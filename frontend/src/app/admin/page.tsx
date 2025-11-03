@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 interface User {
   address: string;
   connectedAt: string;
+  lastSeen: string;
 }
 
 export default function AdminPage() {
@@ -168,7 +169,7 @@ export default function AdminPage() {
               <thead className="bg-gray-800">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Address</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Connected At</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Last Seen</th>
                 </tr>
               </thead>
               <tbody>
@@ -188,7 +189,7 @@ export default function AdminPage() {
                     >
                       <td className="px-6 py-4 font-mono text-sm">{user.address}</td>
                       <td className="px-6 py-4 text-sm text-gray-400">
-                        {new Date(user.connectedAt).toLocaleString()}
+                        {new Date(user.lastSeen).toLocaleString()}
                       </td>
                     </tr>
                   ))
