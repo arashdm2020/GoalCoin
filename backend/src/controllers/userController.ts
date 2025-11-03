@@ -19,38 +19,53 @@ export const userController = {
     try {
       const { address } = req.body;
 
-      if (!address || typeof address !== 'string') {
-        res.status(400).json({ error: 'Address is required' });
+      if (!address || typeof address !== 'string' || !isValidAddress(address)) {
+        res.status(400).json({ error: 'Valid address is required' });
         return;
       }
 
-      if (!isValidAddress(address)) {
-        res.status(400).json({ error: 'Invalid Ethereum address format' });
-        return;
-      }
-
-      // Normalize address to lowercase for consistency
       const normalizedAddress = address.toLowerCase();
 
-      // Upsert user with connection timestamp
       const user = await prisma.user.upsert({
         where: { address: normalizedAddress },
-        update: { connectedAt: new Date() },
+        update: { isConnected: true, lastSeen: new Date() },
         create: {
           address: normalizedAddress,
-          connectedAt: new Date(),
+          isConnected: true,
         },
       });
 
-      res.status(200).json({
-        success: true,
-        user: {
-          address: user.address,
-          connectedAt: user.connectedAt,
-        },
-      });
+      res.status(200).json({ success: true, user });
     } catch (error) {
       console.error('Error in user connect:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  async disconnect(req: Request, res: Response): Promise<void> {
+    try {
+      const { address } = req.body;
+
+      if (!address || typeof address !== 'string' || !isValidAddress(address)) {
+        res.status(400).json({ error: 'Valid address is required' });
+        return;
+      }
+
+      const normalizedAddress = address.toLowerCase();
+
+      await prisma.user.update({
+        where: { address: normalizedAddress },
+        data: { isConnected: false },
+      });
+
+      res.status(200).json({ success: true, message: 'User disconnected' });
+    } catch (error) {
+      // Ignore errors if user not found, as the goal is to disconnect
+      if ((error as any).code === 'P2025') {
+        res.status(200).json({ success: true, message: 'User not found, considered disconnected' });
+        return;
+      }
+      console.error('Error in user disconnect:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

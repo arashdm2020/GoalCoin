@@ -11,12 +11,16 @@ export const adminController = {
   async getUsers(req: Request, res: Response): Promise<void> {
     try {
       const users = await prisma.user.findMany({
+        where: {
+          isConnected: true,
+        },
         orderBy: {
-          connectedAt: 'desc',
+          lastSeen: 'desc',
         },
         select: {
           address: true,
           connectedAt: true,
+          lastSeen: true,
         },
       });
 
