@@ -27,6 +27,9 @@ export function ConnectWalletButton() {
   useEffect(() => {
     if (isConnected && address) {
       sendConnectionToBackend(address);
+    } else if (!isConnected && address) {
+      // This handles the case where the user disconnects from the wallet provider directly
+      sendDisconnectToBackend(address);
     }
   }, [isConnected, address]);
 
@@ -64,7 +67,25 @@ export function ConnectWalletButton() {
     }
   };
 
+    const sendDisconnectToBackend = async (walletAddress: string) => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://localhost:3001';
+      await fetch(`${backendUrl}/api/users/disconnect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address: walletAddress }),
+      });
+    } catch (error) {
+      console.error('Error sending disconnect to backend:', error);
+    }
+  };
+
   const handleDisconnect = () => {
+    if (address) {
+      sendDisconnectToBackend(address);
+    }
     disconnect();
   };
 

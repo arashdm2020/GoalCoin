@@ -9,4 +9,10 @@ const router = express.Router();
  */
 router.post('/connect', userController.connect);
 
+/**
+ * POST /api/users/disconnect
+ * Marks a user as disconnected
+ */
+router.post('/disconnect', userController.disconnect);
+
 export { router as userRoutes };
