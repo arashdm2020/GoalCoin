@@ -14,6 +14,7 @@ export function ConnectWalletButton() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
+  const [previousAddress, setPreviousAddress] = useState<string | undefined>();
 
   // Check for MetaMask and client-side rendering
   useEffect(() => {
@@ -24,14 +25,23 @@ export function ConnectWalletButton() {
   }, []);
 
   // Send connection to backend when wallet connects
+  // Effect to track the connected address
+  useEffect(() => {
+    if (address) {
+      setPreviousAddress(address);
+    }
+  }, [address]);
+
+  // Send connection/disconnection events to the backend
   useEffect(() => {
     if (isConnected && address) {
       sendConnectionToBackend(address);
-    } else if (!isConnected && address) {
-      // This handles the case where the user disconnects from the wallet provider directly
-      sendDisconnectToBackend(address);
+    } else if (!isConnected && previousAddress) {
+      // When disconnected, use the last known address to notify the backend
+      sendDisconnectToBackend(previousAddress);
+      setPreviousAddress(undefined); // Clean up state
     }
-  }, [isConnected, address]);
+  }, [isConnected, address, previousAddress]);
 
   const sendConnectionToBackend = async (walletAddress: string) => {
     try {
