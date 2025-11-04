@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -8,6 +8,23 @@ interface User {
   connectedAt: string;
   lastSeen: string;
 }
+
+type Status = 'Active' | 'Dormant' | 'Inactive';
+
+// Helper function to determine user status
+const getUserStatus = (lastSeenDate: string): { status: Status; color: string } => {
+  const now = new Date();
+  const lastSeen = new Date(lastSeenDate);
+  const diffHours = (now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60);
+
+  if (diffHours <= 24) {
+    return { status: 'Active', color: 'text-green-400' };
+  }
+  if (diffHours <= 24 * 7) {
+    return { status: 'Dormant', color: 'text-yellow-400' };
+  }
+  return { status: 'Inactive', color: 'text-red-400' };
+};
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,6 +35,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  // State for filtering and searching
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'All' | Status>('All');
 
   useEffect(() => {
     // Check if already authenticated (session stored in localStorage)
@@ -83,6 +104,25 @@ export default function AdminPage() {
       console.error('Error fetching users:', err);
     }
   };
+
+    const filteredUsers = useMemo(() => {
+    return users
+      .filter((user) => user.address.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter((user) => {
+        if (statusFilter === 'All') return true;
+        const { status } = getUserStatus(user.lastSeen);
+        return status === statusFilter;
+      });
+  }, [users, searchTerm, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { Active: 0, Dormant: 0, Inactive: 0 };
+    users.forEach((user) => {
+      const { status } = getUserStatus(user.lastSeen);
+      counts[status]++;
+    });
+    return counts;
+  }, [users]);
 
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -161,7 +201,33 @@ export default function AdminPage() {
         <div className="bg-gray-900 rounded-lg border border-[#FFD700]/20 overflow-hidden">
           <div className="p-6 border-b border-gray-800">
             <h2 className="text-2xl font-semibold">Connected Users</h2>
-            <p className="text-gray-400 mt-2">Total: {users.length} users</p>
+            <p className="text-gray-400 mt-2">
+              Total: {users.length} ({statusCounts.Active} Active / {statusCounts.Dormant} Dormant / {statusCounts.Inactive} Inactive)
+            </p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-4">
+              <input
+                type="text"
+                placeholder="Search by address..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-grow px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+              />
+              <div className="flex items-center gap-2">
+                {(['All', 'Active', 'Dormant', 'Inactive'] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status)}
+                    className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                      statusFilter === status
+                        ? 'bg-[#FFD700] text-black'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -170,29 +236,39 @@ export default function AdminPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Address</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Last Seen</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {users.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="px-6 py-8 text-center text-gray-400">
-                      No users connected yet
+                    <td colSpan={3} className="px-6 py-8 text-center text-gray-400">
+                      No users match the current filters.
                     </td>
                   </tr>
                 ) : (
-                  users.map((user, index) => (
-                    <tr
-                      key={user.address}
-                      className={`border-t border-gray-800 ${
-                        index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-950'
-                      }`}
-                    >
-                      <td className="px-6 py-4 font-mono text-sm">{user.address}</td>
-                      <td className="px-6 py-4 text-sm text-gray-400">
-                        {new Date(user.lastSeen).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))
+                  filteredUsers.map((user, index) => {
+                    const { status, color } = getUserStatus(user.lastSeen);
+                    return (
+                      <tr
+                        key={user.address}
+                        className={`border-t border-gray-800 ${
+                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-950'
+                        }`}
+                      >
+                        <td className="px-6 py-4 font-mono text-sm">{user.address}</td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {new Date(user.lastSeen).toLocaleString()}
+                        </td>
+                        <td className={`px-6 py-4 text-sm font-semibold ${color}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={`h-2.5 w-2.5 rounded-full ${color.replace('text', 'bg')}`}></span>
+                            {status}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
