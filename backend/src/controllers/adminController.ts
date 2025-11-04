@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -10,24 +10,40 @@ const prisma = new PrismaClient();
 export const adminController = {
   async getUsers(req: Request, res: Response): Promise<void> {
     try {
-      const users = await prisma.user.findMany({
-        where: {
-          isConnected: true,
-        },
+                  const allUsers = await prisma.user.findMany({
         orderBy: {
           lastSeen: 'desc',
         },
-        select: {
-          address: true,
-          connectedAt: true,
-          lastSeen: true,
-        },
+      });
+
+      // Define thresholds based on environment
+      const isDemo = process.env.NODE_ENV !== 'production';
+      const thresholds = {
+        active: isDemo ? 5 * 60 * 1000 : 24 * 60 * 60 * 1000, // 5 mins in demo, 24h in prod
+        dormant: isDemo ? 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000, // 60 mins in demo, 7d in prod
+      };
+
+      const now = Date.now();
+
+      const usersWithStatus = allUsers.map(user => {
+        const timeDiff = now - new Date(user.lastSeen).getTime();
+        let status: 'Active' | 'Dormant' | 'Inactive';
+
+        if (user.online || timeDiff < thresholds.active) {
+          status = 'Active';
+        } else if (timeDiff < thresholds.dormant) {
+          status = 'Dormant';
+        } else {
+          status = 'Inactive';
+        }
+
+        return { ...user, status };
       });
 
       res.status(200).json({
         success: true,
-        count: users.length,
-        users,
+        count: usersWithStatus.length,
+        users: usersWithStatus,
       });
     } catch (error) {
       console.error('Error fetching users:', error);

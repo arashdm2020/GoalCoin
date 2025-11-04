@@ -15,4 +15,10 @@ router.post('/connect', userController.connect);
  */
 router.post('/disconnect', userController.disconnect);
 
+/**
+ * POST /api/users/heartbeat
+ * Updates the user's lastSeen timestamp to keep them online
+ */
+router.post('/heartbeat', userController.heartbeat);
+
 export { router as userRoutes };

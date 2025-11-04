@@ -7,23 +7,20 @@ interface User {
   address: string;
   connectedAt: string;
   lastSeen: string;
+  status: 'Active' | 'Dormant' | 'Inactive';
 }
 
 type Status = 'Active' | 'Dormant' | 'Inactive';
 
-// Helper function to determine user status
-const getUserStatus = (lastSeenDate: string): { status: Status; color: string } => {
-  const now = new Date();
-  const lastSeen = new Date(lastSeenDate);
-  const diffHours = (now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60);
-
-  if (diffHours <= 24) {
-    return { status: 'Active', color: 'text-green-400' };
+const getStatusColor = (status: Status): string => {
+  switch (status) {
+    case 'Active':
+      return 'text-green-400';
+    case 'Dormant':
+      return 'text-yellow-400';
+    case 'Inactive':
+      return 'text-red-400';
   }
-  if (diffHours <= 24 * 7) {
-    return { status: 'Dormant', color: 'text-yellow-400' };
-  }
-  return { status: 'Inactive', color: 'text-red-400' };
 };
 
 export default function AdminPage() {
@@ -105,21 +102,19 @@ export default function AdminPage() {
     }
   };
 
-    const filteredUsers = useMemo(() => {
+      const filteredUsers = useMemo(() => {
     return users
       .filter((user) => user.address.toLowerCase().includes(searchTerm.toLowerCase()))
       .filter((user) => {
         if (statusFilter === 'All') return true;
-        const { status } = getUserStatus(user.lastSeen);
-        return status === statusFilter;
+        return user.status === statusFilter;
       });
   }, [users, searchTerm, statusFilter]);
 
-  const statusCounts = useMemo(() => {
+    const statusCounts = useMemo(() => {
     const counts = { Active: 0, Dormant: 0, Inactive: 0 };
     users.forEach((user) => {
-      const { status } = getUserStatus(user.lastSeen);
-      counts[status]++;
+      counts[user.status]++;
     });
     return counts;
   }, [users]);
@@ -248,7 +243,7 @@ export default function AdminPage() {
                   </tr>
                 ) : (
                   filteredUsers.map((user, index) => {
-                    const { status, color } = getUserStatus(user.lastSeen);
+                                        const color = getStatusColor(user.status);
                     return (
                       <tr
                         key={user.address}
@@ -260,10 +255,10 @@ export default function AdminPage() {
                         <td className="px-6 py-4 text-sm text-gray-400">
                           {new Date(user.lastSeen).toLocaleString()}
                         </td>
-                        <td className={`px-6 py-4 text-sm font-semibold ${color}`}>
+                                                <td className={`px-6 py-4 text-sm font-semibold ${color}`}>
                           <div className="flex items-center gap-2">
                             <span className={`h-2.5 w-2.5 rounded-full ${color.replace('text', 'bg')}`}></span>
-                            {status}
+                            {user.status}
                           </div>
                         </td>
                       </tr>
