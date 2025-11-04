@@ -7,6 +7,10 @@ import fs from 'fs';
 import path from 'path';
 import { userRoutes } from './routes/userRoutes';
 import { adminRoutes } from './routes/adminRoutes';
+import { PrismaClient } from '@prisma/client';
+import cron from 'node-cron';
+
+const prisma = new PrismaClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -55,6 +59,27 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Cron job to mark users as offline if no heartbeat is received
+cron.schedule('* * * * *', async () => {
+  const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+
+  try {
+    await prisma.user.updateMany({
+      where: {
+        online: true,
+        lastSeen: {
+          lt: threeMinutesAgo,
+        },
+      },
+      data: {
+        online: false,
+      },
+    });
+  } catch (error) {
+    console.error('Error in offline cron job:', error);
+  }
+});
 
 // 404 handler
 app.use((req, res) => {

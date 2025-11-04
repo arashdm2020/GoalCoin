@@ -32,6 +32,21 @@ export function ConnectWalletButton() {
     }
   }, [address]);
 
+    // Heartbeat effect to keep the session alive
+  useEffect(() => {
+    if (isConnected && address) {
+      const interval = setInterval(() => {
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/heartbeat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address }),
+        });
+      }, 60 * 1000); // Every 60 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isConnected, address]);
+
   // Send connection/disconnection events to the backend
   useEffect(() => {
     if (isConnected && address) {

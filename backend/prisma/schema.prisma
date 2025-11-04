@@ -11,7 +11,7 @@ datasource db {
 model User {
   address     String   @id
   connectedAt DateTime @default(now())
-  isConnected Boolean  @default(true)
+  online      Boolean  @default(false)
   lastSeen    DateTime @updatedAt
 
   @@map("users")

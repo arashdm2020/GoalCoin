@@ -26,12 +26,12 @@ export const userController = {
 
       const normalizedAddress = address.toLowerCase();
 
-      const user = await prisma.user.upsert({
+            const user = await prisma.user.upsert({
         where: { address: normalizedAddress },
-        update: { isConnected: true, lastSeen: new Date() },
+        update: { online: true, lastSeen: new Date() },
         create: {
           address: normalizedAddress,
-          isConnected: true,
+          online: true,
         },
       });
 
@@ -53,9 +53,9 @@ export const userController = {
 
       const normalizedAddress = address.toLowerCase();
 
-      await prisma.user.update({
+            await prisma.user.update({
         where: { address: normalizedAddress },
-        data: { isConnected: false },
+        data: { online: false },
       });
 
       res.status(200).json({ success: true, message: 'User disconnected' });
@@ -65,7 +65,31 @@ export const userController = {
         res.status(200).json({ success: true, message: 'User not found, considered disconnected' });
         return;
       }
-      console.error('Error in user disconnect:', error);
+            console.error('Error in user disconnect:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  async heartbeat(req: Request, res: Response): Promise<void> {
+    try {
+      const { address } = req.body;
+
+      if (!address || typeof address !== 'string' || !isValidAddress(address)) {
+        res.status(400).json({ error: 'Valid address is required' });
+        return;
+      }
+
+      const normalizedAddress = address.toLowerCase();
+
+      await prisma.user.update({
+        where: { address: normalizedAddress },
+        data: { lastSeen: new Date(), online: true },
+      });
+
+      res.status(200).json({ success: true, message: 'Heartbeat received' });
+    } catch (error) {
+      // Non-critical error, just log it
+      console.error('Error in heartbeat:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },
