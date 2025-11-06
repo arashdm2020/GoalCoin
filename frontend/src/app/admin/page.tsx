@@ -128,7 +128,7 @@ export default function AdminPage() {
     }
   }, [activeTab]);
 
-  const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+  const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

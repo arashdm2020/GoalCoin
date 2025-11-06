@@ -22,6 +22,9 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for Render.com deployment
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
