@@ -17,21 +17,20 @@ function isValidAddress(address: string): boolean {
 export const userController = {
   async connect(req: Request, res: Response): Promise<void> {
     try {
-      const { address } = req.body;
+      const { wallet } = req.body;
 
-      if (!address || typeof address !== 'string' || !isValidAddress(address)) {
-        res.status(400).json({ error: 'Valid address is required' });
+      if (!wallet || typeof wallet !== 'string' || !isValidAddress(wallet)) {
+        res.status(400).json({ error: 'Valid wallet address is required' });
         return;
       }
 
-      const normalizedAddress = address.toLowerCase();
+      const normalizedWallet = wallet.toLowerCase();
 
-            const user = await prisma.user.upsert({
-        where: { address: normalizedAddress },
-        update: { online: true, lastSeen: new Date() },
+      const user = await prisma.user.upsert({
+        where: { wallet: normalizedWallet },
+        update: {},
         create: {
-          address: normalizedAddress,
-          online: true,
+          wallet: normalizedWallet,
         },
       });
 
@@ -44,51 +43,33 @@ export const userController = {
 
   async disconnect(req: Request, res: Response): Promise<void> {
     try {
-      const { address } = req.body;
+      const { wallet } = req.body;
 
-      if (!address || typeof address !== 'string' || !isValidAddress(address)) {
-        res.status(400).json({ error: 'Valid address is required' });
+      if (!wallet || typeof wallet !== 'string' || !isValidAddress(wallet)) {
+        res.status(400).json({ error: 'Valid wallet address is required' });
         return;
       }
 
-      const normalizedAddress = address.toLowerCase();
-
-            await prisma.user.update({
-        where: { address: normalizedAddress },
-        data: { online: false },
-      });
-
+      // In the new schema, we don't track online status, so this is just a no-op
       res.status(200).json({ success: true, message: 'User disconnected' });
     } catch (error) {
-      // Ignore errors if user not found, as the goal is to disconnect
-      if ((error as any).code === 'P2025') {
-        res.status(200).json({ success: true, message: 'User not found, considered disconnected' });
-        return;
-      }
-            console.error('Error in user disconnect:', error);
+      console.error('Error in user disconnect:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },
 
   async heartbeat(req: Request, res: Response): Promise<void> {
     try {
-      const { address } = req.body;
+      const { wallet } = req.body;
 
-      if (!address || typeof address !== 'string' || !isValidAddress(address)) {
-        res.status(400).json({ error: 'Valid address is required' });
+      if (!wallet || typeof wallet !== 'string' || !isValidAddress(wallet)) {
+        res.status(400).json({ error: 'Valid wallet address is required' });
         return;
       }
 
-      const normalizedAddress = address.toLowerCase();
-
-      await prisma.user.update({
-        where: { address: normalizedAddress },
-        data: { lastSeen: new Date(), online: true },
-      });
-
+      // In the new schema, we don't track heartbeats, so this is just a no-op
       res.status(200).json({ success: true, message: 'Heartbeat received' });
     } catch (error) {
-      // Non-critical error, just log it
       console.error('Error in heartbeat:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
