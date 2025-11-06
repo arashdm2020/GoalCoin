@@ -68,14 +68,13 @@ export async function runAutoMigration(): Promise<void> {
           WHERE "id" IS NULL OR "wallet" IS NULL;
         `;
         
-        // Add constraints after data migration
-        await prisma.$executeRaw`
-          ALTER TABLE "users" ALTER COLUMN "id" SET NOT NULL;
-        `;
-        
-        await prisma.$executeRaw`
-          ALTER TABLE "users" ALTER COLUMN "wallet" SET NOT NULL;
-        `;
+        // Add NOT NULL constraints safely
+        console.log('🔧 Applying NOT NULL constraints...');
+        await prisma.$executeRaw`ALTER TABLE "users" ADD CONSTRAINT "users_id_not_null" CHECK ("id" IS NOT NULL) NOT VALID;`;
+        await prisma.$executeRaw`ALTER TABLE "users" VALIDATE CONSTRAINT "users_id_not_null";`;
+
+        await prisma.$executeRaw`ALTER TABLE "users" ADD CONSTRAINT "users_wallet_not_null" CHECK ("wallet" IS NOT NULL) NOT VALID;`;
+        await prisma.$executeRaw`ALTER TABLE "users" VALIDATE CONSTRAINT "users_wallet_not_null";`;
         
         // Add unique constraints
         await prisma.$executeRaw`
@@ -95,15 +94,16 @@ export async function runAutoMigration(): Promise<void> {
           ALTER TABLE "users" ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id");
         `;
         
-        console.log('✅ Auto-migration completed successfully!');
+        console.log('✅ "users" table migration completed successfully!');
         
         // Verify the migration worked
         await prisma.user.findFirst({ select: { id: true, wallet: true } });
-        console.log('✅ Migration verification successful');
+        console.log('✅ "users" table verification successful');
         
       } catch (migrationError) {
         console.error('❌ Auto-migration failed:', migrationError);
-        console.log('⚠️ Server will continue with old schema compatibility mode');
+        // This is a critical failure, re-throw the error to stop the process.
+        throw migrationError;
       }
     } else {
       console.error('❌ Unexpected database error:', error);
