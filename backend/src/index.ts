@@ -16,6 +16,7 @@ import { userRoutes } from './routes/userRoutes';
 import { challengeRoutes } from './routes/challengeRoutes';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
+import { runAutoMigration } from './utils/autoMigrate';
 
 const prisma = new PrismaClient();
 
@@ -132,11 +133,19 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 // Start server based on environment
 if (process.env.NODE_ENV === 'production') {
-  // In production (like on Render), start a simple HTTP server.
-  // Render handles SSL termination.
-  app.listen(PORT, () => {
-    console.log(`HTTP Server running on port ${PORT}`);
-  });
+  // Run auto-migration before starting the server
+  runAutoMigration()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`HTTP Server running on port ${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error('❌ Auto-migration failed, starting server anyway:', error);
+      app.listen(PORT, () => {
+        console.log(`HTTP Server running on port ${PORT} (migration failed)`);
+      });
+    });
 } else {
   // In development, start an HTTPS server for a local setup.
   const projectRoot = path.join(__dirname, '../..');
