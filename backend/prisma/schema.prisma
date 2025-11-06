@@ -8,11 +8,114 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// User model to store player information
 model User {
   address     String   @id
   connectedAt DateTime @default(now())
   online      Boolean  @default(false)
   lastSeen    DateTime @updatedAt
+  country     String?
+  challenges  Challenge[]
 
   @@map("users")
 }
+
+// Challenge model for the 90-day challenge
+model Challenge {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userAddress], references: [address])
+  userAddress String
+  startDate DateTime @default(now())
+  endDate   DateTime
+  paid      Boolean  @default(false)
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  paymentId String?  @unique
+
+  @@map("challenges")
+  @@index([userAddress])
+}
+
+// Payment model for crypto checkouts
+model Payment {
+  id              String        @id @default(cuid())
+  tier            PaymentTier
+  amount          Float
+  currency        String        @default("USDT.MATIC")
+  coinpaymentsTxn String?       @unique
+  confirmed       Boolean       @default(false)
+  webhookReceived Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  challenge       Challenge?
+  revenueSplits   RevenueSplit[]
+  commissions     Commission[]
+
+  @@map("payments")
+}
+
+// Model for tracking revenue splits
+model RevenueSplit {
+  id        String    @id @default(cuid())
+  payment   Payment   @relation(fields: [paymentId], references: [id])
+  paymentId String
+  pool      PoolType
+  amount    Float
+  createdAt DateTime  @default(now())
+
+  @@map("revenue_splits")
+  @@index([paymentId])
+}
+
+// Enum for payment tiers
+enum PaymentTier {
+  TIER_19 // $19
+  TIER_35 // $35
+  TIER_49 // $49
+}
+
+// Enum for pool types
+enum PoolType {
+  PRIZE_POOL
+  TREASURY_POOL
+  BURN_POOL
+}
+
+// Placeholder for Admin/DAO verifiers
+model Verifier {
+  id            String @id @default(cuid())
+  walletAddress String @unique
+  name          String?
+  active        Boolean @default(true)
+  verifications Verification[]
+  commissions   Commission[]
+
+  @@map("verifiers")
+}
+
+model Verification {
+  id          String   @id @default(cuid())
+  subjectType String
+  subjectId   String
+  verifier    Verifier @relation(fields: [verifierId], references: [id])
+  verifierId  String
+  approved    Boolean
+  createdAt   DateTime @default(now())
+
+  @@map("verifications")
+  @@index([subjectType, subjectId])
+}
+
+model Commission {
+  id         String   @id @default(cuid())
+  verifier   Verifier @relation(fields: [verifierId], references: [id])
+  verifierId String
+  payment    Payment  @relation(fields: [paymentId], references: [id])
+  paymentId  String
+  amount     Float    @default(0)
+  createdAt  DateTime @default(now())
+
+  @@map("commissions")
+  @@index([verifierId])
+  @@index([paymentId])
+}
+

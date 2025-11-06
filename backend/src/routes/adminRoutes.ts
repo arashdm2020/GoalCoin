@@ -10,4 +10,10 @@ const router = express.Router();
  */
 router.get('/users', basicAuthMiddleware, adminController.getUsers);
 
+router.get('/verifiers', basicAuthMiddleware, adminController.getVerifiers);
+router.post('/verifiers', basicAuthMiddleware, adminController.createVerifier);
+router.post('/verify', basicAuthMiddleware, adminController.verify);
+router.get('/verification-status', basicAuthMiddleware, adminController.verificationStatus);
+router.get('/commissions', basicAuthMiddleware, adminController.commissions);
+
 export { router as adminRoutes };

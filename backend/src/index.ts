@@ -7,6 +7,11 @@ import fs from 'fs';
 import path from 'path';
 import { userRoutes } from './routes/userRoutes';
 import { adminRoutes } from './routes/adminRoutes';
+import { paymentRoutes } from './routes/paymentRoutes';
+import { paymentController } from './controllers/paymentController';
+import { leaderboardRoutes } from './routes/leaderboardRoutes';
+import { storeRoutes } from './routes/storeRoutes';
+import { nftRoutes } from './routes/nftRoutes';
 import { PrismaClient } from '@prisma/client';
 import cron from 'node-cron';
 
@@ -47,6 +52,23 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+// CoinPayments IPN must be mounted BEFORE json/urlencoded parsers to retain raw body for HMAC validation
+app.post('/api/payments/coinpayments-ipn', express.raw({ type: '*/*' }), (req, res) => {
+  const raw = (req as any).body instanceof Buffer ? (req as any).body.toString('utf8') : '';
+  (req as any).rawBody = raw;
+  const parsed: Record<string, string> = {};
+  try {
+    const usp = new URLSearchParams(raw);
+    usp.forEach((v, k) => {
+      parsed[k] = v;
+    });
+    (req as any).body = parsed;
+  } catch (e) {
+    (req as any).body = {};
+  }
+  return paymentController.coinpaymentsIPN(req, res);
+});
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -59,6 +81,10 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/store', storeRoutes);
+app.use('/api/nft', nftRoutes);
 
 // Cron job to mark users as offline if no heartbeat is received
 cron.schedule('* * * * *', async () => {
