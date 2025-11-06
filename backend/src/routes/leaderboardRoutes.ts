@@ -4,6 +4,6 @@ import { leaderboardController } from '../controllers/leaderboardController';
 const router = express.Router();
 
 router.get('/countries', leaderboardController.getCountries);
-router.get('/users', leaderboardController.getUsersByCountry);
+router.get('/', leaderboardController.getLeaderboard);
 
 export { router as leaderboardRoutes };

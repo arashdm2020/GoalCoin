@@ -15,6 +15,7 @@ import { leaderboardRoutes } from './routes/leaderboardRoutes';
 import { userRoutes } from './routes/userRoutes';
 import { challengeRoutes } from './routes/challengeRoutes';
 import cron from 'node-cron';
+import { CronService } from './services/cronService';
 
 const prisma = new PrismaClient();
 
@@ -89,21 +90,29 @@ app.get('/health', (req, res) => {
 
 // API routes
 
-// Cron job placeholder - can be used for cleanup tasks
+// Cron jobs for automated tasks
+// Reassign expired assignments every hour
 cron.schedule('0 * * * *', async () => {
   try {
-    // Example: Clean up expired review assignments
-    await prisma.reviewAssignment.updateMany({
-      where: {
-        expires_at: { lt: new Date() },
-        status: 'PENDING',
-      },
-      data: {
-        status: 'REASSIGNED',
-      },
-    });
+    console.log('Running expired assignment reassignment...');
+    const result = await CronService.reassignExpiredAssignments();
+    console.log(`Reassigned ${result.reassigned} expired assignments`);
   } catch (error) {
-    console.error('Error in cleanup cron job:', error);
+    console.error('Error in reassignment cron job:', error);
+  }
+});
+
+// Compute accuracy and auto-suspend reviewers daily at 2 AM
+cron.schedule('0 2 * * *', async () => {
+  try {
+    console.log('Computing reviewer accuracy and auto-suspending...');
+    const result = await CronService.computeAccuracyAndSuspend();
+    console.log(`Processed accuracy for ${result.processed} reviewers`);
+    
+    const unsuspendResult = await CronService.unsuspendReviewers();
+    console.log(`Unsuspended ${unsuspendResult.unsuspended} reviewers`);
+  } catch (error) {
+    console.error('Error in accuracy computation cron job:', error);
   }
 });
 
