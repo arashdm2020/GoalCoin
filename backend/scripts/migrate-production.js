@@ -11,6 +11,8 @@ const path = require('path');
 
 async function runProductionMigration() {
   console.log('🚀 Starting production database migration...');
+  console.log('📍 Current working directory:', process.cwd());
+  console.log('📍 Script location:', __dirname);
   
   const prisma = new PrismaClient();
   
