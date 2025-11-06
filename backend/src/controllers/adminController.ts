@@ -5,6 +5,36 @@ import { AuditService } from '../services/auditService';
 const prisma = new PrismaClient();
 
 export const adminController = {
+  // --- User Management ---
+  async getUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const users = await prisma.user.findMany({
+        orderBy: { created_at: 'desc' },
+        include: {
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              created_at: true,
+            },
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        users: users,
+        count: users.length,
+      });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch users' 
+      });
+    }
+  },
+
   // --- Reviewer Management ---
   async addReviewer(req: Request, res: Response): Promise<void> {
     const { wallet } = req.body;

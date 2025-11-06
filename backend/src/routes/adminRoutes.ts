@@ -4,6 +4,9 @@ import { basicAuthMiddleware } from '../middleware/basicAuth';
 
 const router = express.Router();
 
+// User management
+router.get('/users', basicAuthMiddleware, adminController.getUsers);
+
 // Reviewer management
 router.post('/reviewers', basicAuthMiddleware, adminController.addReviewer);
 router.get('/reviewers', basicAuthMiddleware, adminController.listReviewers);
