@@ -85,6 +85,7 @@ model ReviewAssignment {
   review          Review?   
 
   @@map("review_assignments")
+  @@index([reviewer_wallet, assigned_at])
 }
 
 model Review {
@@ -149,6 +150,22 @@ model PoolsLedger {
   created_at   DateTime @default(now())
 
   @@map("pools_ledger")
+}
+
+// --- Audit Log Model ---
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // e.g., "REVIEWER_ADDED", "VOTE_SUBMITTED", "PAYOUT_CREATED"
+  entity_type String   // e.g., "reviewer", "submission", "payout"
+  entity_id   String   // ID of the affected entity
+  user_wallet String?  // Wallet of user who performed action
+  admin_user  String?  // Admin username who performed action
+  old_data    Json?    // Previous state (for updates)
+  new_data    Json?    // New state
+  created_at  DateTime @default(now())
+
+  @@map("audit_logs")
 }
 
 // --- Enums ---

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { AuditService } from '../services/auditService';
 
 const prisma = new PrismaClient();
 
@@ -127,10 +128,50 @@ export const reviewController = {
                 })
               )
             );
+
+            // Update reviewer accuracy scores
+            await Promise.all(
+              allReviews.map(async (review) => {
+                const reviewer = await tx.reviewerWallet.findUnique({
+                  where: { wallet: review.reviewer_wallet }
+                });
+                
+                if (reviewer) {
+                  const isCorrect = (finalStatus === 'APPROVED' && review.vote === 'APPROVE') ||
+                                   (finalStatus === 'REJECTED' && review.vote === 'REJECT');
+                  
+                  const newTotalVotes = reviewer.total_votes + 1;
+                  const newWrongVotes = isCorrect ? reviewer.wrong_votes : reviewer.wrong_votes + 1;
+                  const newAccuracy = ((newTotalVotes - newWrongVotes) / newTotalVotes) * 100;
+
+                  await tx.reviewerWallet.update({
+                    where: { wallet: review.reviewer_wallet },
+                    data: {
+                      total_votes: newTotalVotes,
+                      wrong_votes: newWrongVotes,
+                      accuracy_7d: newAccuracy,
+                      // Auto-suspend if accuracy < 85%
+                      ...(newAccuracy < 85 && {
+                        enabled: false,
+                        suspended_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                      })
+                    },
+                  });
+                }
+              })
+            );
           }
         }
 
         return review;
+      });
+
+      await AuditService.log({
+        action: 'VOTE_SUBMITTED',
+        entity_type: 'review',
+        entity_id: assignment_id,
+        user_wallet: reviewer_wallet,
+        new_data: { vote, submission_id: assignment.submission_id },
       });
 
       res.status(201).json({ message: 'Vote submitted successfully' });
