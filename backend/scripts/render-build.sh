@@ -7,9 +7,9 @@ echo "🚀 Starting GoalCoin backend deployment..."
 echo "📦 Installing dependencies..."
 npm install
 
-# Apply migrations
-echo "🔄 Applying database migrations..."
-npx prisma migrate deploy
+# Synchronize database schema
+echo "🔄 Synchronizing database schema with Prisma schema..."
+npx prisma db push
 
 # Generate Prisma client
 echo "⚙️ Generating Prisma client..."
