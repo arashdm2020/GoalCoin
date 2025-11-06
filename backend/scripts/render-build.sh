@@ -7,14 +7,9 @@ echo "🚀 Starting GoalCoin backend deployment..."
 echo "📦 Installing dependencies..."
 npm install
 
-# Apply safe migrations (not db push!)
-echo "🔄 Applying database migrations safely..."
-echo "📋 Running production migration script..."
-node scripts/migrate-production.js || echo "⚠️ Migration script failed, continuing with build..."
-echo "🔄 Running prisma migrate deploy as fallback..."
-npx prisma migrate deploy || echo "⚠️ Migrate deploy failed, trying db push..."
-echo "🔄 Final fallback: prisma db push..."
-npx prisma db push --accept-data-loss || echo "⚠️ All migration attempts failed"
+# Apply migrations
+echo "🔄 Applying database migrations..."
+npx prisma migrate deploy
 
 # Generate Prisma client
 echo "⚙️ Generating Prisma client..."
