@@ -1,149 +1,165 @@
 import { Request, Response } from 'express';
-import { PrismaClient, User } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const prismaAny = prisma as any;
 
-/**
- * GET /api/admin/users
- * Returns all users ordered by latest connection timestamp
- */
 export const adminController = {
-  async getUsers(req: Request, res: Response): Promise<void> {
+  // --- Reviewer Management ---
+  async addReviewer(req: Request, res: Response): Promise<void> {
+    const { wallet } = req.body;
+    if (!wallet) {
+      res.status(400).json({ error: 'Wallet address is required' });
+      return;
+    }
     try {
-                  const allUsers = await prisma.user.findMany({
-        orderBy: {
-          lastSeen: 'desc',
-        },
+      const reviewer = await prisma.reviewerWallet.create({
+        data: { wallet },
+      });
+      res.status(201).json(reviewer);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to add reviewer' });
+    }
+  },
+
+  async listReviewers(req: Request, res: Response): Promise<void> {
+    try {
+      const reviewers = await prisma.reviewerWallet.findMany();
+      res.status(200).json(reviewers);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch reviewers' });
+    }
+  },
+
+  async toggleReviewerStatus(req: Request, res: Response): Promise<void> {
+    const { wallet, enabled } = req.body;
+    if (!wallet || typeof enabled !== 'boolean') {
+      res.status(400).json({ error: 'Wallet and enabled status are required' });
+      return;
+    }
+    try {
+      const reviewer = await prisma.reviewerWallet.update({
+        where: { wallet },
+        data: { enabled },
+      });
+      res.status(200).json(reviewer);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update reviewer' });
+    }
+  },
+
+  // --- Submission & Payout Viewing ---
+  async getSubmissions(req: Request, res: Response): Promise<void> {
+    try {
+      const submissions = await prisma.submission.findMany({ 
+        include: { 
+          reviews: true, 
+          assignments: true,
+          user: { select: { wallet: true, handle: true } }
+        } 
+      });
+      res.status(200).json(submissions);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch submissions' });
+    }
+  },
+
+  async getCommissions(req: Request, res: Response): Promise<void> {
+    try {
+      const commissions = await prisma.commission.findMany({ 
+        where: { payout_id: null },
+        orderBy: { earned_at: 'desc' }
+      });
+      res.status(200).json(commissions);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch commissions' });
+    }
+  },
+
+  async createPayout(req: Request, res: Response): Promise<void> {
+    const { reviewer_wallet, commission_ids, tx_hash } = req.body;
+    try {
+      const commissions = await prisma.commission.findMany({ 
+        where: { 
+          id: { in: commission_ids }, 
+          reviewer_wallet,
+          payout_id: null 
+        } 
+      });
+      
+      if (commissions.length === 0) {
+        res.status(400).json({ error: 'No valid commissions found' });
+        return;
+      }
+
+      const totalAmount = commissions.reduce((sum, c) => sum + c.amount_usdt, 0);
+
+      const payout = await prisma.$transaction(async (tx) => {
+        const newPayout = await tx.payout.create({
+          data: {
+            reviewer_wallet,
+            amount_usdt: totalAmount,
+            tx_hash,
+            status: 'PAID',
+            period_start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+            period_end: new Date(),
+          },
+        });
+
+        await tx.commission.updateMany({
+          where: { id: { in: commission_ids } },
+          data: { payout_id: newPayout.id },
+        });
+
+        return newPayout;
       });
 
-      // Define thresholds based on environment
-      const isDemo = process.env.NODE_ENV !== 'production';
-      const thresholds = {
-        active: isDemo ? 5 * 60 * 1000 : 24 * 60 * 60 * 1000, // 5 mins in demo, 24h in prod
-        dormant: isDemo ? 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000, // 60 mins in demo, 7d in prod
-      };
+      res.status(201).json(payout);
+    } catch (error) {
+      console.error('Failed to create payout:', error);
+      res.status(500).json({ error: 'Failed to create payout' });
+    }
+  },
 
-      const now = Date.now();
+  async assignSubmissionReviewers(req: Request, res: Response): Promise<void> {
+    const { submission_id } = req.body;
+    
+    try {
+      const submission = await prisma.submission.findUnique({ where: { id: submission_id } });
+      if (!submission) {
+        res.status(404).json({ error: 'Submission not found' });
+        return;
+      }
 
-      const usersWithStatus = allUsers.map(user => {
-        const timeDiff = now - new Date(user.lastSeen).getTime();
-        let status: 'Active' | 'Dormant' | 'Inactive';
-
-        if (user.online || timeDiff < thresholds.active) {
-          status = 'Active';
-        } else if (timeDiff < thresholds.dormant) {
-          status = 'Dormant';
-        } else {
-          status = 'Inactive';
-        }
-
-        return { ...user, status };
+      const enabledReviewers = await prisma.reviewerWallet.findMany({ 
+        where: { enabled: true } 
       });
 
-      res.status(200).json({
-        success: true,
-        count: usersWithStatus.length,
-        users: usersWithStatus,
-      });
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  },
-  async getVerifiers(req: Request, res: Response): Promise<void> {
-    try {
-      const verifiers = await prismaAny.verifier.findMany({ orderBy: { name: 'asc' } });
-      res.status(200).json({ success: true, verifiers });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  },
-  async createVerifier(req: Request, res: Response): Promise<void> {
-    try {
-      const { walletAddress, name, active } = req.body as { walletAddress: string; name?: string; active?: boolean };
-      if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
-        res.status(400).json({ error: 'Valid walletAddress required' });
+      if (enabledReviewers.length < 5) {
+        res.status(400).json({ error: 'Not enough enabled reviewers' });
         return;
       }
-      const v = await prismaAny.verifier.upsert({
-        where: { walletAddress: walletAddress.toLowerCase() },
-        update: { name: name ?? undefined, active: active ?? undefined },
-        create: { walletAddress: walletAddress.toLowerCase(), name: name ?? null, active: active ?? true },
-      });
-      res.status(200).json({ success: true, verifier: v });
+
+      // Randomly select 5 reviewers
+      const selectedReviewers = enabledReviewers
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 5);
+
+      const assignments = await Promise.all(
+        selectedReviewers.map(reviewer =>
+          prisma.reviewAssignment.create({
+            data: {
+              submission_id,
+              reviewer_wallet: reviewer.wallet,
+              expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+            },
+          })
+        )
+      );
+
+      res.status(201).json({ assignments });
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  },
-  async verify(req: Request, res: Response): Promise<void> {
-    try {
-      const { verifierId, subjectType, subjectId, approved } = req.body as { verifierId: string; subjectType: string; subjectId: string; approved: boolean };
-      if (!verifierId || !subjectType || !subjectId || typeof approved !== 'boolean') {
-        res.status(400).json({ error: 'Invalid payload' });
-        return;
-      }
-      const verifier = await prismaAny.verifier.findUnique({ where: { id: verifierId } });
-      if (!verifier || !verifier.active) {
-        res.status(400).json({ error: 'Invalid verifier' });
-        return;
-      }
-      const existing = await prismaAny.verification.findFirst({ where: { verifierId, subjectType, subjectId } });
-      if (existing) {
-        const updated = await prismaAny.verification.update({ where: { id: existing.id }, data: { approved } });
-        await evaluateQuorumAndCommissions(subjectType, subjectId);
-        res.status(200).json({ success: true, verification: updated });
-        return;
-      }
-      const verification = await prismaAny.verification.create({ data: { verifierId, subjectType, subjectId, approved } });
-      await evaluateQuorumAndCommissions(subjectType, subjectId);
-      res.status(200).json({ success: true, verification });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  },
-  async verificationStatus(req: Request, res: Response): Promise<void> {
-    try {
-      const { subjectType, subjectId } = req.query as { subjectType?: string; subjectId?: string };
-      if (!subjectType || !subjectId) {
-        res.status(400).json({ error: 'subjectType and subjectId required' });
-        return;
-      }
-      const all = await prismaAny.verification.findMany({ where: { subjectType, subjectId } });
-      const approved = all.filter((v: any) => v.approved).length;
-      const rejected = all.filter((v: any) => v.approved === false).length;
-      const quorum = Number(process.env.VERIFICATION_QUORUM || 3);
-      const quorumReached = approved >= quorum;
-      res.status(200).json({ success: true, approved, rejected, total: all.length, quorum, quorumReached });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  },
-  async commissions(req: Request, res: Response): Promise<void> {
-    try {
-      const { verifierId } = req.query as { verifierId?: string };
-      const list = await prismaAny.commission.findMany({ where: verifierId ? { verifierId } : undefined, orderBy: { createdAt: 'desc' } });
-      res.status(200).json({ success: true, commissions: list });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('Failed to assign reviewers:', error);
+      res.status(500).json({ error: 'Failed to assign reviewers' });
     }
   },
 };
-
-async function evaluateQuorumAndCommissions(subjectType: string, subjectId: string): Promise<void> {
-  const quorum = Number(process.env.VERIFICATION_QUORUM || 3);
-  const approvals = await prismaAny.verification.findMany({ where: { subjectType, subjectId, approved: true } });
-  if (approvals.length < quorum) return;
-  if (subjectType.toLowerCase() !== 'payment') return;
-  const payment = await prismaAny.payment.findUnique({ where: { id: subjectId } });
-  if (!payment) return;
-  const existing = await prismaAny.commission.findMany({ where: { paymentId: payment.id } });
-  if (existing.length > 0) return;
-  const perVerifier = Number(process.env.VERIFIER_COMMISSION_AMOUNT || 0);
-  if (perVerifier <= 0) return;
-  await prisma.$transaction(
-    approvals.slice(0, quorum).map((v: any) =>
-      prismaAny.commission.create({ data: { verifierId: v.verifierId, paymentId: payment.id, amount: perVerifier } })
-    )
-  );
-}

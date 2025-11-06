@@ -5,14 +5,15 @@ import rateLimit from 'express-rate-limit';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
-import { userRoutes } from './routes/userRoutes';
-import { adminRoutes } from './routes/adminRoutes';
-import { paymentRoutes } from './routes/paymentRoutes';
-import { paymentController } from './controllers/paymentController';
-import { leaderboardRoutes } from './routes/leaderboardRoutes';
-import { storeRoutes } from './routes/storeRoutes';
-import { nftRoutes } from './routes/nftRoutes';
 import { PrismaClient } from '@prisma/client';
+import { webhooksRoutes } from './routes/webhooksRoutes';
+import { paymentRoutes } from './routes/paymentRoutes';
+import { adminRoutes } from './routes/adminRoutes';
+import { submissionRoutes } from './routes/submissionRoutes';
+import { reviewRoutes } from './routes/reviewRoutes';
+import { leaderboardRoutes } from './routes/leaderboardRoutes';
+import { userRoutes } from './routes/userRoutes';
+import { challengeRoutes } from './routes/challengeRoutes';
 import cron from 'node-cron';
 
 const prisma = new PrismaClient();
@@ -52,26 +53,34 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// CoinPayments IPN must be mounted BEFORE json/urlencoded parsers to retain raw body for HMAC validation
-app.post('/api/payments/coinpayments-ipn', express.raw({ type: '*/*' }), (req, res) => {
-  const raw = (req as any).body instanceof Buffer ? (req as any).body.toString('utf8') : '';
-  (req as any).rawBody = raw;
-  const parsed: Record<string, string> = {};
+// Special raw body parser for CoinPayments webhook
+app.use('/api/webhooks/coinpayments', express.raw({ type: 'application/x-www-form-urlencoded' }), (req, res, next) => {
+  (req as any).rawBody = req.body.toString();
   try {
-    const usp = new URLSearchParams(raw);
-    usp.forEach((v, k) => {
-      parsed[k] = v;
-    });
-    (req as any).body = parsed;
+    const parsed: Record<string, string> = {};
+    const usp = new URLSearchParams((req as any).rawBody);
+    usp.forEach((v, k) => { parsed[k] = v; });
+    req.body = parsed;
   } catch (e) {
-    (req as any).body = {};
+    req.body = {};
   }
-  return paymentController.coinpaymentsIPN(req, res);
+  next();
 });
+
+
 
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/api/webhooks', webhooksRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/submissions', submissionRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/challenges', challengeRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -79,31 +88,22 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use('/api/users', userRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/store', storeRoutes);
-app.use('/api/nft', nftRoutes);
 
-// Cron job to mark users as offline if no heartbeat is received
-cron.schedule('* * * * *', async () => {
-  const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
-
+// Cron job placeholder - can be used for cleanup tasks
+cron.schedule('0 * * * *', async () => {
   try {
-    await prisma.user.updateMany({
+    // Example: Clean up expired review assignments
+    await prisma.reviewAssignment.updateMany({
       where: {
-        online: true,
-        lastSeen: {
-          lt: threeMinutesAgo,
-        },
+        expires_at: { lt: new Date() },
+        status: 'PENDING',
       },
       data: {
-        online: false,
+        status: 'REASSIGNED',
       },
     });
   } catch (error) {
-    console.error('Error in offline cron job:', error);
+    console.error('Error in cleanup cron job:', error);
   }
 });
 

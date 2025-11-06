@@ -1,4 +1,5 @@
-// Prisma schema for GoalCoin MVP
+// Prisma schema for GoalCoin MVP - Aligned with James's Technical Annex
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,114 +9,183 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model to store player information
+// --- Core User and Challenge Models ---
+
 model User {
-  address     String   @id
-  connectedAt DateTime @default(now())
-  online      Boolean  @default(false)
-  lastSeen    DateTime @updatedAt
-  country     String?
-  challenges  Challenge[]
+  id           String        @id @default(cuid())
+  wallet       String        @unique
+  email        String?       @unique
+  handle       String?       @unique
+  country_code String?
+  tier         UserTier      @default(FAN)
+  founder_nft  Boolean       @default(false)
+  created_at   DateTime      @default(now())
+  payments     Payment[]
+  submissions  Submission[]
 
   @@map("users")
 }
 
-// Challenge model for the 90-day challenge
 model Challenge {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userAddress], references: [address])
-  userAddress String
-  startDate DateTime @default(now())
-  endDate   DateTime
-  paid      Boolean  @default(false)
-  payment   Payment? @relation(fields: [paymentId], references: [id])
-  paymentId String?  @unique
+  id          String       @id @default(cuid())
+  title       String       @default("90-Day Challenge")
+  start_date  DateTime
+  end_date    DateTime
+  rules       String?      // For storing rules text or link
+  active      Boolean      @default(true)
+  submissions Submission[]
 
   @@map("challenges")
-  @@index([userAddress])
 }
 
-// Payment model for crypto checkouts
 model Payment {
-  id              String        @id @default(cuid())
-  tier            PaymentTier
-  amount          Float
-  currency        String        @default("USDT.MATIC")
-  coinpaymentsTxn String?       @unique
-  confirmed       Boolean       @default(false)
-  webhookReceived Boolean       @default(false)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  challenge       Challenge?
-  revenueSplits   RevenueSplit[]
-  commissions     Commission[]
+  id          String       @id @default(cuid())
+  user        User         @relation(fields: [user_id], references: [id])
+  user_id     String
+  tx_id       String       @unique // From CoinPayments
+  amount      Float
+  tier        PaymentTier
+  status      String       @default("pending") // e.g., pending, confirmed, failed
+  paid_at     DateTime?
+  raw_webhook Json?
+  created_at  DateTime     @default(now())
+  ledger_entry PoolsLedger? 
 
   @@map("payments")
 }
 
-// Model for tracking revenue splits
-model RevenueSplit {
-  id        String    @id @default(cuid())
-  payment   Payment   @relation(fields: [paymentId], references: [id])
-  paymentId String
-  pool      PoolType
-  amount    Float
-  createdAt DateTime  @default(now())
+// --- Submission, Review, and Payout Models ---
 
-  @@map("revenue_splits")
-  @@index([paymentId])
+model Submission {
+  id              String             @id @default(cuid())
+  user            User               @relation(fields: [user_id], references: [id])
+  user_id         String
+  challenge       Challenge          @relation(fields: [challenge_id], references: [id])
+  challenge_id    String
+  week_no         Int
+  file_url        String
+  watermark_code  String
+  status          SubmissionStatus   @default(PENDING)
+  created_at      DateTime           @default(now())
+  closed_at       DateTime?
+  assignments     ReviewAssignment[]
+  reviews         Review[]
+
+  @@map("submissions")
 }
 
-// Enum for payment tiers
-enum PaymentTier {
-  TIER_19 // $19
-  TIER_35 // $35
-  TIER_49 // $49
+model ReviewAssignment {
+  id              String    @id @default(cuid())
+  submission      Submission @relation(fields: [submission_id], references: [id])
+  submission_id   String
+  reviewer_wallet String
+  assigned_at     DateTime  @default(now())
+  expires_at      DateTime
+  status          AssignmentStatus @default(PENDING)
+  review          Review?   
+
+  @@map("review_assignments")
 }
 
-// Enum for pool types
-enum PoolType {
-  PRIZE_POOL
-  TREASURY_POOL
-  BURN_POOL
+model Review {
+  id              String           @id @default(cuid())
+  submission      Submission       @relation(fields: [submission_id], references: [id])
+  submission_id   String
+  reviewer_wallet String
+  vote            VoteType
+  voted_at        DateTime         @default(now())
+  assignment      ReviewAssignment @relation(fields: [assignment_id], references: [id])
+  assignment_id   String           @unique
+
+  @@map("reviews")
 }
 
-// Placeholder for Admin/DAO verifiers
-model Verifier {
-  id            String @id @default(cuid())
-  walletAddress String @unique
-  name          String?
-  active        Boolean @default(true)
-  verifications Verification[]
-  commissions   Commission[]
+model ReviewerWallet {
+  wallet          String    @id
+  enabled         Boolean   @default(true)
+  accuracy_7d     Float?    @default(100)
+  total_votes     Int       @default(0)
+  wrong_votes     Int       @default(0)
+  suspended_until DateTime?
 
-  @@map("verifiers")
-}
-
-model Verification {
-  id          String   @id @default(cuid())
-  subjectType String
-  subjectId   String
-  verifier    Verifier @relation(fields: [verifierId], references: [id])
-  verifierId  String
-  approved    Boolean
-  createdAt   DateTime @default(now())
-
-  @@map("verifications")
-  @@index([subjectType, subjectId])
+  @@map("reviewer_wallets")
 }
 
 model Commission {
-  id         String   @id @default(cuid())
-  verifier   Verifier @relation(fields: [verifierId], references: [id])
-  verifierId String
-  payment    Payment  @relation(fields: [paymentId], references: [id])
-  paymentId  String
-  amount     Float    @default(0)
-  createdAt  DateTime @default(now())
+  id              String   @id @default(cuid())
+  reviewer_wallet String
+  submission_id   String
+  amount_usdt     Float
+  earned_at       DateTime @default(now())
+  payout          Payout?  @relation(fields: [payout_id], references: [id])
+  payout_id       String?
 
   @@map("commissions")
-  @@index([verifierId])
-  @@index([paymentId])
+}
+
+model Payout {
+  id            String       @id @default(cuid())
+  reviewer_wallet String
+  amount_usdt   Float
+  tx_hash       String?
+  period_start  DateTime
+  period_end    DateTime
+  status        PayoutStatus @default(PENDING)
+  created_at    DateTime     @default(now())
+  commissions   Commission[]
+
+  @@map("payouts")
+}
+
+// --- Financial and Ledger Models ---
+
+model PoolsLedger {
+  id           String   @id @default(cuid())
+  payment      Payment  @relation(fields: [payment_id], references: [id])
+  payment_id   String   @unique
+  prize_usdt   Float
+  treasury_usdt Float
+  burn_usdt    Float
+  created_at   DateTime @default(now())
+
+  @@map("pools_ledger")
+}
+
+// --- Enums ---
+
+enum UserTier {
+  FAN
+  FOUNDER
+  PLAYER
+}
+
+enum PaymentTier {
+  TIER_19
+  TIER_35
+  TIER_49
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  APPEAL
+}
+
+enum AssignmentStatus {
+  PENDING
+  VOTED
+  REASSIGNED
+}
+
+enum VoteType {
+  APPROVE
+  REJECT
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  FAILED
 }
 
