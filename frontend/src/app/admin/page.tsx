@@ -128,7 +128,7 @@ export default function AdminPage() {
     }
   }, [activeTab]);
 
-  const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+  const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,9 +200,12 @@ export default function AdminPage() {
         setUsers(data.users || []);
       } else if (response.status === 401) {
         handleAuthError();
+      } else {
+        setError(`Failed to fetch users: ${response.status} ${response.statusText}`);
       }
     } catch (err) {
       console.error('Error fetching users:', err);
+      setError('Failed to connect to backend server. Make sure the backend is running on localhost:3001');
     }
   };
 
