@@ -28,7 +28,7 @@ async function baselineDatabase() {
     'Checking migration status'
   );
 
-  if (checkMigrations.success) {
+  if (checkMigrations.success && checkMigrations.output.includes('Database schema is up to date')) {
     console.log('✅ Database is already migrated, proceeding with deploy');
     const deploy = runCommand('npx prisma migrate deploy', 'Deploying migrations');
     return deploy.success;
