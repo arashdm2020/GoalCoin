@@ -58,13 +58,20 @@ npm install && npx prisma migrate deploy && npx prisma generate && npm run build
 
 **Why this matters:**
 - ❌ `prisma db push` tries to apply schema changes directly and fails with existing data
-- ✅ `prisma migrate deploy` uses our safe migration that preserves existing data
+- ✅ Our baseline script handles existing production databases safely
+- ✅ Uses `prisma migrate resolve` to mark existing schema as migrated (baseline)
+- ✅ Then applies any new migrations without data loss
 
 This will:
 1. Run `npm install` (install dependencies)
-2. Run `prisma migrate deploy` (applies our safe migration)
+2. Run `baseline-db.js` (handles existing database schema safely)
 3. Run `prisma generate` (generates Prisma client)
 4. Run `npm run build` (compiles TypeScript)
+
+**Baseline Process:**
+- Checks if migration tracking exists
+- If not, marks existing schema as migrated (baseline)
+- Applies any new migrations without touching existing data
 
 #### 3. Start Command for Render
 
