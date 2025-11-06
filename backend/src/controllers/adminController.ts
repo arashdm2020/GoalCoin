@@ -453,3 +453,5 @@ export const adminController = {
     }
   },
 };
+
+export default adminController;

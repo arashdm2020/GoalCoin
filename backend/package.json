@@ -13,7 +13,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
-    "deploy": "prisma migrate deploy && npm run build"
+    "deploy": "prisma migrate deploy && npm run build",
+    "render:build": "npm install && prisma migrate deploy && prisma generate && npm run build"
   },
   "keywords": [],
   "author": "",

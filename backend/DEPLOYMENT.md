@@ -41,15 +41,30 @@ COINPAYMENTS_CURRENCY=USDT.MATIC
 
 #### 2. Build Command for Render
 
-Set the build command in Render dashboard:
+**IMPORTANT**: Change the build command in Render dashboard from:
 ```bash
-npm run deploy
+npm install && npm run db:generate && npx prisma db push --accept-data-loss && npm run build
 ```
 
+**TO:**
+```bash
+npm run render:build
+```
+
+Or alternatively:
+```bash
+npm install && npx prisma migrate deploy && npx prisma generate && npm run build
+```
+
+**Why this matters:**
+- ❌ `prisma db push` tries to apply schema changes directly and fails with existing data
+- ✅ `prisma migrate deploy` uses our safe migration that preserves existing data
+
 This will:
-1. Run `prisma migrate deploy` (applies migrations safely)
-2. Run `prisma generate` (generates Prisma client)
-3. Run `npm run build` (compiles TypeScript)
+1. Run `npm install` (install dependencies)
+2. Run `prisma migrate deploy` (applies our safe migration)
+3. Run `prisma generate` (generates Prisma client)
+4. Run `npm run build` (compiles TypeScript)
 
 #### 3. Start Command for Render
 
