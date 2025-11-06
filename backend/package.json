@@ -14,7 +14,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "deploy": "prisma migrate deploy && npm run build",
-    "render:build": "npm install && prisma migrate deploy && prisma generate && npm run build"
+    "render:build": "npm install && node scripts/baseline-db.js && prisma generate && npm run build",
+    "db:baseline": "node scripts/baseline-db.js"
   },
   "keywords": [],
   "author": "",
