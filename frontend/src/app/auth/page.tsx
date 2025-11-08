@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ConnectWalletButton from '@/components/ConnectWalletButton';
+import { ConnectWalletButton } from '@/components/ConnectWalletButton';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
