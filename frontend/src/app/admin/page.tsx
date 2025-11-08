@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 interface User {
   id: string;
-  wallet: string;
+  wallet?: string;
   email?: string;
   handle?: string;
   country_code?: string;
@@ -406,7 +406,7 @@ export default function AdminPage() {
   const filteredUsers = useMemo(() => {
     return users
       .filter((user) => 
-        user.wallet.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.wallet && user.wallet.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (user.handle && user.handle.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
       )
@@ -616,7 +616,7 @@ export default function AdminPage() {
                           index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-950'
                         }`}
                       >
-                        <td className="px-6 py-4 font-mono text-sm">{user.wallet.slice(0, 10)}...</td>
+                        <td className="px-6 py-4 font-mono text-sm">{user.wallet ? user.wallet.slice(0, 10) + '...' : '-'}</td>
                         <td className="px-6 py-4 text-sm">{user.handle || '-'}</td>
                         <td className="px-6 py-4 text-sm">{user.email || '-'}</td>
                         <td className="px-6 py-4 text-sm">{user.country_code || '-'}</td>
