@@ -159,7 +159,7 @@ export default function LeaderboardPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-medium">
-                            {entry.handle || entry.wallet.slice(0, 10) + '...'}
+                            {entry.handle || (entry.wallet ? entry.wallet.slice(0, 10) + '...' : 'Anonymous')}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-400">

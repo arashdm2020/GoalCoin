@@ -81,6 +81,14 @@ export default function DashboardPage() {
             <span className="text-sm text-gray-400">
               {user.handle || user.email || user.wallet?.slice(0, 10)}
             </span>
+            {!user.wallet && (
+              <button
+                onClick={() => router.push('/link-wallet')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                🔗 Connect Wallet
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

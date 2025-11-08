@@ -579,6 +579,34 @@ export const adminController = {
       res.status(500).json({ error: 'Failed to mark commissions as paid' });
     }
   },
+
+  // --- Clear All Users (MVP Only) ---
+  async clearAllUsers(req: Request, res: Response): Promise<void> {
+    try {
+      // Delete all user-related data
+      await prisma.warmupLog.deleteMany({});
+      await prisma.workoutLog.deleteMany({});
+      await prisma.mealLog.deleteMany({});
+      await prisma.referral.deleteMany({});
+      await prisma.adView.deleteMany({});
+      await prisma.review.deleteMany({});
+      await prisma.reviewAssignment.deleteMany({});
+      await prisma.submission.deleteMany({});
+      await prisma.payment.deleteMany({});
+      await prisma.user.deleteMany({});
+
+      // Log audit (if AuditService is available)
+      // AuditService.log('CLEAR_ALL_USERS', 'admin', 'All users cleared for MVP reset');
+
+      res.status(200).json({
+        success: true,
+        message: 'All users and related data cleared successfully',
+      });
+    } catch (error) {
+      console.error('Failed to clear users:', error);
+      res.status(500).json({ error: 'Failed to clear users' });
+    }
+  },
 };
 
 export default adminController;
