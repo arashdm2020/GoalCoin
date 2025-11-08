@@ -13,8 +13,9 @@ datasource db {
 
 model User {
   id                String        @id @default(cuid())
-  wallet            String        @unique
+  wallet            String?       @unique
   email             String?       @unique
+  password_hash     String?
   email_verified    Boolean       @default(false)
   handle            String?       @unique
   country_code      String?
@@ -329,6 +330,28 @@ model BurnEvent {
   created_at  DateTime @default(now())
 
   @@map("burn_events")
+}
+
+model ShopifyRedemption {
+  id          String   @id @default(cuid())
+  order_code  String   @unique
+  user_id     String
+  redeemed_at DateTime @default(now())
+
+  @@map("shopify_redemptions")
+}
+
+model TestStake {
+  id          String    @id @default(cuid())
+  wallet      String
+  amount_usd  Float
+  network     String    // e.g., "mumbai", "polygon"
+  status      String    // "pending", "active", "unstaked"
+  tx_hash     String?
+  created_at  DateTime  @default(now())
+  unstaked_at DateTime?
+
+  @@map("test_stakes")
 }
 
 // --- Enums ---
