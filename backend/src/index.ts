@@ -18,6 +18,9 @@ import { fitnessRoutes } from './routes/fitnessRoutes';
 import { utilityBridgeRoutes } from './routes/utilityBridgeRoutes';
 import { daoRoutes } from './routes/daoRoutes';
 import { debugRoutes } from './routes/debugRoutes';
+import { authRoutes } from './routes/authRoutes';
+import { shopifyRoutes } from './routes/shopifyRoutes';
+import { stakingRoutes } from './routes/stakingRoutes';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
 
@@ -104,6 +107,9 @@ app.use('/api/fitness', fitnessRoutes);
 app.use('/api/utility-bridge', utilityBridgeRoutes);
 app.use('/api/dao', daoRoutes);
 app.use('/api/debug', debugRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/shopify', shopifyRoutes);
+app.use('/api/staking', stakingRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
