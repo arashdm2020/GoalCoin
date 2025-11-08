@@ -38,11 +38,20 @@ async function main() {
   ];
 
   for (const session of warmupSessions) {
-    await prisma.warmupSession.upsert({
+    const existing = await prisma.warmupSession.findFirst({
       where: { title: session.title },
-      update: session,
-      create: session,
     });
+
+    if (existing) {
+      await prisma.warmupSession.update({
+        where: { id: existing.id },
+        data: session,
+      });
+    } else {
+      await prisma.warmupSession.create({
+        data: session,
+      });
+    }
   }
 
   console.log('✅ Created warmup sessions');
@@ -152,11 +161,20 @@ async function main() {
   const allPlans = [...budgetPlans, ...balancedPlans, ...proteinBoostPlans];
 
   for (const plan of allPlans) {
-    await prisma.dietPlan.upsert({
+    const existing = await prisma.dietPlan.findFirst({
       where: { title: plan.title },
-      update: plan,
-      create: plan,
     });
+
+    if (existing) {
+      await prisma.dietPlan.update({
+        where: { id: existing.id },
+        data: plan,
+      });
+    } else {
+      await prisma.dietPlan.create({
+        data: plan,
+      });
+    }
   }
 
   console.log('✅ Created diet plans');

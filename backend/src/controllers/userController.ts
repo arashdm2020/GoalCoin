@@ -28,9 +28,19 @@ export const userController = {
 
       const user = await prisma.user.upsert({
         where: { wallet: normalizedWallet },
-        update: {},
+        update: {
+          last_activity_date: new Date(),
+        },
         create: {
           wallet: normalizedWallet,
+          xp_points: 0,
+          goal_points: 0,
+          current_streak: 0,
+          longest_streak: 0,
+          burn_multiplier: 1.0,
+          is_holder: false,
+          micro_goal_points: 0,
+          last_activity_date: new Date(),
         },
       });
 
