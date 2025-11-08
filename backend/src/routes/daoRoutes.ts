@@ -12,4 +12,4 @@ router.patch('/proposals/:id/status', daoController.updateProposalStatus);
 // Voting routes
 router.post('/vote', daoController.voteOnProposal);
 
-export default router;
+export { router as daoRoutes };

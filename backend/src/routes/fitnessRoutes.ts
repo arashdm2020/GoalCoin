@@ -17,4 +17,4 @@ router.post('/meal/log', fitnessController.logMeal);
 // Progress routes
 router.get('/progress/:userId', fitnessController.getUserProgress);
 
-export default router;
+export { router as fitnessRoutes };

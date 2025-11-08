@@ -11,4 +11,4 @@ router.get('/referral-leaderboard', utilityBridgeController.getReferralLeaderboa
 // Ad view routes
 router.post('/ad-view', utilityBridgeController.logAdView);
 
-export default router;
+export { router as utilityBridgeRoutes };
