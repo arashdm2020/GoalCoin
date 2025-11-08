@@ -39,7 +39,7 @@ export function ConnectWalletButton() {
         fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/heartbeat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address }),
+          body: JSON.stringify({ wallet: address }),
         });
       }, 60 * 1000); // Every 60 seconds
 
@@ -66,7 +66,7 @@ export function ConnectWalletButton() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ address: walletAddress }),
+        body: JSON.stringify({ wallet: walletAddress }),
       });
 
       if (!response.ok) {
@@ -100,7 +100,7 @@ export function ConnectWalletButton() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ address: walletAddress }),
+        body: JSON.stringify({ wallet: walletAddress }),
       });
     } catch (error) {
       console.error('Error sending disconnect to backend:', error);
