@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface LeaderboardEntry {
-  wallet: string;
+  wallet?: string;
   handle?: string;
   country_code?: string;
   tier: string;
