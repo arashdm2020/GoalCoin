@@ -147,9 +147,10 @@ export default function AdminPage() {
 
       if (response.ok) {
         setIsAuthenticated(true);
-        setAuthHeader(basicAuth);
-        localStorage.setItem('admin_auth_header', basicAuth);
-        fetchAllData(basicAuth);
+        const fullAuthHeader = `Basic ${basicAuth}`;
+        setAuthHeader(fullAuthHeader);
+        localStorage.setItem('admin_auth_header', fullAuthHeader);
+        fetchAllData(fullAuthHeader);
       } else {
         setError('Invalid credentials');
       }
