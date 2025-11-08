@@ -116,9 +116,11 @@ export default function AdminPage() {
     // Check if already authenticated (session stored in localStorage)
     const storedAuth = localStorage.getItem('admin_auth_header');
     if (storedAuth) {
+      // Ensure it has "Basic " prefix
+      const authHeaderValue = storedAuth.startsWith('Basic ') ? storedAuth : `Basic ${storedAuth}`;
       setIsAuthenticated(true);
-      setAuthHeader(storedAuth);
-      fetchAllData(storedAuth);
+      setAuthHeader(authHeaderValue);
+      fetchAllData(authHeaderValue);
     }
   }, []);
 
