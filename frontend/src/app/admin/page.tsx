@@ -758,7 +758,7 @@ export default function AdminPage() {
                 />
                 <select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => setStatusFilter(e.target.value as 'All' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'APPEAL')}
                   className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
                 >
                   <option value="All">All Status</option>
