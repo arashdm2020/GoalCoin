@@ -77,6 +77,17 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`📥 ${req.method} ${req.path}`);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Body:', JSON.stringify(req.body, null, 2));
+  console.log('Query:', JSON.stringify(req.query, null, 2));
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  next();
+});
+
 // Special raw body parser for CoinPayments webhook
 app.use('/api/webhooks/coinpayments', express.raw({ type: 'application/x-www-form-urlencoded' }), (req, res, next) => {
   (req as any).rawBody = req.body.toString();

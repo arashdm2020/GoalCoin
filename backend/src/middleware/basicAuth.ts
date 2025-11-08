@@ -12,7 +12,11 @@ export const basicAuthMiddleware = async (
 ): Promise<void> => {
   const authHeader = req.headers.authorization;
 
+  console.log('🔐 BasicAuth Middleware');
+  console.log('Authorization Header:', authHeader);
+
   if (!authHeader || !authHeader.startsWith('Basic ')) {
+    console.log('❌ No valid Authorization header');
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
@@ -23,7 +27,9 @@ export const basicAuthMiddleware = async (
 
   // Validate username (optional - can be configured)
   const expectedUsername = process.env.ADMIN_USERNAME || 'admin';
+  console.log('Username:', username, '| Expected:', expectedUsername);
   if (username !== expectedUsername) {
+    console.log('❌ Username mismatch');
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
@@ -38,11 +44,14 @@ export const basicAuthMiddleware = async (
 
   try {
     const isValid = await bcrypt.compare(password, passwordHash);
+    console.log('Password validation result:', isValid);
     if (!isValid) {
+      console.log('❌ Invalid password');
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
+    console.log('✅ Authentication successful');
     next();
   } catch (error) {
     console.error('Error validating password:', error);
