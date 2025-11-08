@@ -639,6 +639,53 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Clear All Users Button (MVP Only) */}
+            <div className="p-6 border-t border-gray-800 bg-red-900/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-red-400">⚠️ Danger Zone (MVP Only)</h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Clear all users and related data for testing purposes
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!confirm('⚠️ WARNING!\n\nThis will permanently delete ALL users and their data!\n\nAre you absolutely sure?')) {
+                      return;
+                    }
+                    if (!confirm('This action CANNOT be undone!\n\nType YES in the next prompt to confirm.')) {
+                      return;
+                    }
+                    const confirmation = prompt('Type "DELETE ALL USERS" to confirm:');
+                    if (confirmation !== 'DELETE ALL USERS') {
+                      alert('Cancelled. No data was deleted.');
+                      return;
+                    }
+
+                    try {
+                      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+                      const response = await fetch(`${backendUrl}/api/admin/users/clear-all`, {
+                        method: 'DELETE',
+                        headers: { Authorization: authHeader },
+                      });
+
+                      if (response.ok) {
+                        alert('✅ All users cleared successfully!');
+                        setUsers([]);
+                      } else {
+                        throw new Error('Failed to clear users');
+                      }
+                    } catch (err) {
+                      alert('❌ Error: ' + (err as Error).message);
+                    }
+                  }}
+                  className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  🗑️ Clear All Users
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

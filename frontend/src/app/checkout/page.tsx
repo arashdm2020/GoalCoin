@@ -45,6 +45,12 @@ export default function CheckoutPage() {
   }, [router]);
 
   const handlePurchase = async (tierIndex: number) => {
+    // Check if user has wallet
+    if (!user?.wallet) {
+      alert('⚠️ Please connect your wallet first!\n\nGo to Dashboard and click "Connect Wallet" button.');
+      return;
+    }
+
     setLoading(true);
     setSelectedTier(tierIndex);
 

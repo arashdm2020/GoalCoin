@@ -27,4 +27,7 @@ router.get('/commissions/preview', basicAuthMiddleware, adminController.previewC
 router.post('/commissions/mark-paid', basicAuthMiddleware, adminController.markCommissionsPaid);
 router.post('/payouts', basicAuthMiddleware, adminController.createPayout);
 
+// MVP Testing - Clear all users
+router.delete('/users/clear-all', basicAuthMiddleware, adminController.clearAllUsers);
+
 export { router as adminRoutes };
