@@ -12,16 +12,36 @@ datasource db {
 // --- Core User and Challenge Models ---
 
 model User {
-  id           String        @id @default(cuid())
-  wallet       String        @unique
-  email        String?       @unique
-  handle       String?       @unique
-  country_code String?
-  tier         UserTier      @default(FAN)
-  founder_nft  Boolean       @default(false)
-  created_at   DateTime      @default(now())
-  payments     Payment[]
-  submissions  Submission[]
+  id                String        @id @default(cuid())
+  wallet            String        @unique
+  email             String?       @unique
+  email_verified    Boolean       @default(false)
+  handle            String?       @unique
+  country_code      String?
+  tier              UserTier      @default(FAN)
+  founder_nft       Boolean       @default(false)
+  
+  // XP and Streak System
+  xp_points         Int           @default(0)
+  goal_points       Int           @default(0)
+  current_streak    Int           @default(0)
+  longest_streak    Int           @default(0)
+  last_activity_date DateTime?
+  burn_multiplier   Float         @default(1.0)
+  
+  // Utility Bridge for Non-Holders
+  is_holder         Boolean       @default(false)
+  micro_goal_points Int           @default(0)
+  
+  created_at        DateTime      @default(now())
+  payments          Payment[]
+  submissions       Submission[]
+  warmup_logs       WarmupLog[]
+  workout_logs      WorkoutLog[]
+  meal_logs         MealLog[]
+  referrals_made    Referral[]    @relation("Referrer")
+  referrals_received Referral[]   @relation("Referred")
+  ad_views          AdView[]
 
   @@map("users")
 }
@@ -168,6 +188,149 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// --- Fitness MVP Add-Ons ---
+
+model WarmupSession {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  video_url   String?
+  duration_min Int     @default(5)
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  logs        WarmupLog[]
+
+  @@map("warmup_sessions")
+}
+
+model WarmupLog {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     String
+  session     WarmupSession @relation(fields: [session_id], references: [id])
+  session_id  String
+  completed   Boolean  @default(true)
+  xp_earned   Int      @default(10)
+  completed_at DateTime @default(now())
+
+  @@map("warmup_logs")
+  @@index([user_id, completed_at])
+}
+
+model WorkoutLog {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     String
+  workout_type String  // e.g., "cardio", "strength", "flexibility"
+  duration_min Int
+  xp_earned   Int      @default(20)
+  completed_at DateTime @default(now())
+
+  @@map("workout_logs")
+  @@index([user_id, completed_at])
+}
+
+model DietPlan {
+  id          String   @id @default(cuid())
+  title       String   // e.g., "GoalCoin Meal of the Day"
+  tier        DietTier @default(BALANCED)
+  region      String?  // e.g., "Middle East", "Asia", "Western"
+  description String
+  ingredients String?  // Text-based list
+  instructions String? // Cooking instructions
+  calories    Int?
+  protein_g   Int?
+  active      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  logs        MealLog[]
+
+  @@map("diet_plans")
+}
+
+model MealLog {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     String
+  plan        DietPlan @relation(fields: [plan_id], references: [id])
+  plan_id     String
+  completed   Boolean  @default(true)
+  xp_earned   Int      @default(15)
+  completed_at DateTime @default(now())
+
+  @@map("meal_logs")
+  @@index([user_id, completed_at])
+}
+
+// --- Utility Bridge Models ---
+
+model Referral {
+  id          String   @id @default(cuid())
+  referrer    User     @relation("Referrer", fields: [referrer_id], references: [id])
+  referrer_id String
+  referred    User     @relation("Referred", fields: [referred_id], references: [id])
+  referred_id String
+  reward_points Int    @default(50)
+  created_at  DateTime @default(now())
+
+  @@map("referrals")
+  @@unique([referrer_id, referred_id])
+}
+
+model AdView {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     String
+  ad_type     String   // e.g., "video", "banner"
+  reward_points Int    @default(5)
+  viewed_at   DateTime @default(now())
+
+  @@map("ad_views")
+  @@index([user_id, viewed_at])
+}
+
+// --- DAO Governance ---
+
+model DaoProposal {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  proposer_wallet String
+  status      ProposalStatus @default(ACTIVE)
+  votes_for   Int      @default(0)
+  votes_against Int    @default(0)
+  created_at  DateTime @default(now())
+  expires_at  DateTime
+  votes       DaoVote[]
+
+  @@map("dao_proposals")
+}
+
+model DaoVote {
+  id          String   @id @default(cuid())
+  proposal    DaoProposal @relation(fields: [proposal_id], references: [id])
+  proposal_id String
+  voter_wallet String
+  vote_type   VoteType
+  vote_count  Int      @default(1) // Max 2 per wallet
+  voted_at    DateTime @default(now())
+
+  @@map("dao_votes")
+  @@unique([proposal_id, voter_wallet])
+}
+
+// --- Treasury & Burn Tracking ---
+
+model BurnEvent {
+  id          String   @id @default(cuid())
+  amount_goalcoin Float
+  tx_hash     String?
+  source      String   // e.g., "treasury_buyback", "streak_multiplier"
+  created_at  DateTime @default(now())
+
+  @@map("burn_events")
+}
+
 // --- Enums ---
 
 enum UserTier {
@@ -206,3 +369,15 @@ enum PayoutStatus {
   FAILED
 }
 
+enum DietTier {
+  BUDGET
+  BALANCED
+  PROTEIN_BOOST
+}
+
+enum ProposalStatus {
+  ACTIVE
+  PASSED
+  REJECTED
+  EXPIRED
+}
