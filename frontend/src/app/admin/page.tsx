@@ -739,6 +739,259 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Submissions Tab */}
+        {activeTab === 'submissions' && (
+          <div className="bg-gray-900 rounded-lg border border-[#FFD700]/20 overflow-hidden">
+            <div className="p-6 border-b border-gray-800">
+              <h2 className="text-2xl font-semibold">Submission Management</h2>
+              <p className="text-gray-400 mt-2">
+                Total: {submissions.length} submissions
+              </p>
+              <div className="mt-6 flex gap-4">
+                <input
+                  type="text"
+                  placeholder="Search by submission ID or user ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                >
+                  <option value="All">All Status</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="APPEAL">Appeal</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-800">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">ID</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">User</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Challenge</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Week</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Watermark</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Submitted</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSubmissions.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
+                        No submissions match the current filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredSubmissions.map((submission, index) => (
+                      <tr
+                        key={submission.id}
+                        className={`border-t border-gray-800 ${
+                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-950'
+                        }`}
+                      >
+                        <td className="px-6 py-4 font-mono text-xs">{submission.id.slice(0, 8)}...</td>
+                        <td className="px-6 py-4 font-mono text-xs">{submission.user_id.slice(0, 8)}...</td>
+                        <td className="px-6 py-4 font-mono text-xs">{submission.challenge_id.slice(0, 8)}...</td>
+                        <td className="px-6 py-4 text-sm">{submission.week_no}</td>
+                        <td className={`px-6 py-4 text-sm font-semibold ${getSubmissionStatusColor(submission.status)}`}>
+                          {submission.status}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs">{submission.watermark_code}</td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {new Date(submission.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <a
+                            href={submission.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#FFD700] hover:underline"
+                          >
+                            View File
+                          </a>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Commissions Tab */}
+        {activeTab === 'commissions' && (
+          <div className="bg-gray-900 rounded-lg border border-[#FFD700]/20 overflow-hidden">
+            <div className="p-6 border-b border-gray-800">
+              <h2 className="text-2xl font-semibold">Commission Management</h2>
+              <p className="text-gray-400 mt-2">
+                Total: {commissions.length} commissions | 
+                Unpaid: {commissions.filter(c => !c.payout_id).length}
+              </p>
+              <div className="mt-6">
+                <input
+                  type="text"
+                  placeholder="Search by reviewer wallet or submission ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                />
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-800">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">ID</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Reviewer</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Submission</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Amount (USDT)</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Earned At</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Payout ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commissions.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
+                        No commissions found.
+                      </td>
+                    </tr>
+                  ) : (
+                    commissions.map((commission, index) => (
+                      <tr
+                        key={commission.id}
+                        className={`border-t border-gray-800 ${
+                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-950'
+                        }`}
+                      >
+                        <td className="px-6 py-4 font-mono text-xs">{commission.id.slice(0, 8)}...</td>
+                        <td className="px-6 py-4 font-mono text-sm">{commission.reviewer_wallet.slice(0, 10)}...</td>
+                        <td className="px-6 py-4 font-mono text-xs">{commission.submission_id.slice(0, 8)}...</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-green-400">
+                          ${commission.amount_usdt.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {new Date(commission.earned_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            commission.payout_id ? 'bg-green-900 text-green-400' : 'bg-yellow-900 text-yellow-400'
+                          }`}>
+                            {commission.payout_id ? 'Paid' : 'Pending'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs text-gray-400">
+                          {commission.payout_id ? commission.payout_id.slice(0, 8) + '...' : '-'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Leaderboard Tab */}
+        {activeTab === 'leaderboard' && (
+          <div className="bg-gray-900 rounded-lg border border-[#FFD700]/20 overflow-hidden">
+            <div className="p-6 border-b border-gray-800">
+              <h2 className="text-2xl font-semibold">Leaderboard</h2>
+              <p className="text-gray-400 mt-2">
+                Total: {leaderboard.length} participants
+              </p>
+              <div className="mt-6">
+                <input
+                  type="text"
+                  placeholder="Search by wallet or handle..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                />
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-800">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Rank</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Wallet</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Handle</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Country</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Tier</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Total Submissions</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Approved</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Success Rate</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold">Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-8 text-center text-gray-400">
+                        No leaderboard data available.
+                      </td>
+                    </tr>
+                  ) : (
+                    leaderboard.map((entry, index) => (
+                      <tr
+                        key={entry.wallet}
+                        className={`border-t border-gray-800 ${
+                          index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-950'
+                        }`}
+                      >
+                        <td className="px-6 py-4 text-sm font-bold">
+                          <span className={`${
+                            index === 0 ? 'text-yellow-400' : 
+                            index === 1 ? 'text-gray-300' : 
+                            index === 2 ? 'text-orange-400' : 
+                            'text-gray-400'
+                          }`}>
+                            #{index + 1}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-sm">{entry.wallet.slice(0, 10)}...</td>
+                        <td className="px-6 py-4 text-sm">{entry.handle || '-'}</td>
+                        <td className="px-6 py-4 text-sm">{entry.country_code || '-'}</td>
+                        <td className={`px-6 py-4 text-sm font-semibold ${getTierColor(entry.tier)}`}>
+                          {entry.tier}
+                        </td>
+                        <td className="px-6 py-4 text-sm">{entry.total_submissions}</td>
+                        <td className="px-6 py-4 text-sm text-green-400">{entry.approved_submissions}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className={`font-medium ${
+                            entry.success_rate >= 80 ? 'text-green-400' : 
+                            entry.success_rate >= 50 ? 'text-yellow-400' : 
+                            'text-red-400'
+                          }`}>
+                            {entry.success_rate.toFixed(1)}%
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {new Date(entry.joined_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
