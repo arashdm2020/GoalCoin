@@ -14,6 +14,9 @@ import { reviewRoutes } from './routes/reviewRoutes';
 import { leaderboardRoutes } from './routes/leaderboardRoutes';
 import { userRoutes } from './routes/userRoutes';
 import { challengeRoutes } from './routes/challengeRoutes';
+import fitnessRoutes from './routes/fitnessRoutes';
+import utilityBridgeRoutes from './routes/utilityBridgeRoutes';
+import daoRoutes from './routes/daoRoutes';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
 
@@ -85,6 +88,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/challenges', challengeRoutes);
+app.use('/api/fitness', fitnessRoutes);
+app.use('/api/utility-bridge', utilityBridgeRoutes);
+app.use('/api/dao', daoRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

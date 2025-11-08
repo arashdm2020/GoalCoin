@@ -1,0 +1,257 @@
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// XP reward constants
+const XP_REWARDS = {
+  WARMUP: 10,
+  WORKOUT: 20,
+  MEAL: 15,
+  DAILY_STREAK: 5,
+};
+
+// Calculate streak and update user
+async function updateUserStreak(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const lastActivity = user.last_activity_date;
+  
+  if (!lastActivity) {
+    // First activity
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        current_streak: 1,
+        longest_streak: 1,
+        last_activity_date: new Date(),
+      },
+    });
+  } else {
+    const lastActivityDate = new Date(lastActivity);
+    lastActivityDate.setHours(0, 0, 0, 0);
+    
+    const daysDiff = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff === 0) {
+      // Same day, no streak update needed
+      return;
+    } else if (daysDiff === 1) {
+      // Consecutive day, increment streak
+      const newStreak = user.current_streak + 1;
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          current_streak: newStreak,
+          longest_streak: Math.max(newStreak, user.longest_streak),
+          last_activity_date: new Date(),
+          xp_points: { increment: XP_REWARDS.DAILY_STREAK },
+        },
+      });
+    } else {
+      // Streak broken, reset to 1
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          current_streak: 1,
+          last_activity_date: new Date(),
+        },
+      });
+    }
+  }
+}
+
+// Get all warmup sessions
+const getWarmupSessions = async (req: Request, res: Response) => {
+  try {
+    const sessions = await prisma.warmupSession.findMany({
+      where: { active: true },
+      orderBy: { order: 'asc' },
+    });
+    res.json(sessions);
+  } catch (error) {
+    console.error('Error fetching warmup sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch warmup sessions' });
+  }
+};
+
+// Log warmup completion
+const logWarmup = async (req: Request, res: Response) => {
+  try {
+    const { userId, sessionId } = req.body;
+
+    if (!userId || !sessionId) {
+      return res.status(400).json({ error: 'userId and sessionId are required' });
+    }
+
+    // Create warmup log
+    const log = await prisma.warmupLog.create({
+      data: {
+        user_id: userId,
+        session_id: sessionId,
+        xp_earned: XP_REWARDS.WARMUP,
+      },
+    });
+
+    // Update user XP
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        xp_points: { increment: XP_REWARDS.WARMUP },
+      },
+    });
+
+    // Update streak
+    await updateUserStreak(userId);
+
+    res.json({ success: true, log, xp_earned: XP_REWARDS.WARMUP });
+  } catch (error) {
+    console.error('Error logging warmup:', error);
+    res.status(500).json({ error: 'Failed to log warmup' });
+  }
+};
+
+// Log workout completion
+const logWorkout = async (req: Request, res: Response) => {
+  try {
+    const { userId, workoutType, durationMin } = req.body;
+
+    if (!userId || !workoutType || !durationMin) {
+      return res.status(400).json({ error: 'userId, workoutType, and durationMin are required' });
+    }
+
+    // Create workout log
+    const log = await prisma.workoutLog.create({
+      data: {
+        user_id: userId,
+        workout_type: workoutType,
+        duration_min: durationMin,
+        xp_earned: XP_REWARDS.WORKOUT,
+      },
+    });
+
+    // Update user XP
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        xp_points: { increment: XP_REWARDS.WORKOUT },
+      },
+    });
+
+    // Update streak
+    await updateUserStreak(userId);
+
+    res.json({ success: true, log, xp_earned: XP_REWARDS.WORKOUT });
+  } catch (error) {
+    console.error('Error logging workout:', error);
+    res.status(500).json({ error: 'Failed to log workout' });
+  }
+};
+
+// Get diet plans
+const getDietPlans = async (req: Request, res: Response) => {
+  try {
+    const { tier, region } = req.query;
+
+    const where: any = { active: true };
+    if (tier) where.tier = tier;
+    if (region) where.region = region;
+
+    const plans = await prisma.dietPlan.findMany({ where });
+    res.json(plans);
+  } catch (error) {
+    console.error('Error fetching diet plans:', error);
+    res.status(500).json({ error: 'Failed to fetch diet plans' });
+  }
+};
+
+// Log meal completion
+const logMeal = async (req: Request, res: Response) => {
+  try {
+    const { userId, planId } = req.body;
+
+    if (!userId || !planId) {
+      return res.status(400).json({ error: 'userId and planId are required' });
+    }
+
+    // Create meal log
+    const log = await prisma.mealLog.create({
+      data: {
+        user_id: userId,
+        plan_id: planId,
+        xp_earned: XP_REWARDS.MEAL,
+      },
+    });
+
+    // Update user XP
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        xp_points: { increment: XP_REWARDS.MEAL },
+      },
+    });
+
+    // Update streak
+    await updateUserStreak(userId);
+
+    res.json({ success: true, log, xp_earned: XP_REWARDS.MEAL });
+  } catch (error) {
+    console.error('Error logging meal:', error);
+    res.status(500).json({ error: 'Failed to log meal' });
+  }
+};
+
+// Get user progress (XP, streaks, etc.)
+const getUserProgress = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        xp_points: true,
+        goal_points: true,
+        current_streak: true,
+        longest_streak: true,
+        burn_multiplier: true,
+        last_activity_date: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get activity counts
+    const [warmupCount, workoutCount, mealCount] = await Promise.all([
+      prisma.warmupLog.count({ where: { user_id: userId } }),
+      prisma.workoutLog.count({ where: { user_id: userId } }),
+      prisma.mealLog.count({ where: { user_id: userId } }),
+    ]);
+
+    res.json({
+      ...user,
+      activity_counts: {
+        warmups: warmupCount,
+        workouts: workoutCount,
+        meals: mealCount,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching user progress:', error);
+    res.status(500).json({ error: 'Failed to fetch user progress' });
+  }
+};
+
+export default {
+  getWarmupSessions,
+  logWarmup,
+  logWorkout,
+  getDietPlans,
+  logMeal,
+  getUserProgress,
+};

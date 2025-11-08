@@ -5,6 +5,103 @@ import { AuditService } from '../services/auditService';
 const prisma = new PrismaClient();
 
 export const adminController = {
+  // --- Dashboard Stats ---
+  async getDashboardStats(req: Request, res: Response): Promise<void> {
+    try {
+      // Get user counts and stats
+      const totalUsers = await prisma.user.count();
+      const activeUsers = await prisma.user.count({
+        where: {
+          last_activity_date: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
+        },
+      });
+
+      // Get XP and streak stats
+      const xpStats = await prisma.user.aggregate({
+        _sum: { xp_points: true, goal_points: true },
+        _avg: { current_streak: true, burn_multiplier: true },
+      });
+
+      // Get total burns
+      const burnStats = await prisma.burnEvent.aggregate({
+        _sum: { amount_goalcoin: true },
+        _count: true,
+      });
+
+      // Get treasury stats (from pools_ledger)
+      const treasuryStats = await prisma.poolsLedger.aggregate({
+        _sum: {
+          prize_usdt: true,
+          treasury_usdt: true,
+          burn_usdt: true,
+        },
+      });
+
+      // Get activity counts
+      const [warmupCount, workoutCount, mealCount] = await Promise.all([
+        prisma.warmupLog.count(),
+        prisma.workoutLog.count(),
+        prisma.mealLog.count(),
+      ]);
+
+      // Get referral stats
+      const referralStats = await prisma.referral.aggregate({
+        _count: true,
+        _sum: { reward_points: true },
+      });
+
+      // Get ad view stats
+      const adViewStats = await prisma.adView.aggregate({
+        _count: true,
+        _sum: { reward_points: true },
+      });
+
+      res.json({
+        success: true,
+        stats: {
+          users: {
+            total: totalUsers,
+            active_7d: activeUsers,
+          },
+          xp: {
+            total_xp: xpStats._sum.xp_points || 0,
+            total_goal_points: xpStats._sum.goal_points || 0,
+            avg_streak: xpStats._avg.current_streak || 0,
+            avg_burn_multiplier: xpStats._avg.burn_multiplier || 1.0,
+          },
+          burns: {
+            total_goalcoin_burned: burnStats._sum.amount_goalcoin || 0,
+            burn_events_count: burnStats._count || 0,
+          },
+          treasury: {
+            total_prize_pool: treasuryStats._sum.prize_usdt || 0,
+            total_treasury: treasuryStats._sum.treasury_usdt || 0,
+            total_burned_usdt: treasuryStats._sum.burn_usdt || 0,
+          },
+          activity: {
+            warmups: warmupCount,
+            workouts: workoutCount,
+            meals: mealCount,
+          },
+          utility_bridge: {
+            referrals: referralStats._count || 0,
+            referral_points: referralStats._sum.reward_points || 0,
+            ad_views: adViewStats._count || 0,
+            ad_view_points: adViewStats._sum.reward_points || 0,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch dashboard stats',
+      });
+    }
+  },
+
   // --- User Management ---
   async getUsers(req: Request, res: Response): Promise<void> {
     try {

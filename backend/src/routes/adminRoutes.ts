@@ -4,6 +4,9 @@ import { basicAuthMiddleware } from '../middleware/basicAuth';
 
 const router = express.Router();
 
+// Dashboard stats
+router.get('/dashboard-stats', basicAuthMiddleware, adminController.getDashboardStats);
+
 // User management
 router.get('/users', basicAuthMiddleware, adminController.getUsers);
 
