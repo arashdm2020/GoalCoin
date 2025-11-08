@@ -452,7 +452,7 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('admin_auth_header');
+    localStorage.clear(); // Clear all localStorage to avoid auth issues
     setUsername('');
     setPassword('');
     setAuthHeader('');
