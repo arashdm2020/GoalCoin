@@ -667,7 +667,10 @@ export default function AdminPage() {
                       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
                       const response = await fetch(`${backendUrl}/api/admin/users/clear-all`, {
                         method: 'DELETE',
-                        headers: { Authorization: authHeader },
+                        headers: {
+                          'Authorization': authHeader,
+                          'Content-Type': 'application/json',
+                        },
                       });
 
                       if (response.ok) {
