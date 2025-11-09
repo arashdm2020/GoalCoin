@@ -93,6 +93,8 @@ const logWarmup = async (req: Request, res: Response) => {
       data: {
         user_id: userId,
         session_id: sessionId,
+        routine_id: 'session-based', // Legacy session-based warmup
+        duration_seconds: 300,
         xp_earned: XP_REWARDS.WARMUP,
       },
     });
