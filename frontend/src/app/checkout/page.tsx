@@ -32,22 +32,35 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      router.push('/auth');
-      return;
-    }
+    const fetchUser = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        router.push('/auth');
+        return;
+      }
 
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+        const response = await fetch(`${backendUrl}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
+    };
+
+    fetchUser();
   }, [router]);
 
   const handlePurchase = async (tierIndex: number) => {
     // Check if user has wallet
     if (!user?.wallet) {
-      alert('⚠️ Please connect your wallet first!\n\nGo to Dashboard and click "Connect Wallet" button.');
+      router.push('/dashboard');
       return;
     }
 
@@ -109,6 +122,27 @@ export default function CheckoutPage() {
             Join the 90-Day Challenge and transform your life
           </p>
         </div>
+
+        {/* Wallet Warning */}
+        {user && !user.wallet && (
+          <div className="max-w-2xl mx-auto mb-8 p-6 bg-red-900/20 border border-red-500/50 rounded-lg">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">⚠️</span>
+              <div>
+                <h3 className="text-xl font-semibold text-red-400 mb-2">Wallet Required</h3>
+                <p className="text-gray-300 mb-4">
+                  You need to connect your wallet before purchasing a tier. Your wallet is required to receive rewards and participate in the challenge.
+                </p>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Go to Dashboard & Connect Wallet
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Revenue Split Info */}
         <div className="max-w-2xl mx-auto mb-12 p-6 bg-gray-900 border border-[#FFD700]/20 rounded-lg">

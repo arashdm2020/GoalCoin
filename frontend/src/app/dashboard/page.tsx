@@ -78,9 +78,23 @@ export default function DashboardPage() {
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">GoalCoin Dashboard</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-400">
-              {user.handle || user.email || user.wallet?.slice(0, 10)}
-            </span>
+            {user.wallet && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border border-[#FFD700]/30 rounded-lg">
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-400">Wallet</span>
+                  <span className="text-sm font-mono text-[#FFD700]">
+                    {user.wallet.slice(0, 6)}...{user.wallet.slice(-4)}
+                  </span>
+                </div>
+                <div className="h-8 w-px bg-gray-700"></div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-400">Balance</span>
+                  <span className="text-sm font-semibold text-green-400">
+                    {user.goal_points} GOAL
+                  </span>
+                </div>
+              </div>
+            )}
             {!user.wallet && (
               <button
                 onClick={() => router.push('/link-wallet')}
