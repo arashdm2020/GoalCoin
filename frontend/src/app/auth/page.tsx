@@ -9,6 +9,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [handle, setHandle] = useState('');
+  const [wallet, setWallet] = useState('');
   const [countryCode, setCountryCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +26,7 @@ export default function AuthPage() {
 
       const body = isLogin
         ? { email, password }
-        : { email, password, handle, country_code: countryCode };
+        : { email, password, handle, wallet, country_code: countryCode };
 
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
@@ -123,6 +124,25 @@ export default function AuthPage() {
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
                     placeholder="@username"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Wallet Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={wallet}
+                    onChange={(e) => setWallet(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                    placeholder="0x..."
+                    required
+                    pattern="^0x[a-fA-F0-9]{40}$"
+                    title="Please enter a valid Ethereum wallet address (0x...)"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Your Solana/Ethereum wallet address for receiving rewards
+                  </p>
                 </div>
 
                 <div>
