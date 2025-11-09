@@ -273,16 +273,20 @@ model MealLog {
 // --- Utility Bridge Models ---
 
 model Referral {
-  id          String   @id @default(cuid())
-  referrer    User     @relation("Referrer", fields: [referrer_id], references: [id])
-  referrer_id String
-  referred    User     @relation("Referred", fields: [referred_id], references: [id])
-  referred_id String
-  reward_points Int    @default(50)
-  created_at  DateTime @default(now())
+  id            String    @id @default(cuid())
+  referrer      User      @relation("Referrer", fields: [referrer_id], references: [id])
+  referrer_id   String
+  referred      User      @relation("Referred", fields: [referred_id], references: [id])
+  referred_id   String
+  reward_points Int       @default(50)
+  status        String    @default("signed_up") // signed_up, activated, fraud_flag
+  activated_at  DateTime?
+  created_at    DateTime  @default(now())
 
   @@map("referrals")
   @@unique([referrer_id, referred_id])
+  @@index([referrer_id, status])
+  @@index([status, created_at])
 }
 
 model AdView {
