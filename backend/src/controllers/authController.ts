@@ -25,15 +25,13 @@ export const authController = {
         return;
       }
 
-      if (!wallet) {
-        res.status(400).json({ error: 'Wallet address is required' });
-        return;
-      }
-
-      // Validate wallet format (basic check)
-      if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
-        res.status(400).json({ error: 'Invalid wallet address format' });
-        return;
+      // Wallet is now optional - will be added in complete-profile step
+      if (wallet) {
+        // Validate wallet format only if provided (Solana address)
+        if (wallet.length < 32 || wallet.length > 44) {
+          res.status(400).json({ error: 'Invalid wallet address format' });
+          return;
+        }
       }
 
       // Check if email already exists
@@ -46,14 +44,16 @@ export const authController = {
         return;
       }
 
-      // Check if wallet already exists
-      const existingWallet = await prisma.user.findUnique({
-        where: { wallet },
-      });
+      // Check if wallet already exists (only if wallet provided)
+      if (wallet) {
+        const existingWallet = await prisma.user.findUnique({
+          where: { wallet },
+        });
 
-      if (existingWallet) {
-        res.status(400).json({ error: 'Wallet address already registered' });
-        return;
+        if (existingWallet) {
+          res.status(400).json({ error: 'Wallet address already registered' });
+          return;
+        }
       }
 
       // Hash password
@@ -64,7 +64,7 @@ export const authController = {
         data: {
           email,
           password_hash: hashedPassword,
-          wallet,
+          wallet: wallet || null,
           handle: handle || null,
           country_code: country_code || null,
           email_verified: false,
