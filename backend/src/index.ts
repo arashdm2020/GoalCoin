@@ -26,6 +26,7 @@ import { countryLeaderboardRoutes } from './routes/countryLeaderboardRoutes';
 import { scoreboardRoutes } from './routes/scoreboardRoutes';
 import { treasuryRoutes } from './routes/treasuryRoutes';
 import { healthRoutes } from './routes/healthRoutes';
+import { adminAuthTestRoutes } from './routes/adminAuthTestRoutes';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
 
@@ -133,6 +134,7 @@ app.use('/api/leaderboards', countryLeaderboardRoutes);
 app.use('/api/scoreboard', scoreboardRoutes);
 app.use('/api/treasury', treasuryRoutes);
 app.use('/api/dev', healthRoutes);
+app.use('/api/admin-test', adminAuthTestRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
