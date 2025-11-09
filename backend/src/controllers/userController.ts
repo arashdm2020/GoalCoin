@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 /**
  * Validates Ethereum address format (basic validation)
@@ -26,25 +28,53 @@ export const userController = {
 
       const normalizedWallet = wallet.toLowerCase();
 
-      const user = await prisma.user.upsert({
+      // Check if user already exists
+      let user = await prisma.user.findUnique({
         where: { wallet: normalizedWallet },
-        update: {
-          last_activity_date: new Date(),
-        },
-        create: {
-          wallet: normalizedWallet,
-          xp_points: 0,
-          goal_points: 0,
-          current_streak: 0,
-          longest_streak: 0,
-          burn_multiplier: 1.0,
-          is_holder: false,
-          micro_goal_points: 0,
-          last_activity_date: new Date(),
-        },
       });
 
-      res.status(200).json({ success: true, user });
+      let isNewUser = false;
+
+      if (user) {
+        // User exists - update last activity
+        user = await prisma.user.update({
+          where: { wallet: normalizedWallet },
+          data: {
+            last_activity_date: new Date(),
+          },
+        });
+      } else {
+        // New user - create account
+        isNewUser = true;
+        user = await prisma.user.create({
+          data: {
+            wallet: normalizedWallet,
+            xp_points: 0,
+            goal_points: 0,
+            current_streak: 0,
+            longest_streak: 0,
+            burn_multiplier: 1.0,
+            is_holder: false,
+            micro_goal_points: 0,
+            last_activity_date: new Date(),
+          },
+        });
+      }
+
+      // Generate JWT token for authentication
+      const token = jwt.sign(
+        { userId: user.id, wallet: user.wallet },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.status(200).json({ 
+        success: true, 
+        user,
+        token,
+        isNewUser,
+        message: isNewUser ? 'Account created successfully' : 'Welcome back!'
+      });
     } catch (error) {
       console.error('Error in user connect:', error);
       res.status(500).json({ error: 'Internal server error' });
