@@ -56,7 +56,7 @@ interface LeaderboardEntry {
   joined_at: string;
 }
 
-type TabType = 'users' | 'reviewers' | 'submissions' | 'commissions' | 'leaderboard';
+type TabType = 'users' | 'reviewers' | 'submissions' | 'commissions' | 'leaderboard' | 'settings';
 
 const getTierColor = (tier: string): string => {
   switch (tier) {
@@ -100,6 +100,12 @@ export default function AdminPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [settings, setSettings] = useState<any[]>([]);
+  
+  // Settings form states
+  const [countdownDate, setCountdownDate] = useState('');
+  const [countdownTitle, setCountdownTitle] = useState('');
+  const [countdownEnabled, setCountdownEnabled] = useState(true);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -182,6 +188,9 @@ export default function AdminPage() {
         break;
       case 'leaderboard':
         await fetchLeaderboard(authToUse);
+        break;
+      case 'settings':
+        await fetchSettings(authToUse);
         break;
     }
   };
@@ -307,6 +316,38 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSettings = async (auth?: string) => {
+    try {
+      const authToUse = auth || authHeader;
+      if (!authToUse) return;
+
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/settings/admin/all`, {
+        headers: {
+          Authorization: authToUse,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data.settings || []);
+        
+        // Set form values from settings
+        const countdownDateSetting = data.settings.find((s: any) => s.key === 'countdown_target_date');
+        const countdownTitleSetting = data.settings.find((s: any) => s.key === 'countdown_title');
+        const countdownEnabledSetting = data.settings.find((s: any) => s.key === 'countdown_enabled');
+        
+        if (countdownDateSetting) setCountdownDate(countdownDateSetting.value);
+        if (countdownTitleSetting) setCountdownTitle(countdownTitleSetting.value);
+        if (countdownEnabledSetting) setCountdownEnabled(countdownEnabledSetting.value === 'true');
+      } else if (response.status === 401) {
+        handleAuthError();
+      }
+    } catch (err) {
+      console.error('Error fetching settings:', err);
+    }
+  };
+
   const handleAuthError = () => {
     setIsAuthenticated(false);
     setAuthHeader('');
@@ -402,6 +443,48 @@ export default function AdminPage() {
       }
     } catch (err) {
       setError('Failed to mark commissions as paid');
+    }
+  };
+
+  const updateCountdownSettings = async () => {
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+      
+      await Promise.all([
+        fetch(`${backendUrl}/api/settings/admin/countdown_target_date`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+          },
+          body: JSON.stringify({ value: countdownDate }),
+        }),
+        fetch(`${backendUrl}/api/settings/admin/countdown_title`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+          },
+          body: JSON.stringify({ value: countdownTitle }),
+        }),
+        fetch(`${backendUrl}/api/settings/admin/countdown_enabled`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+          },
+          body: JSON.stringify({ value: countdownEnabled.toString() }),
+        }),
+      ]);
+
+      setError('');
+      alert('Settings updated successfully!');
+      await fetchSettings();
+    } catch (err) {
+      setError('Failed to update settings');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -532,7 +615,7 @@ export default function AdminPage() {
         <div className="mb-8">
           <div className="border-b border-gray-800">
             <nav className="flex space-x-8">
-              {(['users', 'reviewers', 'submissions', 'commissions', 'leaderboard'] as TabType[]).map((tab) => (
+              {(['users', 'reviewers', 'submissions', 'commissions', 'leaderboard', 'settings'] as TabType[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -1042,6 +1125,119 @@ export default function AdminPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="bg-gray-900 rounded-lg border border-[#FFD700]/20 overflow-hidden">
+            <div className="p-6 border-b border-gray-800">
+              <h2 className="text-2xl font-semibold">App Settings</h2>
+              <p className="text-gray-400 mt-2">
+                Configure homepage countdown timer and other settings
+              </p>
+            </div>
+
+            <div className="p-6">
+              {/* Countdown Timer Settings */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4">Homepage Countdown Timer</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Countdown Title
+                    </label>
+                    <input
+                      type="text"
+                      value={countdownTitle}
+                      onChange={(e) => setCountdownTitle(e.target.value)}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                      placeholder="Launch Countdown"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Target Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={countdownDate ? new Date(countdownDate).toISOString().slice(0, 16) : ''}
+                      onChange={(e) => setCountdownDate(new Date(e.target.value).toISOString())}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Current: {countdownDate ? new Date(countdownDate).toLocaleString() : 'Not set'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="countdown-enabled"
+                      checked={countdownEnabled}
+                      onChange={(e) => setCountdownEnabled(e.target.checked)}
+                      className="w-5 h-5 text-[#FFD700] bg-gray-800 border-gray-700 rounded focus:ring-[#FFD700]"
+                    />
+                    <label htmlFor="countdown-enabled" className="text-sm font-medium">
+                      Enable countdown timer on homepage
+                    </label>
+                  </div>
+
+                  <button
+                    onClick={updateCountdownSettings}
+                    disabled={loading}
+                    className="px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : 'Save Settings'}
+                  </button>
+                </div>
+              </div>
+
+              {/* All Settings Table */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4">All Settings</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-800">
+                    <thead className="bg-gray-800">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Key
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Value
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Description
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          Updated At
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-gray-900 divide-y divide-gray-800">
+                      {settings.map((setting) => (
+                        <tr key={setting.key}>
+                          <td className="px-6 py-4 text-sm font-mono text-[#FFD700]">
+                            {setting.key}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-white">
+                            {setting.value}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-400">
+                            {setting.description || '-'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-400">
+                            {setting.updated_at ? new Date(setting.updated_at).toLocaleString() : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         )}
