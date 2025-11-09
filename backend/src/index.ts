@@ -31,6 +31,7 @@ import { settingsRoutes } from './routes/settingsRoutes';
 import warmupRoutes from './routes/warmupRoutes';
 import mealRoutes from './routes/mealRoutes';
 import referralRoutes from './routes/referralRoutes';
+import scoreboardWidgetRoutes from './routes/scoreboardWidgetRoutes';
 import { apiLimiter, authLimiter, xpLimiter, adminLimiter } from './middleware/rateLimiter';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
@@ -147,6 +148,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/warmups', warmupRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/referrals', referralRoutes);
+app.use('/api/widgets', scoreboardWidgetRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
