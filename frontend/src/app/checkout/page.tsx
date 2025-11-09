@@ -126,27 +126,6 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        {/* Wallet Warning */}
-        {user && !user.wallet && (
-          <div className="max-w-2xl mx-auto mb-8 p-6 bg-red-900/20 border border-red-500/50 rounded-lg">
-            <div className="flex items-start gap-4">
-              <span className="text-3xl">⚠️</span>
-              <div>
-                <h3 className="text-xl font-semibold text-red-400 mb-2">Wallet Required</h3>
-                <p className="text-gray-300 mb-4">
-                  You need to connect your wallet before purchasing a tier. Your wallet is required to receive rewards and participate in the challenge.
-                </p>
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Go to Dashboard & Connect Wallet
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Revenue Split Info */}
         <div className="max-w-2xl mx-auto mb-12 p-6 bg-gray-900 border border-[#FFD700]/20 rounded-lg">
           <h3 className="text-xl font-semibold mb-4">💰 Revenue Distribution</h3>
