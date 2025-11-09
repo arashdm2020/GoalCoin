@@ -41,6 +41,13 @@ export default function DashboardPage() {
         }
 
         const data = await response.json();
+        
+        // Check if profile is complete
+        if (!data.user.wallet || !data.user.handle || !data.user.country_code) {
+          router.push('/complete-profile');
+          return;
+        }
+        
         setUser(data.user);
       } catch (error) {
         localStorage.removeItem('auth_token');
