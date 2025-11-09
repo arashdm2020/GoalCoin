@@ -185,6 +185,9 @@ const logMeal = async (req: Request, res: Response) => {
       data: {
         user_id: userId,
         plan_id: planId,
+        meal_id: 'plan-based', // Legacy plan-based meal
+        meal_type: 'lunch',
+        calories: 0,
         xp_earned: XP_REWARDS.MEAL,
       },
     });
