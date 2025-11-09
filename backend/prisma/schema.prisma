@@ -34,6 +34,12 @@ model User {
   is_holder         Boolean       @default(false)
   micro_goal_points Int           @default(0)
   
+  // Streak Protection Features
+  grace_days_remaining       Int       @default(2)
+  grace_days_used_this_month Int       @default(0)
+  streak_freeze_tokens       Int       @default(0)
+  streak_frozen_until        DateTime?
+  
   created_at        DateTime      @default(now())
   payments          Payment[]
   submissions       Submission[]

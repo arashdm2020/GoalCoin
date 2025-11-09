@@ -31,6 +31,7 @@ import { settingsRoutes } from './routes/settingsRoutes';
 import warmupRoutes from './routes/warmupRoutes';
 import mealRoutes from './routes/mealRoutes';
 import referralRoutes from './routes/referralRoutes';
+import { apiLimiter, authLimiter, xpLimiter, adminLimiter } from './middleware/rateLimiter';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
 
@@ -118,6 +119,9 @@ app.use('/api/webhooks/coinpayments', express.raw({ type: 'application/x-www-for
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Apply general rate limiter to all API routes
+app.use('/api/', apiLimiter);
+
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
@@ -130,10 +134,10 @@ app.use('/api/fitness', fitnessRoutes);
 app.use('/api/utility-bridge', utilityBridgeRoutes);
 app.use('/api/dao', daoRoutes);
 app.use('/api/debug', debugRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/staking', stakingRoutes);
-app.use('/api/xp', xpRoutes);
+app.use('/api/xp', xpLimiter, xpRoutes);
 app.use('/api/leaderboards', countryLeaderboardRoutes);
 app.use('/api/scoreboard', scoreboardRoutes);
 app.use('/api/treasury', treasuryRoutes);
