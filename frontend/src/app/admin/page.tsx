@@ -1162,15 +1162,41 @@ export default function AdminPage() {
                     <label className="block text-sm font-medium mb-2">
                       Target Date & Time
                     </label>
-                    <input
-                      type="datetime-local"
-                      value={countdownDate ? new Date(countdownDate).toISOString().slice(0, 16) : ''}
-                      onChange={(e) => setCountdownDate(new Date(e.target.value).toISOString())}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Current: {countdownDate ? new Date(countdownDate).toLocaleString() : 'Not set'}
-                    </p>
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        value={countdownDate ? new Date(countdownDate).toISOString().slice(0, 16) : ''}
+                        onChange={(e) => setCountdownDate(new Date(e.target.value).toISOString())}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700] focus:ring-2 focus:ring-[#FFD700]/20 transition-all"
+                        style={{
+                          colorScheme: 'dark',
+                        }}
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg className="w-5 h-5 text-[#FFD700]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="mt-2 p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-gray-300">
+                          Current: <span className="text-[#FFD700] font-semibold">
+                            {countdownDate ? new Date(countdownDate).toLocaleString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 'Not set'}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3">
