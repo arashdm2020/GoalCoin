@@ -42,22 +42,20 @@ class FanTierService {
    * Get user's current tier and progress
    */
   async getUserTierProgress(userId: string): Promise<any> {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        fan_tier: true,
-        xp_points: true,
-        tier_updated_at: true
-      }
-    });
+    const user = await prisma.$queryRaw<any[]>`
+      SELECT fan_tier, xp_points, tier_updated_at
+      FROM users
+      WHERE id = ${userId}
+    `;
 
-    if (!user) return null;
+    if (user.length === 0) return null;
 
-    const currentTierInfo = await this.getTierInfo(user.fan_tier || 'ROOKIE');
+    const userData = user[0];
+    const currentTierInfo = await this.getTierInfo(userData.fan_tier || 'ROOKIE');
     const allTiers = await this.getAllTiers();
 
     // Find next tier
-    const currentIndex = allTiers.findIndex(t => t.tier === user.fan_tier);
+    const currentIndex = allTiers.findIndex(t => t.tier === userData.fan_tier);
     const nextTier = currentIndex < allTiers.length - 1 ? allTiers[currentIndex + 1] : null;
 
     // Calculate progress to next tier
@@ -65,21 +63,21 @@ class FanTierService {
     let xpNeeded = 0;
 
     if (nextTier && currentTierInfo) {
-      const xpInCurrentTier = user.xp_points - currentTierInfo.min_xp;
+      const xpInCurrentTier = userData.xp_points - currentTierInfo.min_xp;
       const xpRangeForTier = nextTier.min_xp - currentTierInfo.min_xp;
       progress = Math.min((xpInCurrentTier / xpRangeForTier) * 100, 100);
-      xpNeeded = nextTier.min_xp - user.xp_points;
+      xpNeeded = nextTier.min_xp - userData.xp_points;
     }
 
     return {
-      currentTier: user.fan_tier,
+      currentTier: userData.fan_tier,
       currentTierInfo,
       nextTier: nextTier?.tier || null,
       nextTierInfo: nextTier,
-      xpPoints: user.xp_points,
+      xpPoints: userData.xp_points,
       progress: Math.round(progress),
       xpNeeded: Math.max(xpNeeded, 0),
-      tierUpdatedAt: user.tier_updated_at
+      tierUpdatedAt: userData.tier_updated_at
     };
   }
 
