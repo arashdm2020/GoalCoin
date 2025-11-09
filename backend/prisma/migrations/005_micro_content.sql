@@ -33,8 +33,7 @@ CREATE TABLE content_interactions (
   metadata JSONB, -- Additional data (e.g., watch duration, comment text)
   created_at TIMESTAMP DEFAULT NOW(),
   CONSTRAINT fk_interaction_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  CONSTRAINT fk_interaction_content FOREIGN KEY (content_id) REFERENCES content_items(id) ON DELETE CASCADE,
-  UNIQUE(user_id, content_id, action, DATE(created_at))
+  CONSTRAINT fk_interaction_content FOREIGN KEY (content_id) REFERENCES content_items(id) ON DELETE CASCADE
 );
 
 -- 3. Content action types configuration
