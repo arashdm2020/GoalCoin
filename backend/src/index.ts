@@ -30,6 +30,7 @@ import { adminAuthTestRoutes } from './routes/adminAuthTestRoutes';
 import { settingsRoutes } from './routes/settingsRoutes';
 import warmupRoutes from './routes/warmupRoutes';
 import mealRoutes from './routes/mealRoutes';
+import referralRoutes from './routes/referralRoutes';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
 
@@ -141,6 +142,7 @@ app.use('/api/admin-test', adminAuthTestRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/warmups', warmupRoutes);
 app.use('/api/meals', mealRoutes);
+app.use('/api/referrals', referralRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
