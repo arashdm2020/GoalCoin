@@ -50,16 +50,15 @@ export const shopifyService = {
 
       // Determine tier based on order total
       const totalPrice = parseFloat(orderData.total_price);
-      let tier = 'FAN';
+      let tier: 'FAN' | 'FOUNDER' | 'PLAYER' = 'FAN';
       if (totalPrice >= 49) tier = 'PLAYER';
       else if (totalPrice >= 35) tier = 'FOUNDER';
 
-      // Update user tier and paid status
+      // Update user tier
       await prisma.user.update({
         where: { id: user.id },
         data: {
           tier,
-          paid: true,
           founder_nft: tier === 'FOUNDER',
         },
       });
@@ -106,7 +105,6 @@ export const shopifyService = {
         where: { id: user.id },
         data: {
           tier: 'FOUNDER',
-          paid: true,
           founder_nft: true,
         },
       });
