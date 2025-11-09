@@ -10,11 +10,11 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 // Create Redis client
 const redis = new Redis(REDIS_URL, {
   maxRetriesPerRequest: 3,
-  retryStrategy(times) {
+  retryStrategy(times: number) {
     const delay = Math.min(times * 50, 2000);
     return delay;
   },
-  reconnectOnError(err) {
+  reconnectOnError(err: Error) {
     const targetError = 'READONLY';
     if (err.message.includes(targetError)) {
       return true;
@@ -27,7 +27,7 @@ redis.on('connect', () => {
   console.log('✅ Redis connected successfully');
 });
 
-redis.on('error', (err) => {
+redis.on('error', (err: Error) => {
   console.error('❌ Redis connection error:', err.message);
 });
 
