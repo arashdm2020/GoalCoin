@@ -2,15 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ConnectWalletButton } from '@/components/ConnectWalletButton';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [handle, setHandle] = useState('');
-  const [wallet, setWallet] = useState('');
-  const [countryCode, setCountryCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -24,9 +20,7 @@ export default function AuthPage() {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
-      const body = isLogin
-        ? { email, password }
-        : { email, password, handle, wallet, country_code: countryCode };
+      const body = { email, password };
 
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
@@ -122,72 +116,11 @@ export default function AuthPage() {
             </div>
 
             {!isLogin && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Handle (Username)
-                  </label>
-                  <input
-                    type="text"
-                    value={handle}
-                    onChange={(e) => setHandle(e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
-                    placeholder="@username"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Wallet Address <span className="text-red-500">*</span>
-                  </label>
-                  {wallet ? (
-                    <div className="w-full px-4 py-3 bg-green-900/30 border border-green-500 rounded-lg flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-400">✓</span>
-                        <span className="text-white font-mono text-sm">
-                          {wallet.slice(0, 6)}...{wallet.slice(-4)}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setWallet('')}
-                        className="text-red-400 hover:text-red-300 text-sm"
-                      >
-                        Change
-                      </button>
-                    </div>
-                  ) : (
-                    <ConnectWalletButton 
-                      onConnect={(address) => setWallet(address)}
-                    />
-                  )}
-                  <p className="text-xs text-gray-400 mt-1">
-                    Connect your wallet to receive rewards
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Country</label>
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
-                  >
-                    <option value="">Select Country</option>
-                    <option value="US">United States</option>
-                    <option value="NG">Nigeria</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="IN">India</option>
-                    <option value="BR">Brazil</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
-                    <option value="JP">Japan</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                </div>
-              </>
+              <div className="bg-blue-500/10 border border-blue-500 rounded-lg p-4">
+                <p className="text-sm text-blue-400">
+                  ℹ️ After registration, you'll complete your profile with username, country, and wallet connection.
+                </p>
+              </div>
             )}
 
             {error && (
@@ -198,17 +131,11 @@ export default function AuthPage() {
 
             <button
               type="submit"
-              disabled={loading || (!isLogin && !wallet)}
+              disabled={loading}
               className="w-full py-3 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {loading ? 'Processing...' : isLogin ? 'Login' : 'Create Account'}
             </button>
-            
-            {!isLogin && !wallet && (
-              <p className="text-xs text-red-400 mt-2 text-center">
-                Please connect your wallet first
-              </p>
-            )}
           </form>
 
           {/* Back to Home */}
