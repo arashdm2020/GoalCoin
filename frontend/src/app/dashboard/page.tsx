@@ -174,11 +174,11 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link
-            href="/fitness/warmup"
+            href="/warmup"
             className="bg-gray-900 border border-[#FFD700]/20 rounded-lg p-6 hover:border-[#FFD700]/50 transition-colors"
           >
             <h3 className="text-xl font-semibold mb-2">🔥 Warm-Up</h3>
-            <p className="text-gray-400 text-sm">Start your daily warm-up session</p>
+            <p className="text-gray-400 text-sm">Complete daily warm-up routines</p>
           </Link>
 
           <Link
@@ -190,11 +190,11 @@ export default function DashboardPage() {
           </Link>
 
           <Link
-            href="/fitness/diet"
+            href="/meals"
             className="bg-gray-900 border border-[#FFD700]/20 rounded-lg p-6 hover:border-[#FFD700]/50 transition-colors"
           >
-            <h3 className="text-xl font-semibold mb-2">🥗 Diet Plan</h3>
-            <p className="text-gray-400 text-sm">View meal plans and log meals</p>
+            <h3 className="text-xl font-semibold mb-2">🍽️ Meal Plan</h3>
+            <p className="text-gray-400 text-sm">Log your daily meals & track nutrition</p>
           </Link>
 
           <Link
@@ -211,6 +211,14 @@ export default function DashboardPage() {
           >
             <h3 className="text-xl font-semibold mb-2">🏆 Leaderboard</h3>
             <p className="text-gray-400 text-sm">See global rankings</p>
+          </Link>
+
+          <Link
+            href="/referrals"
+            className="bg-gray-900 border border-[#FFD700]/20 rounded-lg p-6 hover:border-[#FFD700]/50 transition-colors"
+          >
+            <h3 className="text-xl font-semibold mb-2">🎁 Referrals</h3>
+            <p className="text-gray-400 text-sm">Invite friends & win prizes</p>
           </Link>
 
           <Link
