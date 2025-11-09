@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ConnectWalletButton } from '@/components/ConnectWalletButton';
+// Removed ConnectWalletButton import - using manual wallet connection
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -58,8 +58,27 @@ export default function CompleteProfilePage() {
     }
   };
 
-  const handleConnectWallet = (address: string) => {
-    setWallet(address);
+  const handleConnectWallet = async () => {
+    try {
+      // Check if Phantom wallet is installed
+      const { solana } = window as any;
+      
+      if (!solana || !solana.isPhantom) {
+        setError('Please install Phantom wallet first');
+        window.open('https://phantom.app/', '_blank');
+        return;
+      }
+
+      // Connect to Phantom
+      const response = await solana.connect();
+      const address = response.publicKey.toString();
+      
+      setWallet(address);
+      setError('');
+    } catch (err: any) {
+      console.error('Wallet connection error:', err);
+      setError('Failed to connect wallet');
+    }
   };
 
   const handleSubmitProfile = async () => {
@@ -244,7 +263,13 @@ export default function CompleteProfilePage() {
                 </p>
                 
                 {!wallet ? (
-                  <ConnectWalletButton onConnect={handleConnectWallet} />
+                  <button
+                    onClick={handleConnectWallet}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>👻</span>
+                    Connect Phantom Wallet
+                  </button>
                 ) : (
                   <div className="bg-green-500/10 border border-green-500 rounded-lg p-4">
                     <div className="flex items-center gap-3">
