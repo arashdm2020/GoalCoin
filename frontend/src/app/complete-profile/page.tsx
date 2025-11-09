@@ -60,24 +60,31 @@ export default function CompleteProfilePage() {
 
   const handleConnectWallet = async () => {
     try {
-      // Check if Phantom wallet is installed
-      const { solana } = window as any;
+      // Check if MetaMask is installed
+      const { ethereum } = window as any;
       
-      if (!solana || !solana.isPhantom) {
-        setError('Please install Phantom wallet first');
-        window.open('https://phantom.app/', '_blank');
+      if (!ethereum || !ethereum.isMetaMask) {
+        setError('Please install MetaMask wallet first');
+        window.open('https://metamask.io/download/', '_blank');
         return;
       }
 
-      // Connect to Phantom
-      const response = await solana.connect();
-      const address = response.publicKey.toString();
+      // Request account access
+      const accounts = await ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
       
-      setWallet(address);
-      setError('');
+      if (accounts && accounts.length > 0) {
+        setWallet(accounts[0]);
+        setError('');
+      }
     } catch (err: any) {
       console.error('Wallet connection error:', err);
-      setError('Failed to connect wallet');
+      if (err.code === 4001) {
+        setError('Please approve the connection request in MetaMask');
+      } else {
+        setError('Failed to connect wallet');
+      }
     }
   };
 
@@ -259,16 +266,16 @@ export default function CompleteProfilePage() {
             <div className="space-y-6">
               <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
                 <p className="text-gray-400 mb-4">
-                  Connect your Solana wallet to participate in the 90-Day Challenge and earn rewards.
+                  Connect your Ethereum wallet to participate in the 90-Day Challenge and earn rewards.
                 </p>
                 
                 {!wallet ? (
                   <button
                     onClick={handleConnectWallet}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-black font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
                   >
-                    <span>👻</span>
-                    Connect Phantom Wallet
+                    <span>🦊</span>
+                    Connect MetaMask
                   </button>
                 ) : (
                   <div className="bg-green-500/10 border border-green-500 rounded-lg p-4">
@@ -285,19 +292,28 @@ export default function CompleteProfilePage() {
                 )}
               </div>
 
-              <div className="flex gap-3">
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleLinkWallet}
+                    disabled={loading || !wallet}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-yellow-500 text-black font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Completing...' : 'Complete Profile'}
+                  </button>
+                </div>
+                
                 <button
-                  onClick={() => setStep(1)}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                  onClick={() => router.push('/dashboard')}
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-lg transition-all"
                 >
-                  Back
-                </button>
-                <button
-                  onClick={handleLinkWallet}
-                  disabled={loading || !wallet}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-yellow-500 text-black font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Completing...' : 'Complete Profile'}
+                  Skip Wallet Connection (Complete Later)
                 </button>
               </div>
             </div>
