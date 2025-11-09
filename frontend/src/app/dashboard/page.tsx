@@ -114,6 +114,24 @@ export default function DashboardPage() {
       </header>
 
       <main className="container mx-auto px-6 py-8">
+        {/* Active Tier Display */}
+        {!needsPayment && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-500/30 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">✅ Active Challenge</h2>
+                <p className="text-gray-300">
+                  You're enrolled in the 90-Day Challenge as <span className="text-[#FFD700] font-semibold">{user.tier}</span>
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-400">Burn Multiplier</div>
+                <div className="text-3xl font-bold text-green-400">{user.burn_multiplier}×</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Payment Required Banner */}
         {needsPayment && (
           <div className="mb-8 p-6 bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/20 border border-[#FFD700]/30 rounded-lg">
