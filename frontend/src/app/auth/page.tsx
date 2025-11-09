@@ -130,18 +130,29 @@ export default function AuthPage() {
                   <label className="block text-sm font-medium mb-2">
                     Wallet Address <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={wallet}
-                    onChange={(e) => setWallet(e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
-                    placeholder="0x..."
-                    required
-                    pattern="^0x[a-fA-F0-9]{40}$"
-                    title="Please enter a valid Ethereum wallet address (0x...)"
-                  />
+                  {wallet ? (
+                    <div className="w-full px-4 py-3 bg-green-900/30 border border-green-500 rounded-lg flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        <span className="text-white font-mono text-sm">
+                          {wallet.slice(0, 6)}...{wallet.slice(-4)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setWallet('')}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <ConnectWalletButton 
+                      onConnect={(address) => setWallet(address)}
+                    />
+                  )}
                   <p className="text-xs text-gray-400 mt-1">
-                    Your Solana/Ethereum wallet address for receiving rewards
+                    Connect your wallet to receive rewards
                   </p>
                 </div>
 
@@ -177,25 +188,18 @@ export default function AuthPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (!isLogin && !wallet)}
               className="w-full py-3 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {loading ? 'Processing...' : isLogin ? 'Login' : 'Create Account'}
             </button>
+            
+            {!isLogin && !wallet && (
+              <p className="text-xs text-red-400 mt-2 text-center">
+                Please connect your wallet first
+              </p>
+            )}
           </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">Or</span>
-            </div>
-          </div>
-
-          {/* Wallet Connect */}
-          <ConnectWalletButton />
 
           {/* Back to Home */}
           <button

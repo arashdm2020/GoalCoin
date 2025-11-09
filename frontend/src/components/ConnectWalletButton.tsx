@@ -3,11 +3,15 @@
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useEffect, useState } from 'react';
 
+interface ConnectWalletButtonProps {
+  onConnect?: (address: string) => void;
+}
+
 /**
  * ConnectWalletButton component
  * Handles wallet connection and automatically sends connection to backend
  */
-export function ConnectWalletButton() {
+export function ConnectWalletButton({ onConnect }: ConnectWalletButtonProps = {}) {
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
@@ -51,12 +55,16 @@ export function ConnectWalletButton() {
   useEffect(() => {
     if (isConnected && address) {
       sendConnectionToBackend(address);
+      // Call onConnect callback if provided
+      if (onConnect) {
+        onConnect(address);
+      }
     } else if (!isConnected && previousAddress) {
       // When disconnected, use the last known address to notify the backend
       sendDisconnectToBackend(previousAddress);
       setPreviousAddress(undefined); // Clean up state
     }
-  }, [isConnected, address, previousAddress]);
+  }, [isConnected, address, previousAddress, onConnect]);
 
   const sendConnectionToBackend = async (walletAddress: string) => {
     try {
