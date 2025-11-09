@@ -54,9 +54,11 @@ export const analyticsService = {
       // Get total users
       const totalUsers = await prisma.user.count();
 
-      // Get paid users
+      // Get paid users (users with tier FAN, FOUNDER, or PLAYER)
       const paidUsers = await prisma.user.count({
-        where: { paid: true },
+        where: { 
+          tier: { in: ['FAN', 'FOUNDER', 'PLAYER'] },
+        },
       });
 
       return {
