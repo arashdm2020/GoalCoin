@@ -27,9 +27,9 @@ export const authController = {
 
       // Wallet is now optional - will be added in complete-profile step
       if (wallet) {
-        // Validate wallet format only if provided (Solana address)
-        if (wallet.length < 32 || wallet.length > 44) {
-          res.status(400).json({ error: 'Invalid wallet address format' });
+        // Validate wallet format only if provided (Ethereum address)
+        if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
+          res.status(400).json({ error: 'Invalid Ethereum wallet address format' });
           return;
         }
       }
