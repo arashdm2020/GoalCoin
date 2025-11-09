@@ -21,6 +21,11 @@ import { debugRoutes } from './routes/debugRoutes';
 import { authRoutes } from './routes/authRoutes';
 import { shopifyRoutes } from './routes/shopifyRoutes';
 import { stakingRoutes } from './routes/stakingRoutes';
+import { xpRoutes } from './routes/xpRoutes';
+import { countryLeaderboardRoutes } from './routes/countryLeaderboardRoutes';
+import { scoreboardRoutes } from './routes/scoreboardRoutes';
+import { treasuryRoutes } from './routes/treasuryRoutes';
+import { healthRoutes } from './routes/healthRoutes';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
 
@@ -123,6 +128,11 @@ app.use('/api/debug', debugRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/staking', stakingRoutes);
+app.use('/api/xp', xpRoutes);
+app.use('/api/leaderboards', countryLeaderboardRoutes);
+app.use('/api/scoreboard', scoreboardRoutes);
+app.use('/api/treasury', treasuryRoutes);
+app.use('/api/dev', healthRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
