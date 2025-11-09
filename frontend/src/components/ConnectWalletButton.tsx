@@ -77,7 +77,27 @@ export function ConnectWalletButton({ onConnect }: ConnectWalletButtonProps = {}
         body: JSON.stringify({ wallet: walletAddress }),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Store auth token and user data
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          // Show welcome message
+          if (data.isNewUser) {
+            console.log('✅ Account created successfully!');
+          } else {
+            console.log('✅ Welcome back!');
+          }
+          
+          // Redirect to dashboard after a short delay
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 1000);
+        }
+      } else {
         console.error('Failed to register connection with backend');
       }
     } catch (error) {
