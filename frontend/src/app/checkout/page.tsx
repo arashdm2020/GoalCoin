@@ -83,6 +83,7 @@ export default function CheckoutPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
+          wallet: user.wallet,
           amount: tier.price,
           tier: `TIER_${tier.price}`,
         }),
