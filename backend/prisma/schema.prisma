@@ -206,14 +206,16 @@ model WarmupSession {
 }
 
 model WarmupLog {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [user_id], references: [id])
-  user_id     String
-  session     WarmupSession @relation(fields: [session_id], references: [id])
-  session_id  String
-  completed   Boolean  @default(true)
-  xp_earned   Int      @default(10)
-  completed_at DateTime @default(now())
+  id               String         @id @default(cuid())
+  user             User           @relation(fields: [user_id], references: [id])
+  user_id          String
+  session          WarmupSession? @relation(fields: [session_id], references: [id])
+  session_id       String?
+  routine_id       String         // ID from warmup catalog
+  duration_seconds Int            @default(300)
+  completed        Boolean        @default(true)
+  xp_earned        Int            @default(5)
+  completed_at     DateTime       @default(now())
 
   @@map("warmup_logs")
   @@index([user_id, completed_at])

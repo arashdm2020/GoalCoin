@@ -28,6 +28,7 @@ import { treasuryRoutes } from './routes/treasuryRoutes';
 import { healthRoutes } from './routes/healthRoutes';
 import { adminAuthTestRoutes } from './routes/adminAuthTestRoutes';
 import { settingsRoutes } from './routes/settingsRoutes';
+import warmupRoutes from './routes/warmupRoutes';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
 
@@ -137,6 +138,7 @@ app.use('/api/treasury', treasuryRoutes);
 app.use('/api/dev', healthRoutes);
 app.use('/api/admin-test', adminAuthTestRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/warmups', warmupRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
