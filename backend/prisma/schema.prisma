@@ -252,16 +252,21 @@ model DietPlan {
 }
 
 model MealLog {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [user_id], references: [id])
-  user_id     String
-  plan        DietPlan @relation(fields: [plan_id], references: [id])
-  plan_id     String
-  completed   Boolean  @default(true)
-  xp_earned   Int      @default(15)
-  completed_at DateTime @default(now())
+  id           String    @id @default(cuid())
+  user         User      @relation(fields: [user_id], references: [id])
+  user_id      String
+  plan         DietPlan? @relation(fields: [plan_id], references: [id])
+  plan_id      String?
+  meal_id      String    // ID from meal catalog
+  meal_type    String    // breakfast, lunch, dinner, snack
+  calories     Int       @default(0)
+  completed    Boolean   @default(true)
+  xp_earned    Int       @default(5)
+  logged_at    DateTime  @default(now())
+  completed_at DateTime  @default(now())
 
   @@map("meal_logs")
+  @@index([user_id, logged_at])
   @@index([user_id, completed_at])
 }
 
