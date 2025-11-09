@@ -18,10 +18,21 @@ export const authController = {
    */
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, handle, country_code } = req.body;
+      const { email, password, handle, wallet, country_code } = req.body;
 
       if (!email || !password) {
         res.status(400).json({ error: 'Email and password are required' });
+        return;
+      }
+
+      if (!wallet) {
+        res.status(400).json({ error: 'Wallet address is required' });
+        return;
+      }
+
+      // Validate wallet format (basic check)
+      if (!wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
+        res.status(400).json({ error: 'Invalid wallet address format' });
         return;
       }
 
@@ -35,6 +46,16 @@ export const authController = {
         return;
       }
 
+      // Check if wallet already exists
+      const existingWallet = await prisma.user.findUnique({
+        where: { wallet },
+      });
+
+      if (existingWallet) {
+        res.status(400).json({ error: 'Wallet address already registered' });
+        return;
+      }
+
       // Hash password
       const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -43,6 +64,7 @@ export const authController = {
         data: {
           email,
           password_hash: hashedPassword,
+          wallet,
           handle: handle || null,
           country_code: country_code || null,
           email_verified: false,
