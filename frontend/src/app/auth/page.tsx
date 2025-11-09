@@ -44,8 +44,18 @@ export default function AuthPage() {
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Redirect based on action
+      if (isLogin) {
+        // Login: check if profile is complete
+        if (data.user.wallet && data.user.handle && data.user.country_code) {
+          router.push('/dashboard');
+        } else {
+          router.push('/complete-profile');
+        }
+      } else {
+        // Register: always go to complete profile
+        router.push('/complete-profile');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
