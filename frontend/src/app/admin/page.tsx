@@ -194,7 +194,7 @@ export default function AdminPage() {
       const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/users`, {
         headers: {
-          Authorization: `Basic ${authToUse}`,
+          Authorization: authToUse,
         },
       });
 
@@ -220,7 +220,7 @@ export default function AdminPage() {
       const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/reviewers`, {
         headers: {
-          Authorization: `Basic ${authToUse}`,
+          Authorization: authToUse,
         },
       });
 
@@ -243,7 +243,7 @@ export default function AdminPage() {
       const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/submissions`, {
         headers: {
-          Authorization: `Basic ${authToUse}`,
+          Authorization: authToUse,
         },
       });
 
@@ -266,7 +266,7 @@ export default function AdminPage() {
       const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/commissions/preview${commissionPeriod ? `?period=${commissionPeriod}` : ''}`, {
         headers: {
-          Authorization: `Basic ${authToUse}`,
+          Authorization: authToUse,
         },
       });
 
@@ -292,7 +292,7 @@ export default function AdminPage() {
       
       const response = await fetch(url, {
         headers: {
-          Authorization: `Basic ${authToUse}`,
+          Authorization: authToUse,
         },
       });
 
@@ -321,7 +321,7 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Basic ${authHeader}`,
+          Authorization: authHeader,
         },
         body: JSON.stringify({ wallet, days }),
       });
@@ -343,7 +343,7 @@ export default function AdminPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Basic ${authHeader}`,
+          Authorization: authHeader,
         },
         body: JSON.stringify({ wallet }),
       });
@@ -365,7 +365,7 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Basic ${authHeader}`,
+          Authorization: authHeader,
         },
         body: JSON.stringify({ submission_id: submissionId }),
       });
@@ -387,7 +387,7 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Basic ${authHeader}`,
+          Authorization: authHeader,
         },
         body: JSON.stringify({ 
           period: commissionPeriod,
