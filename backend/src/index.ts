@@ -34,6 +34,7 @@ import referralRoutes from './routes/referralRoutes';
 import scoreboardWidgetRoutes from './routes/scoreboardWidgetRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import nftRoutes from './routes/nftRoutes';
+import { rateLimitRoutes } from './routes/rateLimitRoutes';
 import { apiLimiter, authLimiter, xpLimiter, adminLimiter } from './middleware/rateLimiter';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
@@ -154,6 +155,7 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/widgets', scoreboardWidgetRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/nft', nftRoutes);
+app.use('/api/rate-limits', adminLimiter, rateLimitRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

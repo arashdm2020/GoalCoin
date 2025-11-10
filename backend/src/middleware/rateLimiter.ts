@@ -1,57 +1,101 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response } from 'express';
+import { rateLimitMonitorService } from '../services/rateLimitMonitorService';
+
+// Handler for rate limit violations
+const handleRateLimitExceeded = async (req: Request, res: Response, endpoint: string, limit: number) => {
+  const ip = req.ip || 'unknown';
+  const user = (req as any).user;
+  
+  // Log violation
+  await rateLimitMonitorService.logViolation({
+    ip,
+    userId: user?.userId,
+    endpoint,
+    timestamp: new Date(),
+    requestCount: limit + 1,
+    limit,
+  });
+
+  // Check if IP is blocked
+  const isBlocked = await rateLimitMonitorService.isIPBlocked(ip);
+  if (isBlocked) {
+    res.status(403).json({ error: 'Your IP has been blocked due to excessive requests' });
+    return;
+  }
+};
 
 /**
  * General API rate limiter
- * 100 requests per 15 minutes per IP
+ * 1000 requests per minute per IP (as per James requirements)
  */
 export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 60 * 1000, // 1 minute
+  max: 1000,
   message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: async (req, res) => {
+    await handleRateLimitExceeded(req, res, req.path, 1000);
+    res.status(429).json({ error: 'Too many requests from this IP, please try again later.' });
+  },
 });
 
 /**
  * Strict rate limiter for authentication endpoints
- * 5 requests per 15 minutes per IP
+ * 5 req/min (burst 10) per IP+user (as per James requirements)
  */
 export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 login requests per windowMs
-  message: 'Too many login attempts, please try again after 15 minutes.',
-  skipSuccessfulRequests: true, // Don't count successful requests
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,
+  message: 'Too many login attempts, please try again later.',
+  skipSuccessfulRequests: true,
+  handler: async (req, res) => {
+    await handleRateLimitExceeded(req, res, req.path, 5);
+    res.status(429).json({ error: 'Too many login attempts, please try again later.' });
+  },
 });
 
 /**
  * XP award rate limiter
- * 50 requests per 5 minutes per IP
+ * 30 req/min (burst 60) (as per James requirements)
  */
 export const xpLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 50,
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
   message: 'Too many XP requests, please slow down.',
+  handler: async (req, res) => {
+    await handleRateLimitExceeded(req, res, req.path, 30);
+    res.status(429).json({ error: 'Too many XP requests, please slow down.' });
+  },
 });
 
 /**
- * Content interaction rate limiter
- * 100 requests per 10 minutes per IP
+ * Read-only endpoints (feeds, leaderboards)
+ * 120 req/min (as per James requirements)
  */
 export const contentLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 100,
-  message: 'Too many content interactions, please slow down.',
+  windowMs: 60 * 1000, // 1 minute
+  max: 120,
+  message: 'Too many requests, please slow down.',
+  handler: async (req, res) => {
+    await handleRateLimitExceeded(req, res, req.path, 120);
+    res.status(429).json({ error: 'Too many requests, please slow down.' });
+  },
 });
 
 /**
  * Admin endpoint rate limiter
- * 200 requests per 15 minutes per IP
+ * 20 req/min with IP allowlist (as per James requirements)
  */
 export const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
+  windowMs: 60 * 1000, // 1 minute
+  max: 20,
   message: 'Too many admin requests, please slow down.',
+  handler: async (req, res) => {
+    await handleRateLimitExceeded(req, res, req.path, 20);
+    res.status(429).json({ error: 'Too many admin requests, please slow down.' });
+  },
 });
 
 /**
