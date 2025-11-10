@@ -1,6 +1,6 @@
 /**
  * Fan Tier Service - Auto-progression system
- * Tiers: ROOKIE → SUPPORTER → PRO → ELITE → LEGEND
+ * Tiers: MINTED → STAKED → VERIFIED → ASCENDANT → APEX
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -51,7 +51,7 @@ class FanTierService {
     if (user.length === 0) return null;
 
     const userData = user[0];
-    const currentTierInfo = await this.getTierInfo(userData.fan_tier || 'ROOKIE');
+    const currentTierInfo = await this.getTierInfo(userData.fan_tier || 'MINTED');
     const allTiers = await this.getAllTiers();
 
     // Find next tier
@@ -107,11 +107,11 @@ class FanTierService {
       GROUP BY fan_tier
       ORDER BY 
         CASE fan_tier
-          WHEN 'ROOKIE' THEN 1
-          WHEN 'SUPPORTER' THEN 2
-          WHEN 'PRO' THEN 3
-          WHEN 'ELITE' THEN 4
-          WHEN 'LEGEND' THEN 5
+          WHEN 'MINTED' THEN 1
+          WHEN 'STAKED' THEN 2
+          WHEN 'VERIFIED' THEN 3
+          WHEN 'ASCENDANT' THEN 4
+          WHEN 'APEX' THEN 5
         END
     `;
   }
@@ -140,11 +140,11 @@ class FanTierService {
    */
   getBurnMultiplier(tier: string): number {
     const multipliers: Record<string, number> = {
-      'ROOKIE': 1.01,
-      'SUPPORTER': 1.02,
-      'PRO': 1.03,
-      'ELITE': 1.04,
-      'LEGEND': 1.05
+      'MINTED': 1.01,
+      'STAKED': 1.02,
+      'VERIFIED': 1.03,
+      'ASCENDANT': 1.04,
+      'APEX': 1.05
     };
     return multipliers[tier] || 1.0;
   }
