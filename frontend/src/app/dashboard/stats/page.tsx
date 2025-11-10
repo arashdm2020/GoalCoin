@@ -15,6 +15,7 @@ interface UserStats {
     longest_streak: number;
     burn_multiplier: number;
     created_at: string;
+    country_code?: string;
   };
   tier_progress: {
     currentTier: string;
