@@ -13,15 +13,16 @@ export const analyticsService = {
     countryCode?: string;
   }) {
     try {
-      // For now, just log to console
-      // In production, this would write to analytics_events table
-      console.log('Analytics Event:', {
-        event: params.eventName,
-        user: params.userId,
-        country: params.countryCode,
-        props: params.properties,
-        timestamp: new Date(),
-      });
+      await prisma.$executeRaw`
+        INSERT INTO analytics_events (event_name, user_id, properties, country_code, created_at)
+        VALUES (
+          ${params.eventName},
+          ${params.userId || null},
+          ${JSON.stringify(params.properties || {})},
+          ${params.countryCode || null},
+          NOW()
+        )
+      `;
     } catch (error) {
       console.error('Analytics tracking error:', error);
     }
@@ -72,5 +73,274 @@ export const analyticsService = {
       console.error('Error getting platform metrics:', error);
       throw error;
     }
+  },
+
+  /**
+   * Get signup funnel metrics
+   * Signup → Wallet → First XP → Tier 1
+   */
+  async getSignupFunnel(days: number = 30) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const [signups, withWallet, withFirstXP, withTier1] = await Promise.all([
+      // Total signups
+      prisma.user.count({
+        where: { created_at: { gte: since } },
+      }),
+
+      // Users with wallet connected
+      prisma.user.count({
+        where: {
+          created_at: { gte: since },
+          wallet: { not: null },
+        },
+      }),
+
+      // Users with at least 1 XP
+      prisma.user.count({
+        where: {
+          created_at: { gte: since },
+          xp_points: { gt: 0 },
+        },
+      }),
+
+      // Users who reached tier 1 (paid)
+      prisma.user.count({
+        where: {
+          created_at: { gte: since },
+          tier: { in: ['FAN', 'FOUNDER', 'PLAYER'] },
+        },
+      }),
+    ]);
+
+    return {
+      signups,
+      wallet_connected: withWallet,
+      first_xp: withFirstXP,
+      tier_1: withTier1,
+      conversion_rates: {
+        signup_to_wallet: signups > 0 ? (withWallet / signups) * 100 : 0,
+        wallet_to_xp: withWallet > 0 ? (withFirstXP / withWallet) * 100 : 0,
+        xp_to_tier1: withFirstXP > 0 ? (withTier1 / withFirstXP) * 100 : 0,
+        overall: signups > 0 ? (withTier1 / signups) * 100 : 0,
+      },
+    };
+  },
+
+  /**
+   * Get retention metrics (D1, D7, D30)
+   */
+  async getRetentionMetrics() {
+    const now = new Date();
+
+    // D1 Retention (users who came back after 1 day)
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+    
+    const d1Cohort = await prisma.user.count({
+      where: { created_at: { gte: twoDaysAgo, lt: oneDayAgo } },
+    });
+    
+    const d1Retained = await prisma.user.count({
+      where: {
+        created_at: { gte: twoDaysAgo, lt: oneDayAgo },
+        last_activity_date: { gte: oneDayAgo },
+      },
+    });
+
+    // D7 Retention
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const eightDaysAgo = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
+    
+    const d7Cohort = await prisma.user.count({
+      where: { created_at: { gte: eightDaysAgo, lt: sevenDaysAgo } },
+    });
+    
+    const d7Retained = await prisma.user.count({
+      where: {
+        created_at: { gte: eightDaysAgo, lt: sevenDaysAgo },
+        last_activity_date: { gte: sevenDaysAgo },
+      },
+    });
+
+    // D30 Retention
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyOneDaysAgo = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
+    
+    const d30Cohort = await prisma.user.count({
+      where: { created_at: { gte: thirtyOneDaysAgo, lt: thirtyDaysAgo } },
+    });
+    
+    const d30Retained = await prisma.user.count({
+      where: {
+        created_at: { gte: thirtyOneDaysAgo, lt: thirtyDaysAgo },
+        last_activity_date: { gte: thirtyDaysAgo },
+      },
+    });
+
+    return {
+      d1: {
+        cohort: d1Cohort,
+        retained: d1Retained,
+        rate: d1Cohort > 0 ? (d1Retained / d1Cohort) * 100 : 0,
+      },
+      d7: {
+        cohort: d7Cohort,
+        retained: d7Retained,
+        rate: d7Cohort > 0 ? (d7Retained / d7Cohort) * 100 : 0,
+      },
+      d30: {
+        cohort: d30Cohort,
+        retained: d30Retained,
+        rate: d30Cohort > 0 ? (d30Retained / d30Cohort) * 100 : 0,
+      },
+    };
+  },
+
+  /**
+   * Get XP per DAU
+   */
+  async getXPPerDAU() {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const result = await prisma.$queryRaw<any[]>`
+      SELECT 
+        COUNT(DISTINCT id) as active_users,
+        COALESCE(SUM(xp_points), 0) as total_xp,
+        COALESCE(AVG(xp_points), 0) as avg_xp_per_user
+      FROM users
+      WHERE last_activity_date >= ${oneDayAgo}
+    `;
+
+    return result[0] || { active_users: 0, total_xp: 0, avg_xp_per_user: 0 };
+  },
+
+  /**
+   * Get country distribution
+   */
+  async getCountryDistribution() {
+    return await prisma.$queryRaw`
+      SELECT 
+        country_code,
+        COUNT(*) as user_count,
+        ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) as percentage
+      FROM users
+      WHERE country_code IS NOT NULL
+      GROUP BY country_code
+      ORDER BY user_count DESC
+      LIMIT 20
+    `;
+  },
+
+  /**
+   * Get top XP actions
+   */
+  async getTopXPActions(days: number = 7) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    return await prisma.$queryRaw`
+      SELECT 
+        event_name,
+        COUNT(*) as event_count,
+        COUNT(DISTINCT user_id) as unique_users
+      FROM analytics_events
+      WHERE created_at >= ${since}
+        AND event_name LIKE 'xp_%'
+      GROUP BY event_name
+      ORDER BY event_count DESC
+      LIMIT 10
+    `;
+  },
+
+  /**
+   * Get burn and treasury events timeline
+   */
+  async getBurnTreasuryTimeline(days: number = 30) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const [burnEvents, treasuryEvents] = await Promise.all([
+      prisma.$queryRaw`
+        SELECT 
+          DATE(created_at) as date,
+          SUM(amount_goalcoin) as total_burned,
+          COUNT(*) as burn_count
+        FROM burn_events
+        WHERE created_at >= ${since}
+        GROUP BY DATE(created_at)
+        ORDER BY date DESC
+      `,
+      prisma.$queryRaw`
+        SELECT 
+          DATE(created_at) as date,
+          SUM(amount_usd) as total_revenue,
+          COUNT(*) as transaction_count
+        FROM payments
+        WHERE created_at >= ${since}
+          AND status = 'completed'
+        GROUP BY DATE(created_at)
+        ORDER BY date DESC
+      `,
+    ]);
+
+    return { burnEvents, treasuryEvents };
+  },
+
+  /**
+   * Get error and latency metrics
+   */
+  async getErrorMetrics(hours: number = 24) {
+    const since = new Date();
+    since.setHours(since.getHours() - hours);
+
+    return await prisma.$queryRaw`
+      SELECT 
+        event_name,
+        COUNT(*) as error_count,
+        AVG(CAST(properties->>'latency' AS FLOAT)) as avg_latency_ms,
+        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY CAST(properties->>'latency' AS FLOAT)) as p95_latency_ms,
+        PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY CAST(properties->>'latency' AS FLOAT)) as p99_latency_ms
+      FROM analytics_events
+      WHERE created_at >= ${since}
+        AND (event_name LIKE 'error_%' OR properties ? 'latency')
+      GROUP BY event_name
+      ORDER BY error_count DESC
+    `;
+  },
+
+  /**
+   * Get comprehensive analytics dashboard
+   */
+  async getDashboard() {
+    const [
+      platformMetrics,
+      funnelMetrics,
+      retentionMetrics,
+      xpPerDAU,
+      countryDist,
+      topActions,
+      timeline,
+    ] = await Promise.all([
+      this.getPlatformMetrics(),
+      this.getSignupFunnel(),
+      this.getRetentionMetrics(),
+      this.getXPPerDAU(),
+      this.getCountryDistribution(),
+      this.getTopXPActions(),
+      this.getBurnTreasuryTimeline(),
+    ]);
+
+    return {
+      platform: platformMetrics,
+      funnel: funnelMetrics,
+      retention: retentionMetrics,
+      xp_per_dau: xpPerDAU,
+      country_distribution: countryDist,
+      top_xp_actions: topActions,
+      burn_treasury_timeline: timeline,
+      generated_at: new Date().toISOString(),
+    };
   },
 };

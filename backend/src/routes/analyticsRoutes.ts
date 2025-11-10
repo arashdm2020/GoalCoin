@@ -1,14 +1,28 @@
 import { Router, Request, Response } from 'express';
 import { analyticsService } from '../services/analyticsService';
-import { basicAuthMiddleware } from '../middleware/basicAuth';
+import { adminAuthMiddleware } from '../middleware/adminAuth';
 
 const router = Router();
+
+/**
+ * GET /api/analytics/dashboard
+ * Get comprehensive analytics dashboard (admin only)
+ */
+router.get('/dashboard', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const dashboard = await analyticsService.getDashboard();
+    res.json(dashboard);
+  } catch (error: any) {
+    console.error('Error fetching dashboard:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard' });
+  }
+});
 
 /**
  * GET /api/analytics/metrics
  * Get platform metrics (admin only)
  */
-router.get('/metrics', basicAuthMiddleware, async (req: Request, res: Response) => {
+router.get('/metrics', adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const days = req.query.days ? parseInt(req.query.days as string) : 7;
     const metrics = await analyticsService.getPlatformMetrics(days);
@@ -16,6 +30,108 @@ router.get('/metrics', basicAuthMiddleware, async (req: Request, res: Response) 
   } catch (error: any) {
     console.error('Error fetching metrics:', error);
     res.status(500).json({ error: 'Failed to fetch metrics' });
+  }
+});
+
+/**
+ * GET /api/analytics/funnel
+ * Get signup funnel metrics (admin only)
+ */
+router.get('/funnel', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const days = req.query.days ? parseInt(req.query.days as string) : 30;
+    const funnel = await analyticsService.getSignupFunnel(days);
+    res.json(funnel);
+  } catch (error: any) {
+    console.error('Error fetching funnel:', error);
+    res.status(500).json({ error: 'Failed to fetch funnel' });
+  }
+});
+
+/**
+ * GET /api/analytics/retention
+ * Get retention metrics (admin only)
+ */
+router.get('/retention', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const retention = await analyticsService.getRetentionMetrics();
+    res.json(retention);
+  } catch (error: any) {
+    console.error('Error fetching retention:', error);
+    res.status(500).json({ error: 'Failed to fetch retention' });
+  }
+});
+
+/**
+ * GET /api/analytics/xp-per-dau
+ * Get XP per DAU (admin only)
+ */
+router.get('/xp-per-dau', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const xpPerDAU = await analyticsService.getXPPerDAU();
+    res.json(xpPerDAU);
+  } catch (error: any) {
+    console.error('Error fetching XP per DAU:', error);
+    res.status(500).json({ error: 'Failed to fetch XP per DAU' });
+  }
+});
+
+/**
+ * GET /api/analytics/countries
+ * Get country distribution (admin only)
+ */
+router.get('/countries', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const countries = await analyticsService.getCountryDistribution();
+    res.json(countries);
+  } catch (error: any) {
+    console.error('Error fetching countries:', error);
+    res.status(500).json({ error: 'Failed to fetch countries' });
+  }
+});
+
+/**
+ * GET /api/analytics/top-actions
+ * Get top XP actions (admin only)
+ */
+router.get('/top-actions', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const days = req.query.days ? parseInt(req.query.days as string) : 7;
+    const actions = await analyticsService.getTopXPActions(days);
+    res.json(actions);
+  } catch (error: any) {
+    console.error('Error fetching top actions:', error);
+    res.status(500).json({ error: 'Failed to fetch top actions' });
+  }
+});
+
+/**
+ * GET /api/analytics/timeline
+ * Get burn and treasury timeline (admin only)
+ */
+router.get('/timeline', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const days = req.query.days ? parseInt(req.query.days as string) : 30;
+    const timeline = await analyticsService.getBurnTreasuryTimeline(days);
+    res.json(timeline);
+  } catch (error: any) {
+    console.error('Error fetching timeline:', error);
+    res.status(500).json({ error: 'Failed to fetch timeline' });
+  }
+});
+
+/**
+ * GET /api/analytics/errors
+ * Get error and latency metrics (admin only)
+ */
+router.get('/errors', adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const hours = req.query.hours ? parseInt(req.query.hours as string) : 24;
+    const errors = await analyticsService.getErrorMetrics(hours);
+    res.json(errors);
+  } catch (error: any) {
+    console.error('Error fetching errors:', error);
+    res.status(500).json({ error: 'Failed to fetch errors' });
   }
 });
 
