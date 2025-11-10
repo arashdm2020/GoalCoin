@@ -23,14 +23,15 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcrypt": "^5.1.1",
+    "bullmq": "^5.63.0",
     "coinpayments": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.0.0",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
-    "node-cron": "^4.2.1",
-    "ioredis": "^5.3.2"
+    "node-cron": "^4.2.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
