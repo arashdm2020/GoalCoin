@@ -1,9 +1,13 @@
 import Link from 'next/link';
 import { Countdown } from '@/components/Countdown';
+import { InstallPWA } from '@/components/InstallPWA';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-black text-[#FFD700]">
+      {/* PWA Install Button */}
+      <InstallPWA />
+      
       {/* Header */}
       <header className="container mx-auto px-6 py-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold">GoalCoin</h1>

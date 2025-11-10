@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { InstallPWA } from '@/components/InstallPWA';
 
 interface User {
   id: string;
@@ -80,6 +81,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-black text-[#FFD700]">
+      {/* PWA Install Button */}
+      <InstallPWA />
+      
       {/* Header */}
       <header className="border-b border-gray-800">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
