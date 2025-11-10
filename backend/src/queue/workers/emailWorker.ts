@@ -4,6 +4,7 @@
 
 import { Worker, Job } from 'bullmq';
 import redisConnection from '../connection';
+import { emailService } from '../../services/emailService';
 
 interface EmailJob {
   to: string;
@@ -20,17 +21,31 @@ const emailWorker = new Worker(
     console.log(`[Email Worker] Processing: ${template} to ${to}`);
 
     try {
-      // TODO: Integrate Mailgun
-      // For now, just log
-      console.log(`[Email] To: ${to}`);
-      console.log(`[Email] Subject: ${subject}`);
-      console.log(`[Email] Template: ${template}`);
-      console.log(`[Email] Data:`, data);
+      let result;
 
-      // Simulate email sending
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      switch (template) {
+        case 'verification':
+          result = await emailService.sendVerificationEmail(to, data.token);
+          break;
 
-      return { success: true, messageId: `mock-${Date.now()}` };
+        case 'password-reset':
+          result = await emailService.sendPasswordResetEmail(to, data.token);
+          break;
+
+        case 'weekly-digest':
+          result = await emailService.sendWeeklyDigest(to, data);
+          break;
+
+        case 'admin-alert':
+          result = await emailService.sendAdminAlert(to, data);
+          break;
+
+        default:
+          throw new Error(`Unknown email template: ${template}`);
+      }
+
+      console.log(`[Email Worker] ✅ Sent ${template} to ${to}`);
+      return result;
     } catch (error: any) {
       console.error(`[Email Worker] Error:`, error);
       throw error;
