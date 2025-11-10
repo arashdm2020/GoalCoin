@@ -37,6 +37,7 @@ import nftRoutes from './routes/nftRoutes';
 import { apiLimiter, authLimiter, xpLimiter, adminLimiter } from './middleware/rateLimiter';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
+import './queue/workers'; // Start BullMQ workers
 
 const prisma = new PrismaClient();
 
