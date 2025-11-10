@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Placeholder Icons</title>
+</head>
+<body>
+  <h1>Creating placeholder icons...</h1>
+  <script>
+    function createIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Black background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Gold circle
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size/2.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Black inner circle
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size/3.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Gold "G"
+      ctx.fillStyle = '#FFD700';
+      ctx.font = `bold ${size/2}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('G', size/2, size/2);
+      
+      return canvas;
+    }
+    
+    // Create 192x192
+    const canvas192 = createIcon(192);
+    canvas192.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'icon-192x192.png';
+      a.click();
+    });
+    
+    // Create 512x512
+    setTimeout(() => {
+      const canvas512 = createIcon(512);
+      canvas512.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'icon-512x512.png';
+        a.click();
+        document.body.innerHTML = '<h1 style="color: green;">✅ Icons downloaded! Save them to frontend/public/</h1>';
+      });
+    }, 500);
+  </script>
+</body>
+</html>
