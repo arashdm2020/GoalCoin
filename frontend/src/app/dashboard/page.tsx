@@ -235,6 +235,14 @@ export default function DashboardPage() {
             <h3 className="text-xl font-semibold mb-2">🎁 Redeem Code</h3>
             <p className="text-gray-400 text-sm">Redeem Shopify order code</p>
           </Link>
+
+          <Link
+            href="/dashboard/stats"
+            className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-500/30 rounded-lg p-6 hover:border-yellow-500/60 transition-colors"
+          >
+            <h3 className="text-xl font-semibold mb-2 text-yellow-500">📊 My Stats</h3>
+            <p className="text-gray-400 text-sm">View your detailed statistics</p>
+          </Link>
         </div>
       </main>
     </div>

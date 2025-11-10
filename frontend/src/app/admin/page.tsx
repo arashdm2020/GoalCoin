@@ -602,12 +602,20 @@ export default function AdminPage() {
     <div className="min-h-screen bg-black text-[#FFD700]">
       <header className="container mx-auto px-6 py-6 flex justify-between items-center border-b border-gray-800">
         <h1 className="text-3xl font-bold">Admin Panel</h1>
-        <button
-          onClick={handleLogout}
-          className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
-        >
-          Logout
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => router.push('/admin/analytics')}
+            className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-semibold rounded-lg hover:opacity-90 transition-opacity"
+          >
+            📊 Analytics
+          </button>
+          <button
+            onClick={handleLogout}
+            className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <main className="container mx-auto px-6 py-8">
