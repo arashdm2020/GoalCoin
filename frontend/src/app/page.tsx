@@ -1,4 +1,4 @@
-import { ConnectWalletButton } from '@/components/ConnectWalletButton';
+import Link from 'next/link';
 import { Countdown } from '@/components/Countdown';
 
 export default function Home() {
@@ -7,7 +7,12 @@ export default function Home() {
       {/* Header */}
       <header className="container mx-auto px-6 py-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold">GoalCoin</h1>
-        <ConnectWalletButton />
+        <Link 
+          href="/auth"
+          className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold py-3 px-8 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-lg"
+        >
+          Join Us
+        </Link>
       </header>
 
       {/* Hero Section */}
