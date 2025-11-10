@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate GoalCoin Icons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .preview {
+      display: flex;
+      gap: 30px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .icon-box {
+      text-align: center;
+    }
+    .icon-box img {
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      background: #000;
+    }
+    .icon-box p {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #666;
+    }
+    button {
+      background: #FFD700;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #FFA500;
+    }
+    .instructions {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 5px;
+      margin-top: 20px;
+      border-left: 4px solid #FFD700;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #FFD700;
+    }
+    .instructions ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .instructions li {
+      margin: 8px 0;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 GoalCoin Icon Generator</h1>
+    
+    <div class="preview">
+      <div class="icon-box">
+        <img id="icon192" width="192" height="192" alt="192x192 icon">
+        <p>192 × 192</p>
+        <button onclick="downloadIcon(192)">Download 192×192</button>
+      </div>
+      
+      <div class="icon-box">
+        <img id="icon512" width="256" height="256" alt="512x512 icon">
+        <p>512 × 512</p>
+        <button onclick="downloadIcon(512)">Download 512×512</button>
+      </div>
+    </div>
+
+    <button onclick="generateBoth()" style="background: #4CAF50; color: white; font-size: 18px;">
+      ⬇️ Download Both Icons
+    </button>
+
+    <div class="instructions">
+      <h3>📋 Instructions:</h3>
+      <ol>
+        <li>Click "Download Both Icons" to download icon-192x192.png and icon-512x512.png</li>
+        <li>Save both files to <code>frontend/public/</code> folder</li>
+        <li>Replace the existing placeholder icons</li>
+        <li>Commit and push to deploy</li>
+        <li>Test PWA installation on your device</li>
+      </ol>
+      <p style="margin-top: 15px; color: #999; font-size: 14px;">
+        💡 Tip: You can also edit <code>icon.svg</code> to customize the design before generating PNGs.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Load SVG and generate icons
+    async function loadSVG() {
+      try {
+        const response = await fetch('icon.svg');
+        const svgText = await response.text();
+        return svgText;
+      } catch (error) {
+        console.error('Error loading SVG:', error);
+        return null;
+      }
+    }
+
+    async function generateIcon(size) {
+      const svgText = await loadSVG();
+      if (!svgText) return null;
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        const blob = new Blob([svgText], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          
+          ctx.drawImage(img, 0, 0, size, size);
+          
+          canvas.toBlob((blob) => {
+            URL.revokeObjectURL(url);
+            resolve(blob);
+          }, 'image/png');
+        };
+
+        img.src = url;
+      });
+    }
+
+    async function downloadIcon(size) {
+      const blob = await generateIcon(size);
+      if (!blob) return;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `icon-${size}x${size}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    async function generateBoth() {
+      await downloadIcon(192);
+      setTimeout(() => downloadIcon(512), 500);
+    }
+
+    // Preview icons on load
+    async function previewIcons() {
+      const blob192 = await generateIcon(192);
+      const blob512 = await generateIcon(512);
+
+      if (blob192) {
+        document.getElementById('icon192').src = URL.createObjectURL(blob192);
+      }
+      if (blob512) {
+        document.getElementById('icon512').src = URL.createObjectURL(blob512);
+      }
+    }
+
+    // Generate previews when page loads
+    window.addEventListener('load', previewIcons);
+  </script>
+</body>
+</html>

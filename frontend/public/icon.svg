@@ -1,0 +1,60 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#000000"/>
+  
+  <!-- Outer Gold Ring -->
+  <circle cx="256" cy="256" r="200" fill="#FFD700"/>
+  
+  <!-- Middle Black Ring -->
+  <circle cx="256" cy="256" r="170" fill="#000000"/>
+  
+  <!-- Inner Gold Circle -->
+  <circle cx="256" cy="256" r="140" fill="#FFD700"/>
+  
+  <!-- Center Trophy/Goal Symbol -->
+  <g transform="translate(256, 256)">
+    <!-- Trophy Cup -->
+    <path d="M -50 -30 L -50 -50 L 50 -50 L 50 -30 
+             Q 50 20 30 40 L 30 60 L 15 60 L 15 80 L -15 80 L -15 60 L -30 60 L -30 40 
+             Q -50 20 -50 -30 Z" 
+          fill="#000000" 
+          stroke="#000000" 
+          stroke-width="2"/>
+    
+    <!-- Trophy Handles -->
+    <path d="M -50 -40 Q -70 -40 -70 -20 Q -70 0 -50 0" 
+          fill="none" 
+          stroke="#000000" 
+          stroke-width="8"/>
+    <path d="M 50 -40 Q 70 -40 70 -20 Q 70 0 50 0" 
+          fill="none" 
+          stroke="#000000" 
+          stroke-width="8"/>
+    
+    <!-- Trophy Base -->
+    <rect x="-25" y="80" width="50" height="10" rx="2" fill="#000000"/>
+    
+    <!-- Star on Trophy -->
+    <path d="M 0 -35 L 5 -20 L 20 -20 L 8 -10 L 13 5 L 0 -5 L -13 5 L -8 -10 L -20 -20 L -5 -20 Z" 
+          fill="#FFD700"/>
+  </g>
+  
+  <!-- Decorative Corner Stars -->
+  <g fill="#FFD700" opacity="0.6">
+    <!-- Top Left -->
+    <path d="M 100 100 L 105 115 L 120 115 L 108 123 L 113 138 L 100 130 L 87 138 L 92 123 L 80 115 L 95 115 Z"/>
+    <!-- Top Right -->
+    <path d="M 412 100 L 417 115 L 432 115 L 420 123 L 425 138 L 412 130 L 399 138 L 404 123 L 392 115 L 407 115 Z"/>
+    <!-- Bottom Left -->
+    <path d="M 100 412 L 105 427 L 120 427 L 108 435 L 113 450 L 100 442 L 87 450 L 92 435 L 80 427 L 95 427 Z"/>
+    <!-- Bottom Right -->
+    <path d="M 412 412 L 417 427 L 432 427 L 420 435 L 425 450 L 412 442 L 399 450 L 404 435 L 392 427 L 407 427 Z"/>
+  </g>
+  
+  <!-- Coin Edge Details -->
+  <circle cx="256" cy="256" r="185" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.4"/>
+  <circle cx="256" cy="256" r="192" fill="none" stroke="#FFD700" stroke-width="1" opacity="0.3"/>
+  
+  <!-- Inner Ring Details -->
+  <circle cx="256" cy="256" r="155" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.3"/>
+</svg>
