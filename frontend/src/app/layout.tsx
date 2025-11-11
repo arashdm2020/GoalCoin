@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -17,18 +17,18 @@ export const metadata: Metadata = {
   title: "GoalCoin - 90 Day Fitness Challenge",
   description: "Transform your fitness journey with GoalCoin's 90-Day Challenge. Earn rewards, track progress, and join a global community.",
   manifest: "/manifest.json",
-  themeColor: "#FFD700",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "GoalCoin",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#FFD700",
 };
 
 export default function RootLayout({
