@@ -1,5 +1,5 @@
 // Service Worker for GoalCoin PWA
-const CACHE_NAME = 'goalcoin-v1';
+const CACHE_NAME = 'goalcoin-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache on install
@@ -7,8 +7,7 @@ const STATIC_ASSETS = [
   '/',
   '/offline.html',
   '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
+  '/icon.svg',
 ];
 
 // Install event - cache static assets
