@@ -1,16 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Orbitron, Exo_2 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import AnimatedBackground from "../components/AnimatedBackground";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const orbitron = Orbitron({
+  variable: "--font-orbitron",
   subsets: ["latin"],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const exo2 = Exo_2({
+  variable: "--font-exo2",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -47,10 +50,14 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="GoalCoin" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+            <body
+        className={`${orbitron.variable} ${exo2.variable} font-sans antialiased`}
       >
+                        <AnimatedBackground />
         <Providers>{children}</Providers>
+        <div id="watermark-container" style={{ position: 'fixed', right: 0, bottom: 0, zIndex: -1, width: '200px', height: '200px' }}>
+          {/* Watermark animation will go here */}
+        </div>
         <script dangerouslySetInnerHTML={{
           __html: `
             if ('serviceWorker' in navigator) {
