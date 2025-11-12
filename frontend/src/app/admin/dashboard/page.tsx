@@ -20,23 +20,50 @@ export default function DashboardPage() {
     fetchStats();
   }, []);
 
+  const StatCard = ({ title, value }: { title: string; value: string | number }) => (
+    <div className="bg-gray-900 p-6 rounded-lg border border-gray-800">
+      <h3 className="text-gray-400 text-sm font-medium">{title}</h3>
+      <p className="text-2xl font-bold text-white mt-1">{value}</p>
+    </div>
+  );
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-white text-glow mb-8">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gray-900 p-6 rounded-lg">
-          <h3 className="text-gray-400 text-sm">Total Users</h3>
-          <p className="text-2xl font-bold">{stats?.totalUsers ?? 'Loading...'}</p>
+      {stats ? (
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-glow">Users & Engagement</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <StatCard title="Total Users" value={stats.users.total} />
+              <StatCard title="Active Users (7d)" value={stats.users.active_7d} />
+              <StatCard title="Avg. Streak" value={stats.xp.avg_streak.toFixed(2)} />
+              <StatCard title="Avg. Burn Multiplier" value={stats.xp.avg_burn_multiplier.toFixed(2)} />
+            </div>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-glow">Economy & Treasury</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <StatCard title="Total GoalCoin Burned" value={stats.burns.total_goalcoin_burned.toLocaleString()} />
+              <StatCard title="Total Prize Pool (USDT)" value={`$${stats.treasury.total_prize_pool.toFixed(2)}`} />
+              <StatCard title="Total Treasury (USDT)" value={`$${stats.treasury.total_treasury.toFixed(2)}`} />
+              <StatCard title="Total Burned (USDT)" value={`$${stats.treasury.total_burned_usdt.toFixed(2)}`} />
+            </div>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-glow">Platform Activity</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <StatCard title="Warmups" value={stats.activity.warmups.toLocaleString()} />
+              <StatCard title="Workouts" value={stats.activity.workouts.toLocaleString()} />
+              <StatCard title="Meals" value={stats.activity.meals.toLocaleString()} />
+              <StatCard title="Ad Views" value={stats.utility_bridge.ad_views.toLocaleString()} />
+            </div>
+          </div>
         </div>
-        <div className="bg-gray-900 p-6 rounded-lg">
-          <h3 className="text-gray-400 text-sm">Pending Submissions</h3>
-          <p className="text-2xl font-bold">{stats?.pendingSubmissions ?? 'Loading...'}</p>
-        </div>
-        <div className="bg-gray-900 p-6 rounded-lg">
-          <h3 className="text-gray-400 text-sm">Active Reviewers</h3>
-          <p className="text-2xl font-bold">{stats?.activeReviewers ?? 'Loading...'}</p>
-        </div>
-      </div>
+      ) : (
+        <p className="text-gray-500">Loading dashboard stats...</p>
+      )}
     </div>
   );
+
 }
