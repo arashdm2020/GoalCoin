@@ -180,7 +180,7 @@ export const adminController = {
   },
 
   async listReviewers(req: Request, res: Response): Promise<void> {
-    const { status, accuracyMin, accuracyMax, date } = req.query;
+    const { status, accuracyMin, accuracyMax, date, country, page = '1', limit = '25' } = req.query;
 
     try {
       const where: any = {};
@@ -192,12 +192,18 @@ export const adminController = {
       const reviewers = await prisma.reviewer.findMany({
         where,
         include: {
-          user: { select: { wallet: true, handle: true } },
+          user: { select: { wallet: true, handle: true, country_code: true } },
         },
         orderBy: { created_at: 'desc' },
       });
 
-      const reviewerWallets = reviewers
+      // Filter by country if specified
+      let filteredReviewers = reviewers;
+      if (country && country !== 'All') {
+        filteredReviewers = reviewers.filter(r => r.user?.country_code === country);
+      }
+
+      const reviewerWallets = filteredReviewers
         .map(r => r.user.wallet)
         .filter((w): w is string => w !== null && w !== undefined);
 
@@ -225,7 +231,7 @@ export const adminController = {
         return acc;
       }, {} as Record<string, typeof reviews>);
 
-      const reviewersWithAccuracy = reviewers.map(reviewer => {
+      const reviewersWithAccuracy = filteredReviewers.map(reviewer => {
         const wallet = reviewer.user.wallet;
         if (!wallet || !reviewsByWallet[wallet]) {
           return { ...reviewer, accuracy: 1, total_votes: 0, wrong_votes: 0 };
@@ -257,16 +263,118 @@ export const adminController = {
         return true;
       });
 
-      res.status(200).json({ success: true, data: filteredData });
+      // Apply pagination
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
+      const paginatedData = filteredData.slice(startIndex, endIndex);
+
+      res.status(200).json({ 
+        success: true, 
+        data: paginatedData,
+        total: filteredData.length,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(filteredData.length / limitNum)
+      });
     } catch (error) {
       console.error('Failed to fetch reviewers:', error);
         console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
-        query: { status, accuracyMin, accuracyMax, date }
+        query: { status, accuracyMin, accuracyMax, date, country, page, limit }
       });
       res.status(500).json({ 
         error: 'Failed to fetch reviewers',
+        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+      });
+    }
+  },
+
+  async getAvailableCountries(req: Request, res: Response): Promise<void> {
+    try {
+      // Get all unique country codes from users table
+      const countries = await prisma.user.findMany({
+        where: {
+          country_code: {
+            not: null
+          }
+        },
+        select: {
+          country_code: true
+        },
+        distinct: ['country_code']
+      });
+
+      // Country code to full name mapping
+      const countryNames: Record<string, string> = {
+        'US': 'United States',
+        'CN': 'China',
+        'JP': 'Japan',
+        'DE': 'Germany',
+        'IN': 'India',
+        'GB': 'United Kingdom',
+        'FR': 'France',
+        'IT': 'Italy',
+        'BR': 'Brazil',
+        'CA': 'Canada',
+        'KR': 'South Korea',
+        'RU': 'Russia',
+        'AU': 'Australia',
+        'ES': 'Spain',
+        'MX': 'Mexico',
+        'ID': 'Indonesia',
+        'NL': 'Netherlands',
+        'SA': 'Saudi Arabia',
+        'TR': 'Turkey',
+        'CH': 'Switzerland',
+        'TW': 'Taiwan',
+        'BE': 'Belgium',
+        'IE': 'Ireland',
+        'IL': 'Israel',
+        'NO': 'Norway',
+        'AE': 'United Arab Emirates',
+        'EG': 'Egypt',
+        'NG': 'Nigeria',
+        'ZA': 'South Africa',
+        'AR': 'Argentina',
+        'TH': 'Thailand',
+        'SG': 'Singapore',
+        'MY': 'Malaysia',
+        'PH': 'Philippines',
+        'CL': 'Chile',
+        'PK': 'Pakistan',
+        'BD': 'Bangladesh',
+        'VN': 'Vietnam',
+        'CO': 'Colombia',
+        'PL': 'Poland',
+        'SE': 'Sweden',
+        'AT': 'Austria',
+        'DK': 'Denmark',
+        'FI': 'Finland',
+        'CZ': 'Czech Republic',
+        'PT': 'Portugal',
+        'GR': 'Greece',
+        'NZ': 'New Zealand',
+        'HU': 'Hungary',
+        'RO': 'Romania'
+      };
+
+      const countryList = countries
+        .map(c => c.country_code)
+        .filter((code): code is string => code !== null && code !== undefined)
+        .map(code => ({
+          code: code,
+          name: countryNames[code] || code
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      res.status(200).json({ success: true, data: countryList });
+    } catch (error) {
+      console.error('Failed to fetch countries:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch countries',
         details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
       });
     }

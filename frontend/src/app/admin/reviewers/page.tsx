@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { getCountryName } from '@/utils/countries';
 import AddReviewerModal from '../../../components/AddReviewerModal';
 import Tooltip from '../../../components/Tooltip';
 import AuditDrawer from '../../../components/AuditDrawer';
 import RangeSlider from '../../../components/RangeSlider';
+import Pagination from '@/components/admin/Pagination';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
@@ -14,7 +16,33 @@ export default function ReviewersPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedReviewer, setSelectedReviewer] = useState<any>(null);
   const [auditVotes, setAuditVotes] = useState<any[]>([]);
-  const [filters, setFilters] = useState({ status: 'All', accuracyMin: 0, accuracyMax: 1, date: '' });
+  const [filters, setFilters] = useState({ status: 'All', accuracyMin: 0, accuracyMax: 1, date: '', country: 'All' });
+  const [availableCountries, setAvailableCountries] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const fetchCountries = useCallback(async () => {
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/countries`, {
+        headers: { 'Authorization': authHeader }
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to fetch countries:', response.status);
+        return;
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        setAvailableCountries(result.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch countries:', error);
+    }
+  }, []);
 
   const fetchReviewers = useCallback(async () => {
     const params = new URLSearchParams({
@@ -22,6 +50,9 @@ export default function ReviewersPage() {
       accuracyMin: filters.accuracyMin.toString(),
       accuracyMax: filters.accuracyMax.toString(),
       date: filters.date,
+      country: filters.country,
+      page: currentPage.toString(),
+      limit: itemsPerPage.toString(),
     }).toString();
 
     try {
@@ -34,25 +65,30 @@ export default function ReviewersPage() {
       if (!response.ok) {
         console.error('API Error:', response.status, response.statusText);
         setReviewers([]);
+        setTotalItems(0);
         return;
       }
       
       const result = await response.json();
       if (result.success) {
         setReviewers(result.data || []);
+        setTotalItems(result.total || 0);
       } else {
         console.error('API returned error:', result);
         setReviewers([]);
+        setTotalItems(0);
       }
     } catch (error) {
       console.error('Failed to fetch reviewers:', error);
       setReviewers([]);
+      setTotalItems(0);
     }
-  }, [filters]);
+  }, [filters, currentPage, itemsPerPage]);
 
   useEffect(() => {
+    fetchCountries();
     fetchReviewers();
-  }, [fetchReviewers]);
+  }, [fetchReviewers, fetchCountries]);
 
   const handleApiCall = async (url: string, method: string, body: object) => {
     try {
@@ -121,6 +157,15 @@ export default function ReviewersPage() {
     window.open('/api/admin/export-csv?type=reviewers', '_blank');
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-6 md:mb-8">Reviewer Management</h1>
@@ -138,6 +183,17 @@ export default function ReviewersPage() {
               <option value="All">All Statuses</option>
               <option value="ACTIVE">Active</option>
               <option value="SUSPENDED">Suspended</option>
+            </select>
+            <select 
+              className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0"
+              onChange={e => setFilters({ ...filters, country: e.target.value })}
+            >
+              <option value="All">All Countries</option>
+              {availableCountries.map(country => (
+                <option key={country.code} value={country.code}>
+                  {country.name} ({country.code})
+                </option>
+              ))}
             </select>
             <input 
               type="date" 
@@ -185,6 +241,7 @@ export default function ReviewersPage() {
             <thead className="bg-gray-800">
               <tr>
                 <th className="p-2 md:p-4 text-xs md:text-sm">Wallet</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Country</th>
                 <th className="p-2 md:p-4 text-xs md:text-sm">Weight</th>
                 <th className="p-2 md:p-4 text-xs md:text-sm">
                   <Tooltip content="accuracy = 1 - wrong/total">
@@ -199,7 +256,7 @@ export default function ReviewersPage() {
             <tbody>
               {reviewers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                  <td colSpan={7} className="p-8 text-center text-gray-500">
                     <div className="flex flex-col items-center space-y-2">
                       <p className="text-lg">No reviewers found</p>
                       <p className="text-sm">Use the "Add Reviewer" button to add a new reviewer</p>
@@ -212,6 +269,16 @@ export default function ReviewersPage() {
                     <td className="p-2 md:p-4">
                       <div className="font-mono text-xs md:text-sm break-all">
                         {reviewer.user?.wallet ? `${reviewer.user.wallet.slice(0, 6)}...${reviewer.user.wallet.slice(-4)}` : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm">
+                      <div className="flex items-center gap-1">
+                        <span>{reviewer.user?.country_code || 'N/A'}</span>
+                        {reviewer.user?.country_code && (
+                          <span className="text-gray-400 text-xs">
+                            ({getCountryName(reviewer.user.country_code)})
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.voting_weight}x</td>
@@ -244,6 +311,18 @@ export default function ReviewersPage() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination */}
+        {totalItems > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            totalItems={totalItems}
+          />
+        )}
       </div>
     </div>
   );
