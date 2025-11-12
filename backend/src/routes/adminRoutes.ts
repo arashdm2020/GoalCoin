@@ -17,6 +17,9 @@ router.put('/reviewers/status', basicAuthMiddleware, adminController.toggleRevie
 router.post('/reviewers/reset-strikes', basicAuthMiddleware, adminController.resetStrikes);
 router.get('/reviewers/:reviewerId/audit', basicAuthMiddleware, adminController.getReviewerAudit);
 
+// Utility endpoints
+router.get('/countries', basicAuthMiddleware, adminController.getAvailableCountries);
+
 // Submission management
 router.get('/submissions', basicAuthMiddleware, adminController.getSubmissions);
 router.post('/submissions/assign', basicAuthMiddleware, adminController.assignSubmissionReviewers);
