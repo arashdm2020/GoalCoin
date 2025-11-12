@@ -260,17 +260,17 @@ export default function ReviewersPage() {
           <table className="w-full text-left min-w-[700px]">
             <thead className="bg-gray-800">
               <tr>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Wallet</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Country</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Weight</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">
+                <th className="p-2 text-sm">Wallet</th>
+                <th className="p-2 text-sm">Country</th>
+                <th className="p-2 text-sm">Weight</th>
+                <th className="p-2 text-sm">
                   <Tooltip content="accuracy = 1 - wrong/total">
                     Accuracy
                   </Tooltip>
                 </th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Strikes</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Status</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Actions</th>
+                <th className="p-2 text-sm">Strikes</th>
+                <th className="p-2 text-sm">Status</th>
+                <th className="p-2 text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -286,12 +286,12 @@ export default function ReviewersPage() {
               ) : (
                 reviewers.map(reviewer => (
                   <tr key={reviewer.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="p-2 md:p-4">
-                      <div className="font-mono text-xs md:text-sm break-all">
+                    <td className="p-2">
+                      <div className="font-mono text-sm break-all">
                         {reviewer.user?.wallet ? `${reviewer.user.wallet.slice(0, 6)}...${reviewer.user.wallet.slice(-4)}` : 'N/A'}
                       </div>
                     </td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm">
+                    <td className="p-2 text-sm">
                       <div className="flex items-center gap-1">
                         <span>{reviewer.user?.country_code || 'N/A'}</span>
                         {reviewer.user?.country_code && (
@@ -301,20 +301,20 @@ export default function ReviewersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.voting_weight}x</td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm">
+                    <td className="p-2 text-sm">{reviewer.voting_weight}x</td>
+                    <td className="p-2 text-sm">
                       <Tooltip content={`Votes: ${reviewer.total_votes} | Wrong: ${reviewer.wrong_votes}`}>
                         {(reviewer.accuracy * 100).toFixed(2)}%
                       </Tooltip>
                     </td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.strikes}</td>
-                    <td className="p-2 md:p-4">
+                    <td className="p-2 text-sm">{reviewer.strikes}</td>
+                    <td className="p-2">
                       <span className={`px-2 py-1 rounded-full text-xs ${reviewer.status === 'ACTIVE' ? 'bg-green-600' : 'bg-red-600'}`}>
                         {reviewer.status}
                       </span>
                     </td>
-                    <td className="p-2 md:p-4">
-                      <div className="flex flex-col md:flex-row gap-1 text-xs">
+                    <td className="p-2">
+                      <div className="flex flex-col gap-1 text-xs">
                         {reviewer.status === 'ACTIVE' ? (
                           <button onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} className="text-yellow-400 hover:underline">Suspend</button>
                         ) : (
