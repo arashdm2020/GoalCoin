@@ -18,12 +18,23 @@ export default function SubmissionsPage() {
         const authHeader = localStorage.getItem('admin_auth_header');
         if (!authHeader) return;
         const response = await fetch(`${getBackendUrl()}/api/admin/submissions`, { headers: { 'Authorization': authHeader } });
+        
+        if (!response.ok) {
+          console.error('API Error:', response.status, response.statusText);
+          setSubmissions([]);
+          return;
+        }
+        
         const result = await response.json();
         if (result.success) {
-          setSubmissions(result.data);
+          setSubmissions(result.data || []);
+        } else {
+          console.error('API returned error:', result);
+          setSubmissions([]);
         }
       } catch (error) {
         console.error('Failed to fetch submissions:', error);
+        setSubmissions([]);
       }
     };
 
@@ -295,26 +306,37 @@ export default function SubmissionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredSubmissions.map(submission => (
-                <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                  <td className="p-2 md:p-4"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
-                  <td className="p-2 md:p-4">
-                    <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-10 h-10 md:w-12 md:h-12 object-cover rounded-lg" />
-                  </td>
-                  <td className="p-2 md:p-4 text-xs md:text-sm"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline">{submission.user?.handle || 'N/A'}</a></td>
-                  <td className="p-2 md:p-4 text-xs md:text-sm">{submission.status}</td>
-                  <td className="p-2 md:p-4 text-xs md:text-sm">{new Date(submission.created_at).toLocaleDateString()}</td>
-                  <td className="p-2 md:p-4 text-xs md:text-sm">{submission.user?.country_code || 'N/A'}</td>
-                  <td className="p-2 md:p-4">
-                    <div className="flex flex-col md:flex-row gap-1 text-xs">
-                      <button onClick={() => handleViewEvidence(submission)} className="text-blue-400 hover:underline">View</button>
-                      <button onClick={() => handleForceAction(submission, 'Approve')} className="text-green-400 hover:underline">Approve</button>
-                      <button onClick={() => handleForceAction(submission, 'Reject')} className="text-red-400 hover:underline">Reject</button>
-                      <button onClick={() => handleAssign(submission)} className="text-yellow-400 hover:underline">Assign</button>
+              {filteredSubmissions.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-gray-500">
+                    <div className="flex flex-col items-center space-y-2">
+                      <p className="text-lg">هیچ submission ای پیدا نشد</p>
+                      <p className="text-sm">هیچ درخواستی در سیستم ثبت نشده است یا با فیلترهای شما مطابقت ندارد</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredSubmissions.map(submission => (
+                  <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                    <td className="p-2 md:p-4"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
+                    <td className="p-2 md:p-4">
+                      <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-10 h-10 md:w-12 md:h-12 object-cover rounded-lg" />
+                    </td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline">{submission.user?.handle || 'N/A'}</a></td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm">{submission.status}</td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm">{new Date(submission.created_at).toLocaleDateString()}</td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm">{submission.user?.country_code || 'N/A'}</td>
+                    <td className="p-2 md:p-4">
+                      <div className="flex flex-col md:flex-row gap-1 text-xs">
+                        <button onClick={() => handleViewEvidence(submission)} className="text-blue-400 hover:underline">View</button>
+                        <button onClick={() => handleForceAction(submission, 'Approve')} className="text-green-400 hover:underline">Approve</button>
+                        <button onClick={() => handleForceAction(submission, 'Reject')} className="text-red-400 hover:underline">Reject</button>
+                        <button onClick={() => handleAssign(submission)} className="text-yellow-400 hover:underline">Assign</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
