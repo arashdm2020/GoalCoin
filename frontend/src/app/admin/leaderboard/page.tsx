@@ -21,6 +21,8 @@ const LeaderboardRow = ({ user, rank }: { user: any; rank: number }) => {
   );
 };
 
+const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+
 export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
@@ -35,7 +37,9 @@ export default function LeaderboardPage() {
     }).toString();
 
     try {
-      const response = await fetch(`/api/admin/leaderboard?${params}`);
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/leaderboard?${params}`, { headers: { 'Authorization': authHeader } });
       const result = await response.json();
       if (result.success) {
         setLeaderboardData(result.data || []);
@@ -54,7 +58,9 @@ export default function LeaderboardPage() {
 
   const handleRecompute = async () => {
     try {
-      const response = await fetch('/api/admin/leaderboard/recalculate', { method: 'POST' });
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/leaderboard/recalculate`, { method: 'POST', headers: { 'Authorization': authHeader } });
       const result = await response.json();
       if (result.success) {
         alert('Leaderboard recalculation triggered! Data will refresh shortly.');

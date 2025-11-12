@@ -30,6 +30,8 @@ const StatusTile = ({ title, status }: { title: string; status: string }) => {
   );
 };
 
+const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+
 export default function SettingsPage() {
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [featureToggles, setFeatureToggles] = useState<any[]>([]);
@@ -38,10 +40,14 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const authHeader = localStorage.getItem('admin_auth_header');
+        if (!authHeader) return;
+        const headers = { 'Authorization': authHeader };
+
         const [statusRes, togglesRes, logsRes] = await Promise.all([
-          fetch('/api/admin/settings/status'),
-          fetch('/api/admin/settings/feature-toggles'),
-          fetch('/api/admin/settings/security-logs'),
+          fetch(`${getBackendUrl()}/api/admin/settings/status`, { headers }),
+          fetch(`${getBackendUrl()}/api/admin/settings/feature-toggles`, { headers }),
+          fetch(`${getBackendUrl()}/api/admin/settings/security-logs`, { headers }),
         ]);
         const statusData = await statusRes.json();
         const togglesData = await togglesRes.json();
@@ -59,9 +65,11 @@ export default function SettingsPage() {
 
   const handleToggle = async (key: string, value: boolean) => {
     try {
-      const response = await fetch('/api/admin/settings/feature-toggles', {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/settings/feature-toggles`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
         body: JSON.stringify({ key, value }),
       });
       const result = await response.json();

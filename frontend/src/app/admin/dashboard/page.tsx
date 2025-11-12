@@ -2,13 +2,22 @@
 
 import { useState, useEffect } from 'react';
 
+const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/admin/dashboard-stats');
+        // IMPORTANT: We need to get the auth header from somewhere (e.g., localStorage)
+        const authHeader = localStorage.getItem('admin_auth_header'); 
+        if (!authHeader) return; // Or handle redirect to login
+
+        const url = `${getBackendUrl()}/api/admin/dashboard-stats`;
+        const response = await fetch(url, {
+          headers: { 'Authorization': authHeader }
+        });
         const result = await response.json();
         if (result.success) {
           setStats(result.data);
