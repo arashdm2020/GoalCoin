@@ -577,20 +577,33 @@ export const adminController = {
   },
 
   async getLeaderboard(req: Request, res: Response): Promise<void> {
-    const { type = 'global', country, sport } = req.query;
+    const { type = 'global', country, sport, page = '1', limit = '25' } = req.query;
 
     try {
       const where: any = {};
       if (type === 'country' && country) {
         where.country_code = country as string;
       }
+      if (country && country !== '') {
+        where.country_code = country as string;
+      }
       // Sport-specific leaderboard logic would be more complex
+
+      // Get total count for pagination
+      const totalCount = await prisma.user.count({ where });
+
+      // Apply pagination
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const skip = (pageNum - 1) * limitNum;
 
       const users = await prisma.user.findMany({
         where,
         orderBy: { goal_points: 'desc' },
-        take: 100,
+        skip,
+        take: limitNum,
         select: {
+          id: true,
           handle: true,
           wallet: true,
           country_code: true,
@@ -599,7 +612,14 @@ export const adminController = {
         },
       });
 
-      res.status(200).json({ success: true, data: users });
+      res.status(200).json({ 
+        success: true, 
+        data: users,
+        total: totalCount,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum)
+      });
     } catch (error) {
       console.error('Failed to get leaderboard:', error);
       res.status(500).json({ error: 'Failed to get leaderboard' });
