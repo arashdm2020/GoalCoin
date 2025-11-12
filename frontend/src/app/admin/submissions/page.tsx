@@ -310,8 +310,8 @@ export default function SubmissionsPage() {
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-gray-500">
                     <div className="flex flex-col items-center space-y-2">
-                      <p className="text-lg">هیچ submission ای پیدا نشد</p>
-                      <p className="text-sm">هیچ درخواستی در سیستم ثبت نشده است یا با فیلترهای شما مطابقت ندارد</p>
+                      <p className="text-lg">No submissions found</p>
+                      <p className="text-sm">No submissions have been submitted to the system or none match your current filters</p>
                     </div>
                   </td>
                 </tr>
