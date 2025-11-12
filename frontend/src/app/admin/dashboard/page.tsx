@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -18,9 +20,14 @@ export default function DashboardPage() {
         const response = await fetch(url, {
           headers: { 'Authorization': authHeader }
         });
-        const result = await response.json();
-        if (result.success) {
-          setStats(result.data);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setStats(result.data);
+          }
+        } else if (response.status === 401) {
+          localStorage.removeItem('admin_auth_header');
+          router.push('/admin/login');
         }
       } catch (error) {
         console.error('Failed to fetch dashboard stats:', error);
