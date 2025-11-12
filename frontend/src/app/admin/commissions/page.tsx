@@ -5,6 +5,8 @@ import AddCommissionModal from '../../../components/AddCommissionModal';
 
 const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
 
+const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+
 export default function CommissionsPage() {
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [data, setData] = useState<any[]>([]);
@@ -24,7 +26,9 @@ export default function CommissionsPage() {
     }
 
     try {
-      const response = await fetch(url);
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}${url}`, { headers: { 'Authorization': authHeader } });
       const result = await response.json();
       if (result.success) {
         const fetchedData = result.data || [];
@@ -50,9 +54,11 @@ export default function CommissionsPage() {
 
   const handleAddCommission = async (commissionData: { reviewer_wallet: string; submission_id: string; amount_usdt: number; reason: string; }) => {
     try {
-      const response = await fetch('/api/admin/commissions/manual', {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/commissions/manual`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
         body: JSON.stringify(commissionData),
       });
       const result = await response.json();

@@ -6,7 +6,7 @@ import Tooltip from '../../../components/Tooltip';
 import AuditDrawer from '../../../components/AuditDrawer';
 import RangeSlider from '../../../components/RangeSlider';
 
-// TODO: Define a proper type for the reviewer object
+const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function ReviewersPage() {
   const [reviewers, setReviewers] = useState<any[]>([]);
@@ -25,8 +25,11 @@ export default function ReviewersPage() {
     }).toString();
 
     try {
-      // TODO: Add proper authentication
-      const response = await fetch(`/api/admin/reviewers?${params}`);
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/reviewers?${params}`, {
+        headers: { 'Authorization': authHeader }
+      });
       const result = await response.json();
       if (result.success) {
         setReviewers(result.data);
@@ -42,7 +45,9 @@ export default function ReviewersPage() {
 
   const handleApiCall = async (url: string, method: string, body: object) => {
     try {
-      const response = await fetch(url, {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return false;
+      const response = await fetch(`${getBackendUrl()}${url}`, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -80,7 +85,11 @@ export default function ReviewersPage() {
   const handleViewAudit = async (reviewer: any) => {
     setSelectedReviewer(reviewer);
     try {
-      const response = await fetch(`/api/admin/reviewers/${reviewer.id}/audit`);
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/reviewers/${reviewer.id}/audit`, {
+        headers: { 'Authorization': authHeader }
+      });
       const result = await response.json();
       if (result.success) {
         setAuditVotes(result.data);

@@ -6,6 +6,8 @@ import ReasonModal from '../../../components/ReasonModal';
 import AssignReviewerModal from '../../../components/AssignReviewerModal';
 
 
+const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+
 export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
 
@@ -13,7 +15,9 @@ export default function SubmissionsPage() {
     const fetchSubmissions = async () => {
       try {
         // TODO: Add proper filtering and pagination
-        const response = await fetch('/api/admin/submissions');
+        const authHeader = localStorage.getItem('admin_auth_header');
+        if (!authHeader) return;
+        const response = await fetch(`${getBackendUrl()}/api/admin/submissions`, { headers: { 'Authorization': authHeader } });
         const result = await response.json();
         if (result.success) {
           setSubmissions(result.data);
@@ -45,7 +49,9 @@ export default function SubmissionsPage() {
   useEffect(() => {
     const fetchReviewers = async () => {
       try {
-        const response = await fetch('/api/admin/reviewers?status=ACTIVE');
+        const authHeader = localStorage.getItem('admin_auth_header');
+        if (!authHeader) return;
+        const response = await fetch(`${getBackendUrl()}/api/admin/reviewers?status=ACTIVE`, { headers: { 'Authorization': authHeader } });
         const result = await response.json();
         if (result.success) {
           setReviewers(result.data);
@@ -61,8 +67,11 @@ export default function SubmissionsPage() {
 
   const handleSyncLeaderboard = async () => {
     try {
-      const response = await fetch('/api/admin/leaderboard/recalculate', {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/leaderboard/recalculate`, {
         method: 'POST',
+        headers: { 'Authorization': authHeader }
       });
       const result = await response.json();
       if (result.success) {
@@ -82,9 +91,11 @@ export default function SubmissionsPage() {
     const newStatus = action === 'Approve' ? 'APPROVED' : 'REJECTED';
 
     try {
-      const response = await fetch('/api/admin/submissions/bulk-status', {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/submissions/bulk-status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
         body: JSON.stringify({ submissionIds: selected, status: newStatus }),
       });
 
@@ -117,9 +128,11 @@ export default function SubmissionsPage() {
     if (!selectedSubmission) return;
 
     try {
-      const response = await fetch('/api/admin/submissions/assign', {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/submissions/assign`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
         body: JSON.stringify({ 
           submissionId: selectedSubmission.id,
           reviewerIds,
@@ -148,9 +161,11 @@ export default function SubmissionsPage() {
     if (!selectedSubmission) return;
 
     try {
-      const response = await fetch('/api/admin/submissions/status', {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      const response = await fetch(`${getBackendUrl()}/api/admin/submissions/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
         body: JSON.stringify({
           submissionId: selectedSubmission.id,
           status: modalAction === 'Approve' ? 'APPROVED' : 'REJECTED',
