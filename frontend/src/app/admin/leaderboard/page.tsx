@@ -14,9 +14,9 @@ const LeaderboardRow = ({ user, rank }: { user: any; rank: number }) => {
 
   return (
     <tr className={`border-b border-gray-800 hover:bg-gray-800/50 ${rank <= 3 ? 'font-bold' : ''}`}>
-      <td className={`p-4 ${rankColor}`}>{rank}</td>
-      <td className="p-4"><a href={`/admin/users/${user.id}`} className="hover:underline text-blue-400">{user.handle || 'N/A'}</a></td>
-      <td className="p-4">
+      <td className={`p-2 text-sm ${rankColor}`}>{rank}</td>
+      <td className="p-2 text-sm"><a href={`/admin/users/${user.id}`} className="hover:underline text-blue-400">{user.handle || 'N/A'}</a></td>
+      <td className="p-2 text-sm">
         <div className="flex items-center gap-1">
           <span>{user.country_code || 'N/A'}</span>
           {user.country_code && (
@@ -26,8 +26,8 @@ const LeaderboardRow = ({ user, rank }: { user: any; rank: number }) => {
           )}
         </div>
       </td>
-      <td className="p-4 font-bold text-yellow-500">{user.goal_points}</td>
-      <td className="p-4">{user.xp_points}</td>
+      <td className="p-2 text-sm font-bold text-yellow-500">{user.goal_points}</td>
+      <td className="p-2 text-sm">{user.xp_points}</td>
     </tr>
   );
 };
@@ -170,11 +170,11 @@ export default function LeaderboardPage() {
         <table className="w-full text-left">
           <thead className="bg-gray-800">
             <tr>
-              <th className="p-4 w-16">Rank</th>
-              <th className="p-4">User</th>
-              <th className="p-4">Country</th>
-              <th className="p-4">Goal Points</th>
-              <th className="p-4">XP Points</th>
+              <th className="p-2 text-sm w-16">Rank</th>
+              <th className="p-2 text-sm">User</th>
+              <th className="p-2 text-sm">Country</th>
+              <th className="p-2 text-sm">Goal Points</th>
+              <th className="p-2 text-sm">XP Points</th>
             </tr>
           </thead>
           <tbody>
