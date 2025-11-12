@@ -53,6 +53,11 @@ export default function ReviewersPage() {
       }
     } catch (error) {
       console.error('Failed to fetch countries:', error);
+      // Fallback: Set some default countries if API fails
+      setAvailableCountries([
+        { code: 'US', name: 'United States' },
+        { code: 'CA', name: 'Canada' }
+      ]);
     }
   }, []);
 
