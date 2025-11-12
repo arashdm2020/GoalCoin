@@ -201,7 +201,8 @@ export const adminController = {
         .map(r => r.user.wallet)
         .filter((w): w is string => w !== null && w !== undefined);
 
-      const reviews = await prisma.review.findMany({
+      // Only fetch reviews if there are reviewer wallets
+      const reviews = reviewerWallets.length > 0 ? await prisma.review.findMany({
         where: {
           reviewer_wallet: { in: reviewerWallets },
           submission: {
@@ -213,7 +214,7 @@ export const adminController = {
             select: { status: true },
           },
         },
-      });
+      }) : [];
 
       const reviewsByWallet = reviews.reduce((acc, review) => {
         const wallet = review.reviewer_wallet;
@@ -259,7 +260,15 @@ export const adminController = {
       res.status(200).json({ success: true, data: filteredData });
     } catch (error) {
       console.error('Failed to fetch reviewers:', error);
-      res.status(500).json({ error: 'Failed to fetch reviewers' });
+        console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        query: { status, accuracyMin, accuracyMax, date }
+      });
+      res.status(500).json({ 
+        error: 'Failed to fetch reviewers',
+        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : 'Unknown error' : undefined
+      });
     }
   },
 
