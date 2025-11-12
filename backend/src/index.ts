@@ -28,6 +28,7 @@ import { treasuryRoutes } from './routes/treasuryRoutes';
 import { healthRoutes } from './routes/healthRoutes';
 import { adminAuthTestRoutes } from './routes/adminAuthTestRoutes';
 import { settingsRoutes } from './routes/settingsRoutes';
+import { migrationRoutes } from './routes/migrationRoutes';
 import warmupRoutes from './routes/warmupRoutes';
 import mealRoutes from './routes/mealRoutes';
 import referralRoutes from './routes/referralRoutes';
@@ -143,6 +144,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/nft', nftRoutes);
 app.use('/api/rate-limits', adminLimiter, rateLimitRoutes);
 app.use('/api/email-test', adminLimiter, emailTestRoutes);
+app.use('/api/migration', adminLimiter, migrationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
