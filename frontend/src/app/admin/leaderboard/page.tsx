@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { getCountryName } from '@/utils/countries';
+import Pagination from '@/components/admin/Pagination';
 
 const TABS = ['Global', 'Country', 'Sport', 'Fans', 'Players', 'Reviewers'];
 
@@ -14,7 +16,16 @@ const LeaderboardRow = ({ user, rank }: { user: any; rank: number }) => {
     <tr className={`border-b border-gray-800 hover:bg-gray-800/50 ${rank <= 3 ? 'font-bold' : ''}`}>
       <td className={`p-4 ${rankColor}`}>{rank}</td>
       <td className="p-4"><a href={`/admin/users/${user.id}`} className="hover:underline text-blue-400">{user.handle || 'N/A'}</a></td>
-      <td className="p-4">{user.country_code || 'N/A'}</td>
+      <td className="p-4">
+        <div className="flex items-center gap-1">
+          <span>{user.country_code || 'N/A'}</span>
+          {user.country_code && (
+            <span className="text-gray-400 text-xs">
+              ({getCountryName(user.country_code)})
+            </span>
+          )}
+        </div>
+      </td>
       <td className="p-4 font-bold text-yellow-500">{user.goal_points}</td>
       <td className="p-4">{user.xp_points}</td>
     </tr>
@@ -27,6 +38,38 @@ export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [filters, setFilters] = useState({ country: 'All', sport: 'All', dateRange: '' });
+  const [availableCountries, setAvailableCountries] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const fetchCountries = useCallback(async () => {
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/countries`, {
+        headers: { 'Authorization': authHeader }
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to fetch countries:', response.status);
+        return;
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        setAvailableCountries(result.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch countries:', error);
+      // Fallback countries
+      setAvailableCountries([
+        { code: 'US', name: 'United States' },
+        { code: 'CA', name: 'Canada' }
+      ]);
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     const params = new URLSearchParams({
@@ -34,6 +77,8 @@ export default function LeaderboardPage() {
       country: filters.country === 'All' ? '' : filters.country,
       sport: filters.sport === 'All' ? '' : filters.sport,
       dateRange: filters.dateRange,
+      page: currentPage.toString(),
+      limit: itemsPerPage.toString(),
     }).toString();
 
     try {
@@ -43,18 +88,31 @@ export default function LeaderboardPage() {
       const result = await response.json();
       if (result.success) {
         setLeaderboardData(result.data || []);
+        setTotalItems(result.total || 0);
       } else {
         setLeaderboardData([]);
+        setTotalItems(0);
       }
     } catch (error) {
       console.error('Failed to fetch leaderboard:', error);
       setLeaderboardData([]);
+      setTotalItems(0);
     }
-  }, [activeTab, filters]);
+  }, [activeTab, filters, currentPage, itemsPerPage]);
 
   useEffect(() => {
+    fetchCountries();
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, fetchCountries]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page
+  };
 
   const handleRecompute = async () => {
     try {
@@ -92,9 +150,11 @@ export default function LeaderboardPage() {
         <div className="flex items-center space-x-4">
           <select className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, country: e.target.value})}>
             <option value="All">All Countries</option>
-            {/* TODO: Populate with actual countries from an API */}
-            <option value="US">United States</option>
-            <option value="CA">Canada</option>
+            {availableCountries.map(country => (
+              <option key={country.code} value={country.code}>
+                {country.name} ({country.code})
+              </option>
+            ))}
           </select>
           <select className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, sport: e.target.value})}>
             <option value="All">All Sports</option>
@@ -120,7 +180,7 @@ export default function LeaderboardPage() {
           <tbody>
             {leaderboardData.length > 0 ? (
               leaderboardData.map((user, index) => (
-                <LeaderboardRow key={user.id || index} user={user} rank={index + 1} />
+                <LeaderboardRow key={user.id || index} user={user} rank={(currentPage - 1) * itemsPerPage + index + 1} />
               ))
             ) : (
               <tr>
@@ -129,6 +189,18 @@ export default function LeaderboardPage() {
             )}
           </tbody>
         </table>
+        
+        {/* Pagination */}
+        {totalItems > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            totalItems={totalItems}
+          />
+        )}
       </div>
     </div>
   );
