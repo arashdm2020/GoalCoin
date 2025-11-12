@@ -1,168 +1,157 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AddCommissionModal from '../../../components/AddCommissionModal';
 
-// Mock data for demonstration
-const mockPayouts = [
-  { id: 1, wallet: '0x123...abc', amount: 100, currency: 'USDT', status: 'Queued', date: '2025-11-12' },
-  { id: 2, wallet: '0x456...def', amount: 50, currency: 'GC', status: 'Sent', date: '2025-11-11' },
-  { id: 3, wallet: '0x789...ghi', amount: 200, currency: 'USDT', status: 'Failed', date: '2025-11-10' },
-];
-
-const mockRewards = [
-  { id: 1, user: 'user_a', amount: 10, currency: 'GC', status: 'Sent', date: '2025-11-12' },
-  { id: 2, user: 'user_b', amount: 5, currency: 'GC', status: 'Sent', date: '2025-11-11' },
-];
-
-const mockLogs = [
-  { id: 1, message: 'Payout job started', level: 'info', timestamp: '2025-11-12T10:00:00Z' },
-  { id: 2, message: 'Payout for 0x456...def succeeded', level: 'info', timestamp: '2025-11-11T15:30:00Z' },
-  { id: 3, message: 'Payout for 0x789...ghi failed: Insufficient funds', level: 'error', timestamp: '2025-11-10T09:00:00Z' },
-];
+const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
 
 export default function CommissionsPage() {
-  const [activeTab, setActiveTab] = useState('payouts');
+  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [data, setData] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filters, setFilters] = useState({ status: 'All', date: '' });
+  const [summary, setSummary] = useState({ total: '0.00', pending: 0, this_week: '0.00' });
 
-  const handleAddCommission = (commission: { wallet: string; amount: number; currency: 'USDT' | 'GC' }) => {
-    console.log('Adding manual commission:', commission);
-    // Here you would typically make an API call
-    const newPayout = {
-      id: mockPayouts.length + 1,
-      ...commission,
-      status: 'Queued',
-      date: new Date().toISOString().split('T')[0],
-    };
-    // For now, just adding to the mock data
-    // This should be adapted based on whether it's a payout or reward
-    if (activeTab === 'payouts') {
-      // This is a simplification. You'd likely have a separate state for each tab.
-      // setMockPayouts([...mockPayouts, newPayout]);
+  const fetchData = useCallback(async () => {
+    let url = '';
+    if (activeTab === 'Reviewer Payouts') {
+      url = `/api/admin/commissions?status=${filters.status}&date=${filters.date}`;
+    } else {
+      // Placeholder for other tabs
+      setData([]);
+      setSummary({ total: '0.00', pending: 0, this_week: '0.00' });
+      return;
+    }
+
+    try {
+      const response = await fetch(url);
+      const result = await response.json();
+      if (result.success) {
+        const fetchedData = result.data || [];
+        setData(fetchedData);
+        // Calculate summary
+        const totalUnpaid = fetchedData
+          .filter((item: any) => !item.payout_id)
+          .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
+        const pendingCount = fetchedData.filter((item: any) => !item.payout_id).length;
+        setSummary({ total: totalUnpaid.toFixed(2), pending: pendingCount, this_week: 'N/A' });
+      } else {
+        setData([]);
+      }
+    } catch (error) {
+      console.error(`Failed to fetch ${activeTab}:`, error);
+      setData([]);
+    }
+  }, [activeTab, filters]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleAddCommission = async (commissionData: { reviewer_wallet: string; submission_id: string; amount_usdt: number; reason: string; }) => {
+    try {
+      const response = await fetch('/api/admin/commissions/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commissionData),
+      });
+      const result = await response.json();
+      if (result.success) {
+        setIsModalOpen(false);
+        fetchData(); // Refetch data
+      } else {
+        console.error('Failed to add commission:', result.error);
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error adding commission:', error);
+    }
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Reviewer Payouts':
+        return (
+          <table className="w-full text-left">
+            <thead className="bg-gray-800">
+              <tr>
+                <th className="p-4">Reviewer Wallet</th>
+                <th className="p-4">Submission ID</th>
+                <th className="p-4">Amount (USDT)</th>
+                <th className="p-4">Earned At</th>
+                <th className="p-4">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map(item => (
+                <tr key={item.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                  <td className="p-4 font-mono"><a href={`https://etherscan.io/address/${item.reviewer_wallet}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">{item.reviewer_wallet}</a></td>
+                  <td className="p-4 font-mono">{item.submission_id.substring(0, 10)}...</td>
+                  <td className="p-4">${item.amount_usdt.toFixed(4)}</td>
+                  <td className="p-4">{new Date(item.earned_at).toLocaleString()}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded-full text-sm ${item.payout_id ? 'bg-green-600' : 'bg-yellow-600'}`}>
+                      {item.payout_id ? 'PAID' : 'PENDING'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      default:
+        return <div className="text-center py-16"><p className="text-gray-500">{activeTab} is under construction.</p></div>;
     }
   };
 
   return (
     <div className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-3xl font-bold text-white text-glow mb-8">Commissions</h1>
+      <h1 className="text-3xl font-bold text-white text-glow mb-8">Commissions Management</h1>
 
       {/* Summary Tiles */}
-      <div className="flex justify-between items-center mb-6 bg-gray-900 p-4 rounded-lg">
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-400">Filters:</span>
-          <select className="px-4 py-2 bg-gray-800 rounded-lg">
-            <option>All Statuses</option>
-            <option>Queued</option>
-            <option>Sent</option>
-            <option>Failed</option>
-          </select>
-          <input type="date" className="px-4 py-2 bg-gray-800 rounded-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-gray-900 p-6 rounded-lg">
+          <h3 className="text-gray-400 text-sm">Total Unpaid</h3>
+          <p className="text-2xl font-bold text-yellow-400">${summary.total}</p>
         </div>
-        <div>
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg mr-2">Add Manual Commission</button>
+        <div className="bg-gray-900 p-6 rounded-lg">
+          <h3 className="text-gray-400 text-sm">Pending Commissions</h3>
+          <p className="text-2xl font-bold">{summary.pending}</p>
+        </div>
+        <div className="bg-gray-900 p-6 rounded-lg">
+          <h3 className="text-gray-400 text-sm">Paid This Week</h3>
+          <p className="text-2xl font-bold text-gray-500">{summary.this_week}</p>
+        </div>
+      </div>
+
+      {/* Tabs and Filters */}
+      <div className="flex justify-between items-center mb-6 bg-gray-900 p-4 rounded-lg">
+        <div className="flex items-center space-x-2">
+          {TABS.map(tab => (
+            <button 
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold ${activeTab === tab ? 'bg-yellow-500 text-black' : 'bg-gray-800 hover:bg-gray-700'}`}>
+              {tab}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center space-x-4">
+          <select className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, status: e.target.value})}>
+            <option value="All">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="PAID">Paid</option>
+          </select>
+          <input type="date" className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, date: e.target.value})}/>
+          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg">Add Manual</button>
           <button className="px-4 py-2 bg-blue-600 rounded-lg">Export CSV</button>
         </div>
       </div>
 
-      <AddCommissionModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleAddCommission}
-      />
+      <AddCommissionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddCommission} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gray-900 p-6 rounded-lg">Total Paid</div>
-        <div className="bg-gray-900 p-6 rounded-lg">Pending</div>
-        <div className="bg-gray-900 p-6 rounded-lg">This Week</div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-gray-700 mb-6">
-        <button onClick={() => setActiveTab('payouts')} className={`px-6 py-3 ${activeTab === 'payouts' ? 'border-b-2 border-yellow-500' : ''}`}>Reviewer Payouts</button>
-        <button onClick={() => setActiveTab('rewards')} className={`px-6 py-3 ${activeTab === 'rewards' ? 'border-b-2 border-yellow-500' : ''}`}>Fan Rewards</button>
-        <button onClick={() => setActiveTab('logs')} className={`px-6 py-3 ${activeTab === 'logs' ? 'border-b-2 border-yellow-500' : ''}`}>System Logs</button>
-      </div>
-
-      {/* Tab Content */}
-      <div>
-        {activeTab === 'payouts' && (
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="p-4">Wallet</th>
-                  <th className="p-4">Amount</th>
-                  <th className="p-4">Currency</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockPayouts.map(payout => (
-                  <tr key={payout.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="p-4"><a href={`https://polygonscan.com/address/${payout.wallet}`} target="_blank" rel="noopener noreferrer" className="hover:underline">{payout.wallet}</a></td>
-                    <td className="p-4">{payout.amount}</td>
-                    <td className="p-4">{payout.currency}</td>
-                    <td className="p-4">{payout.status}</td>
-                    <td className="p-4">{payout.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {activeTab === 'rewards' && (
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="p-4">User</th>
-                  <th className="p-4">Amount</th>
-                  <th className="p-4">Currency</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockRewards.map(reward => (
-                  <tr key={reward.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="p-4"><a href="#" className="hover:underline">{reward.user}</a></td>
-                    <td className="p-4">{reward.amount}</td>
-                    <td className="p-4">{reward.currency}</td>
-                    <td className="p-4">{reward.status}</td>
-                    <td className="p-4">{reward.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {activeTab === 'logs' && (
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="p-4">Timestamp</th>
-                  <th className="p-4">Level</th>
-                  <th className="p-4">Message</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockLogs.map(log => (
-                  <tr key={log.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="p-4">{new Date(log.timestamp).toLocaleString()}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-sm ${log.level === 'info' ? 'bg-blue-600' : 'bg-red-600'}`}>
-                        {log.level}
-                      </span>
-                    </td>
-                    <td className="p-4 font-mono text-sm">{log.message}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="bg-gray-900 rounded-lg overflow-hidden">
+        {renderContent()}
       </div>
     </div>
   );

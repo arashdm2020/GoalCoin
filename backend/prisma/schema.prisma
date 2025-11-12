@@ -49,6 +49,7 @@ model User {
   referrals_made    Referral[]    @relation("Referrer")
   referrals_received Referral[]   @relation("Referred")
   ad_views          AdView[]
+  reviewer          Reviewer?
 
   @@map("users")
 }
@@ -128,15 +129,16 @@ model Review {
   @@map("reviews")
 }
 
-model ReviewerWallet {
-  wallet          String    @id
-  enabled         Boolean   @default(true)
-  accuracy_7d     Float?    @default(100)
-  total_votes     Int       @default(0)
-  wrong_votes     Int       @default(0)
-  suspended_until DateTime?
+model Reviewer {
+  id              String          @id @default(cuid())
+  user            User            @relation(fields: [user_id], references: [id])
+  user_id         String          @unique
+  voting_weight   Int             @default(1)
+  strikes         Int             @default(0)
+  status          ReviewerStatus  @default(ACTIVE)
+  created_at      DateTime        @default(now())
 
-  @@map("reviewer_wallets")
+  @@map("reviewers")
 }
 
 model Commission {
@@ -179,7 +181,7 @@ model PoolsLedger {
   @@map("pools_ledger")
 }
 
-// --- Audit Log Model ---
+// --- Admin & Audit Log Models ---
 
 model AuditLog {
   id          String   @id @default(cuid())
@@ -193,6 +195,17 @@ model AuditLog {
   created_at  DateTime @default(now())
 
   @@map("audit_logs")
+}
+
+model AdminLog {
+  id          String   @id @default(cuid())
+  admin_user  String   // Admin username
+  action      String   // e.g., "FORCE_APPROVE_SUBMISSION"
+  target_id   String   // ID of the entity being acted upon
+  reason      String?  // Optional reason for the action
+  created_at  DateTime @default(now())
+
+  @@map("admin_logs")
 }
 
 // --- Fitness MVP Add-Ons ---
@@ -371,6 +384,16 @@ model TestStake {
   @@map("test_stakes")
 }
 
+model FeatureToggle {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Boolean  @default(false)
+  description String?
+  updated_at  DateTime @updatedAt
+
+  @@map("feature_toggles")
+}
+
 // --- Enums ---
 
 enum UserTier {
@@ -407,6 +430,11 @@ enum PayoutStatus {
   PENDING
   PAID
   FAILED
+}
+
+enum ReviewerStatus {
+  ACTIVE
+  SUSPENDED
 }
 
 enum DietTier {

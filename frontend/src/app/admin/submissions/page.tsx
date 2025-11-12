@@ -1,20 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import EvidenceViewer from '../../../components/EvidenceViewer';
 import ReasonModal from '../../../components/ReasonModal';
 import AssignReviewerModal from '../../../components/AssignReviewerModal';
 
-// Mock data for demonstration
-const mockSubmissions = [
-  { id: 1, user: 'user_a', thumbnail: '/placeholder.png', status: 'Pending', date: '2025-11-12T10:00:00Z', country: 'US' },
-  { id: 2, user: 'user_b', thumbnail: '/placeholder.png', status: 'Approved', date: '2025-11-11T15:30:00Z', country: 'CA' },
-  { id: 3, user: 'user_c', thumbnail: '/placeholder.png', status: 'Rejected', date: '2025-11-11T12:00:00Z', country: 'GB' },
-  { id: 4, user: 'user_d', thumbnail: '/placeholder.png', status: 'Flagged', date: '2025-11-10T09:00:00Z', country: 'AU' },
-];
 
 export default function SubmissionsPage() {
-  const [submissions, setSubmissions] = useState(mockSubmissions);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        // TODO: Add proper filtering and pagination
+        const response = await fetch('/api/admin/submissions');
+        const result = await response.json();
+        if (result.success) {
+          setSubmissions(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch submissions:', error);
+      }
+    };
+
+    fetchSubmissions();
+  }, []);
   const [selected, setSelected] = useState<number[]>([]);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState('');
@@ -30,34 +40,102 @@ export default function SubmissionsPage() {
     return true;
   });
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [reviewers, setReviewers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchReviewers = async () => {
+      try {
+        const response = await fetch('/api/admin/reviewers?status=ACTIVE');
+        const result = await response.json();
+        if (result.success) {
+          setReviewers(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch reviewers:', error);
+      }
+    };
+
+    fetchReviewers();
+  }, []);
   const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
 
-  const handleBulkAction = (action: 'Approve' | 'Reject') => {
-    console.log(`Performing bulk ${action} on submissions: ${selected.join(', ')}`);
-    // Here you would typically make an API call
-    const newStatus = action === 'Approve' ? 'Approved' : 'Rejected';
-    setSubmissions(submissions.map(s => 
-      selected.includes(s.id) ? { ...s, status: newStatus } : s
-    ));
-    setSelected([]);
-    setIsBulkActionsOpen(false);
+  const handleSyncLeaderboard = async () => {
+    try {
+      const response = await fetch('/api/admin/leaderboard/recalculate', {
+        method: 'POST',
+      });
+      const result = await response.json();
+      if (result.success) {
+        // Optionally, show a success message
+        alert('Leaderboard recalculation triggered!');
+      } else {
+        console.error('Failed to sync leaderboard:', result.error);
+      }
+    } catch (error) {
+      console.error('Error syncing leaderboard:', error);
+    }
   };
 
-  // Mock reviewers for the assignment modal
-  const mockReviewers = [
-    { id: 1, wallet: '0x123...abc' },
-    { id: 2, wallet: '0x456...def' },
-    { id: 3, wallet: '0x789...ghi' },
-  ];
+  const handleBulkAction = async (action: 'Approve' | 'Reject') => {
+    if (selected.length === 0) return;
+
+    const newStatus = action === 'Approve' ? 'APPROVED' : 'REJECTED';
+
+    try {
+      const response = await fetch('/api/admin/submissions/bulk-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionIds: selected, status: newStatus }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setSelected([]);
+        setIsBulkActionsOpen(false);
+        // Refetch submissions to update the list
+        const fetchSubmissions = async () => {
+          const res = await fetch('/api/admin/submissions');
+          const data = await res.json();
+          if (data.success) setSubmissions(data.data);
+        };
+        fetchSubmissions();
+      } else {
+        console.error('Failed to perform bulk action:', result.error);
+      }
+    } catch (error) {
+      console.error('Error in handleBulkAction:', error);
+    }
+  };
+
 
   const handleAssign = (submission: any) => {
     setSelectedSubmission(submission);
     setIsAssignModalOpen(true);
   };
 
-  const handleAssignSubmit = (reviewerIds: number[]) => {
-    console.log(`Assigning submission ${selectedSubmission.id} to reviewers: ${reviewerIds.join(', ')}`);
-    // Here you would typically make an API call
+  const handleAssignSubmit = async (reviewerIds: string[]) => {
+    if (!selectedSubmission) return;
+
+    try {
+      const response = await fetch('/api/admin/submissions/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          submissionId: selectedSubmission.id,
+          reviewerIds,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setIsAssignModalOpen(false);
+        // Optionally, show a success message
+      } else {
+        console.error('Failed to assign reviewers:', result.error);
+      }
+    } catch (error) {
+      console.error('Error in handleAssignSubmit:', error);
+    }
   };
 
   const handleForceAction = (submission: any, action: 'Approve' | 'Reject') => {
@@ -66,16 +144,41 @@ export default function SubmissionsPage() {
     setIsReasonModalOpen(true);
   };
 
-  const handleReasonSubmit = (reason: string) => {
-    console.log(`Forcing ${modalAction} for submission ${selectedSubmission.id} with reason: ${reason}`);
-    // Here you would typically make an API call
-    setSubmissions(submissions.map(s => 
-      s.id === selectedSubmission.id ? { ...s, status: modalAction === 'Approve' ? 'Approved' : 'Rejected' } : s
-    ));
+  const handleReasonSubmit = async (reason: string) => {
+    if (!selectedSubmission) return;
+
+    try {
+      const response = await fetch('/api/admin/submissions/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId: selectedSubmission.id,
+          status: modalAction === 'Approve' ? 'APPROVED' : 'REJECTED',
+          reason,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setIsReasonModalOpen(false);
+        // Refetch submissions to update the list
+        const fetchSubmissions = async () => {
+          const res = await fetch('/api/admin/submissions');
+          const data = await res.json();
+          if (data.success) setSubmissions(data.data);
+        };
+        fetchSubmissions();
+      } else {
+        // TODO: Show an error message to the user
+        console.error('Failed to update submission status:', result.error);
+      }
+    } catch (error) {
+      console.error('Error in handleReasonSubmit:', error);
+    }
   };
 
-  const handleViewEvidence = (mediaUrl: string) => {
-    setSelectedMedia(mediaUrl);
+  const handleViewEvidence = (submission: any) => {
+    setSelectedMedia(submission.file_url);
     setIsViewerOpen(true);
   };
 
@@ -134,7 +237,7 @@ export default function SubmissionsPage() {
               </div>
             )}
           </div>
-          <button className="px-4 py-2 bg-blue-600 rounded-lg">Sync Leaderboard</button>
+          <button onClick={handleSyncLeaderboard} className="px-4 py-2 bg-blue-600 rounded-lg">Sync Leaderboard</button>
         </div>
       </div>
 
@@ -158,7 +261,7 @@ export default function SubmissionsPage() {
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}
         onSubmit={handleAssignSubmit}
-        reviewers={mockReviewers}
+        reviewers={reviewers}
       />
 
       {/* Submissions Table */}
@@ -179,14 +282,14 @@ export default function SubmissionsPage() {
             {filteredSubmissions.map(submission => (
               <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                 <td className="p-4"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
-                <td className="p-4"><img src={submission.thumbnail} alt="thumbnail" className="w-16 h-16 object-cover rounded-lg" /></td>
-                <td className="p-4"><a href="#" className="hover:underline">{submission.user}</a></td>
+                <td className="p-4"><img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-16 h-16 object-cover rounded-lg" /></td>
+                <td className="p-4"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline">{submission.user?.handle || 'N/A'}</a></td>
                 <td className="p-4">{submission.status}</td>
-                <td className="p-4">{new Date(submission.date).toLocaleString()}</td>
-                <td className="p-4">{submission.country}</td>
+                <td className="p-4">{new Date(submission.created_at).toLocaleString()}</td>
+                <td className="p-4">{submission.user?.country_code || 'N/A'}</td>
                 <td className="p-4">
                   <div className="flex space-x-2">
-                    <button onClick={() => handleViewEvidence(submission.thumbnail)} className="text-blue-400 hover:underline">View</button>
+                    <button onClick={() => handleViewEvidence(submission)} className="text-blue-400 hover:underline">View</button>
                     <button onClick={() => handleForceAction(submission, 'Approve')} className="text-green-400 hover:underline">Approve</button>
                     <button onClick={() => handleForceAction(submission, 'Reject')} className="text-red-400 hover:underline">Reject</button>
                     <button onClick={() => handleAssign(submission)} className="text-yellow-400 hover:underline">Assign</button>
