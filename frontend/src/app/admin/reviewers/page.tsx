@@ -49,7 +49,10 @@ export default function ReviewersPage() {
       if (!authHeader) return false;
       const response = await fetch(`${getBackendUrl()}${url}`, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
         body: JSON.stringify(body),
       });
       const result = await response.json();
@@ -108,11 +111,11 @@ export default function ReviewersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <h1 className="text-3xl font-bold text-white text-glow mb-8">Reviewer Management</h1>
 
       {/* Filters and Actions */}
-      <div className="flex justify-between items-center mb-6 bg-gray-900 p-4 rounded-lg">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 bg-gray-900 p-4 rounded-lg gap-4">
         <div>
           <div className="flex items-center space-x-4">
             <span className="text-gray-400">Filters:</span>
@@ -124,7 +127,7 @@ export default function ReviewersPage() {
               <option value="ACTIVE">Active</option>
               <option value="SUSPENDED">Suspended</option>
             </select>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4">
               <span className="text-gray-400">Accuracy:</span>
               <RangeSlider 
                 min={0} 
@@ -140,8 +143,8 @@ export default function ReviewersPage() {
             />
           </div>
         </div>
-        <div>
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg mr-2">Add Reviewer</button>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg">Add Reviewer</button>
           <button onClick={handleExportCSV} className="px-4 py-2 bg-blue-600 rounded-lg">Export CSV</button>
         </div>
       </div>
@@ -161,8 +164,8 @@ export default function ReviewersPage() {
         />
       )}
 
-      <div className="bg-gray-900 rounded-lg overflow-hidden">
-        <table className="w-full text-left">
+      <div className="bg-gray-900 rounded-lg overflow-hidden overflow-x-auto">
+        <table className="w-full text-left min-w-[800px]">
           <thead className="bg-gray-800">
             <tr>
               <th className="p-4">Wallet</th>
@@ -180,7 +183,11 @@ export default function ReviewersPage() {
           <tbody>
             {reviewers.map(reviewer => (
               <tr key={reviewer.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                <td className="p-4">{reviewer.user?.wallet || 'N/A'}</td>
+                <td className="p-4">
+                  <div className="font-mono text-sm break-all">
+                    {reviewer.user?.wallet ? `${reviewer.user.wallet.slice(0, 6)}...${reviewer.user.wallet.slice(-4)}` : 'N/A'}
+                  </div>
+                </td>
                 <td className="p-4">{reviewer.voting_weight}x</td>
                 <td className="p-4">
                   <Tooltip content={`Votes: ${reviewer.total_votes} | Wrong: ${reviewer.wrong_votes}`}>
@@ -194,7 +201,7 @@ export default function ReviewersPage() {
                   </span>
                 </td>
                 <td className="p-4">
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-1 text-sm">
                     {reviewer.status === 'ACTIVE' ? (
                       <button onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} className="text-yellow-400 hover:underline">Suspend</button>
                     ) : (
