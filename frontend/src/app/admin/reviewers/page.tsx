@@ -201,8 +201,8 @@ export default function ReviewersPage() {
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-gray-500">
                     <div className="flex flex-col items-center space-y-2">
-                      <p className="text-lg">هیچ reviewer ای پیدا نشد</p>
-                      <p className="text-sm">برای اضافه کردن reviewer جدید از دکمه "Add Reviewer" استفاده کنید</p>
+                      <p className="text-lg">No reviewers found</p>
+                      <p className="text-sm">Use the "Add Reviewer" button to add a new reviewer</p>
                     </div>
                   </td>
                 </tr>
