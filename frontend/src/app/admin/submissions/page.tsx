@@ -206,13 +206,13 @@ export default function SubmissionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <h1 className="text-3xl font-bold text-white text-glow mb-8">Submissions Management</h1>
 
       {/* Filters and Actions */}
-      <div className="flex justify-between items-center mb-6 bg-gray-900 p-4 rounded-lg">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 bg-gray-900 p-4 rounded-lg gap-4">
         <div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4">
           <span className="text-gray-400">Filters:</span>
           <select 
             className="px-4 py-2 bg-gray-800 rounded-lg" 
@@ -280,8 +280,8 @@ export default function SubmissionsPage() {
       />
 
       {/* Submissions Table */}
-      <div className="bg-gray-900 rounded-lg overflow-hidden">
-        <table className="w-full text-left">
+      <div className="bg-gray-900 rounded-lg overflow-hidden overflow-x-auto">
+        <table className="w-full text-left min-w-[900px]">
           <thead className="bg-gray-800">
             <tr>
               <th className="p-4"><input type="checkbox" onChange={() => setSelected(selected.length === submissions.length ? [] : submissions.map(s => s.id))} /></th>
@@ -297,13 +297,15 @@ export default function SubmissionsPage() {
             {filteredSubmissions.map(submission => (
               <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                 <td className="p-4"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
-                <td className="p-4"><img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-16 h-16 object-cover rounded-lg" /></td>
+                <td className="p-4">
+                  <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg" />
+                </td>
                 <td className="p-4"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline">{submission.user?.handle || 'N/A'}</a></td>
                 <td className="p-4">{submission.status}</td>
                 <td className="p-4">{new Date(submission.created_at).toLocaleString()}</td>
                 <td className="p-4">{submission.user?.country_code || 'N/A'}</td>
                 <td className="p-4">
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-1 text-sm">
                     <button onClick={() => handleViewEvidence(submission)} className="text-blue-400 hover:underline">View</button>
                     <button onClick={() => handleForceAction(submission, 'Approve')} className="text-green-400 hover:underline">Approve</button>
                     <button onClick={() => handleForceAction(submission, 'Reject')} className="text-red-400 hover:underline">Reject</button>
