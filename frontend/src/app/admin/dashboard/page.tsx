@@ -22,12 +22,19 @@ export default function DashboardPage() {
         });
         if (response.ok) {
           const result = await response.json();
+          console.log('Dashboard API response:', result);
           if (result.success) {
-            setStats(result.data);
+            setStats(result.stats);
+          } else {
+            console.error('API returned success: false', result);
           }
         } else if (response.status === 401) {
           localStorage.removeItem('admin_auth_header');
           router.push('/admin/login');
+        } else {
+          console.error('Dashboard API error:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
         }
       } catch (error) {
         console.error('Failed to fetch dashboard stats:', error);
