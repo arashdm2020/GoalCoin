@@ -15,12 +15,14 @@ export class CronService {
         },
         include: {
           submission: {
-            include: { user: true }
-          }
-        }
+            include: { user: true },
+          },
+        },
       });
 
-      console.log(`Found ${expiredAssignments.length} expired assignments to reassign`);
+      if (expiredAssignments.length > 0) {
+        console.log(`Found ${expiredAssignments.length} expired assignments to reassign.`);
+      }
 
       for (const assignment of expiredAssignments) {
         // Mark current assignment as reassigned
@@ -31,63 +33,64 @@ export class CronService {
 
         // Check if submission still needs more reviewers
         const existingReviews = await prisma.review.count({
-          where: { submission_id: assignment.submission_id }
+          where: { submission_id: assignment.submission_id },
         });
 
         if (existingReviews < 3) {
-          // Get available reviewers (excluding those who already reviewed this submission)
-          const existingReviewers = await prisma.review.findMany({
+          // Get all wallets that have already reviewed or been assigned this submission
+          const assignedWallets = (await prisma.reviewAssignment.findMany({
             where: { submission_id: assignment.submission_id },
-            select: { reviewer_wallet: true }
-          });
+            select: { reviewer_wallet: true },
+          })).map(a => a.reviewer_wallet);
 
-          const excludedWallets = existingReviewers.map(r => r.reviewer_wallet);
-
-          // Also exclude reviewers who reviewed this user recently
+          // Also exclude reviewers who reviewed this user's submissions recently
           const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-          const recentAssignments = await prisma.reviewAssignment.findMany({
+          const recentReviewerWallets = (await prisma.review.findMany({
             where: {
-              assigned_at: { gte: oneWeekAgo },
-              submission: { user_id: assignment.submission.user_id }
+              submission: { user_id: assignment.submission.user_id },
+              voted_at: { gte: oneWeekAgo },
             },
-            select: { reviewer_wallet: true }
+            select: { reviewer_wallet: true },
+          })).map(r => r.reviewer_wallet);
+
+          const excludedWallets = [...new Set([...assignedWallets, ...recentReviewerWallets])];
+
+          const availableReviewers = await prisma.reviewer.findMany({
+            where: {
+              status: 'ACTIVE',
+              user: {
+                wallet: { notIn: excludedWallets },
+              },
+            },
+            take: 3 - existingReviews, // Assign up to the required number
+            include: { user: true },
           });
 
-          const recentReviewers = new Set(recentAssignments.map(a => a.reviewer_wallet));
-          excludedWallets.forEach(wallet => recentReviewers.add(wallet));
+          if (availableReviewers.length > 0) {
+            const newAssignments = [];
+            for (const reviewer of availableReviewers) {
+              if (reviewer.user.wallet) {
+                const newAssignment = await prisma.reviewAssignment.create({
+                  data: {
+                    submission_id: assignment.submission_id,
+                    reviewer_wallet: reviewer.user.wallet,
+                    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+                  },
+                });
+                newAssignments.push(newAssignment);
+              }
+            }
 
-          const availableReviewers = await prisma.reviewerWallet.findMany({
-            where: {
-              enabled: true,
-              wallet: { notIn: Array.from(recentReviewers) },
-              OR: [
-                { suspended_until: null },
-                { suspended_until: { lt: now } }
-              ]
-            },
-            take: 2, // Assign 2 more reviewers
-          });
-
-          // Create new assignments
-          for (const reviewer of availableReviewers) {
-            await prisma.reviewAssignment.create({
-              data: {
-                submission_id: assignment.submission_id,
-                reviewer_wallet: reviewer.wallet,
-                expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+            await AuditService.log({
+              action: 'ASSIGNMENT_REASSIGNED',
+              entity_type: 'submission',
+              entity_id: assignment.submission_id,
+              new_data: {
+                expired_reviewer: assignment.reviewer_wallet,
+                new_reviewers: newAssignments.map((a) => a.reviewer_wallet),
               },
             });
           }
-
-          await AuditService.log({
-            action: 'ASSIGNMENT_REASSIGNED',
-            entity_type: 'submission',
-            entity_id: assignment.submission_id,
-            new_data: {
-              expired_reviewer: assignment.reviewer_wallet,
-              new_reviewers: availableReviewers.map(r => r.wallet),
-            },
-          });
         }
       }
 
@@ -98,109 +101,19 @@ export class CronService {
     }
   }
 
-  // Compute 7-day accuracy and auto-suspend reviewers (run daily)
+  // TODO: Implement accuracy calculation and (un)suspension logic
+  // The following fields need to be added to the Reviewer model in schema.prisma:
+  // total_votes     Int       @default(0)
+  // wrong_votes     Int       @default(0)
+  // suspended_until DateTime? 
+
   static async computeAccuracyAndSuspend() {
-    try {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      
-      // Get all reviewers
-      const reviewers = await prisma.reviewerWallet.findMany();
-
-      for (const reviewer of reviewers) {
-        // Get reviews from last 7 days
-        const recentReviews = await prisma.review.findMany({
-          where: {
-            reviewer_wallet: reviewer.wallet,
-            voted_at: { gte: sevenDaysAgo },
-          },
-          include: {
-            submission: {
-              select: { status: true }
-            }
-          }
-        });
-
-        // Only count reviews for closed submissions
-        const closedReviews = recentReviews.filter(r => 
-          r.submission.status === 'APPROVED' || r.submission.status === 'REJECTED'
-        );
-
-        if (closedReviews.length > 0) {
-          const correctVotes = closedReviews.filter(review => {
-            const finalStatus = review.submission.status;
-            return (finalStatus === 'APPROVED' && review.vote === 'APPROVE') ||
-                   (finalStatus === 'REJECTED' && review.vote === 'REJECT');
-          }).length;
-
-          const accuracy = (correctVotes / closedReviews.length) * 100;
-
-          // Update reviewer accuracy
-          const updateData: any = {
-            accuracy_7d: accuracy,
-            total_votes: reviewer.total_votes + closedReviews.length,
-            wrong_votes: reviewer.wrong_votes + (closedReviews.length - correctVotes),
-          };
-
-          // Auto-suspend if accuracy < 85%
-          if (accuracy < 85 && reviewer.enabled) {
-            updateData.enabled = false;
-            updateData.suspended_until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-            await AuditService.log({
-              action: 'REVIEWER_AUTO_SUSPENDED',
-              entity_type: 'reviewer',
-              entity_id: reviewer.wallet,
-              new_data: {
-                accuracy,
-                total_votes: closedReviews.length,
-                correct_votes: correctVotes,
-                suspended_until: updateData.suspended_until,
-              },
-            });
-          }
-
-          await prisma.reviewerWallet.update({
-            where: { wallet: reviewer.wallet },
-            data: updateData,
-          });
-        }
-      }
-
-      return { processed: reviewers.length };
-    } catch (error) {
-      console.error('Error in computeAccuracyAndSuspend:', error);
-      throw error;
-    }
+    console.log('Skipping computeAccuracyAndSuspend: Not yet implemented.');
+    return { processed: 0 };
   }
 
-  // Unsuspend reviewers whose suspension period has ended (run daily)
   static async unsuspendReviewers() {
-    try {
-      const now = new Date();
-      const result = await prisma.reviewerWallet.updateMany({
-        where: {
-          enabled: false,
-          suspended_until: { lt: now },
-        },
-        data: {
-          enabled: true,
-          suspended_until: null,
-        },
-      });
-
-      if (result.count > 0) {
-        await AuditService.log({
-          action: 'REVIEWERS_AUTO_UNSUSPENDED',
-          entity_type: 'reviewer',
-          entity_id: 'batch',
-          new_data: { count: result.count },
-        });
-      }
-
-      return { unsuspended: result.count };
-    } catch (error) {
-      console.error('Error in unsuspendReviewers:', error);
-      throw error;
-    }
+    console.log('Skipping unsuspendReviewers: Not yet implemented.');
+    return { unsuspended: 0 };
   }
 }

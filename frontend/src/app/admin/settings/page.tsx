@@ -1,93 +1,146 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-// Mock data for demonstration
-const mockLogs = [
-  { user: 'admin', action: 'Force Approved Submission #123', ipHash: '...a1b2', timestamp: '2025-11-12T10:00:00Z' },
-  { user: 'admin', action: 'Suspended Reviewer 0x456...def', ipHash: '...c3d4', timestamp: '2025-11-11T15:30:00Z' },
-];
+const FeatureToggle = ({ toggle, onToggle }: { toggle: any; onToggle: (key: string, value: boolean) => void }) => (
+  <div className="flex items-center justify-between bg-gray-800 p-4 rounded-lg">
+    <div>
+      <p className="font-semibold">/{toggle.key.replace(/_/g, '-')}</p>
+      <p className="text-sm text-gray-400">{toggle.description}</p>
+    </div>
+    <label className="relative inline-flex items-center cursor-pointer">
+      <input 
+        type="checkbox" 
+        checked={toggle.value}
+        onChange={(e) => onToggle(toggle.key, e.target.checked)}
+        className="sr-only peer" 
+      />
+      <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-yellow-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+    </label>
+  </div>
+);
 
-const mockEnv = {
-  DATABASE_URL: 'present',
-  JWT_SECRET: 'present',
-  MAILGUN_API_KEY: 'absent',
+const StatusTile = ({ title, status }: { title: string; status: string }) => {
+  const statusColor = status === 'operational' || status === 'connected' ? 'text-green-400' : 'text-yellow-400';
+  return (
+    <div className="bg-gray-900 p-6 rounded-lg">
+      <h3 className="text-gray-400 text-sm">{title}</h3>
+      <p className={`text-2xl font-bold ${statusColor}`}>{status}</p>
+    </div>
+  );
 };
 
 export default function SettingsPage() {
-  const [toggles, setToggles] = useState({
-    roadmap: true,
-    burnTracker: true,
-    docs: true,
-    transparency: true,
-    invite: false,
-    friends: false,
-    store: false,
-  });
+  const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [featureToggles, setFeatureToggles] = useState<any[]>([]);
+  const [securityLogs, setSecurityLogs] = useState<any[]>([]);
 
-  const handleToggle = (key: keyof typeof toggles) => {
-    setToggles({ ...toggles, [key]: !toggles[key] });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statusRes, togglesRes, logsRes] = await Promise.all([
+          fetch('/api/admin/settings/status'),
+          fetch('/api/admin/settings/feature-toggles'),
+          fetch('/api/admin/settings/security-logs'),
+        ]);
+        const statusData = await statusRes.json();
+        const togglesData = await togglesRes.json();
+        const logsData = await logsRes.json();
+
+        if (statusData.success) setSystemStatus(statusData.data);
+        if (togglesData.success) setFeatureToggles(togglesData.data);
+        if (logsData.success) setSecurityLogs(logsData.data);
+      } catch (error) {
+        console.error('Failed to fetch settings data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleToggle = async (key: string, value: boolean) => {
+    try {
+      const response = await fetch('/api/admin/settings/feature-toggles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        setFeatureToggles(toggles => toggles.map(t => t.key === key ? { ...t, value } : t));
+      } else {
+        console.error('Failed to update toggle:', result.error);
+      }
+    } catch (error) {
+      console.error('Error updating toggle:', error);
+    }
   };
 
   return (
     <div className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-3xl font-bold text-white text-glow mb-8">System Settings</h1>
+      <h1 className="text-3xl font-bold text-white text-glow mb-8">Settings</h1>
 
-      {/* System Status */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gray-900 p-6 rounded-lg">Mailgun: Partial</div>
-        <div className="bg-gray-900 p-6 rounded-lg">Redis: Free</div>
-        <div className="bg-gray-900 p-6 rounded-lg">Backups: Manual <button className="ml-4 px-2 py-1 bg-blue-600 rounded-lg">Backup Now</button></div>
-      </div>
-
-      {/* Feature Toggles */}
-      <div className="bg-gray-900 p-6 rounded-lg mb-8">
-        <h2 className="text-2xl font-bold mb-4">Feature Toggles</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Object.entries(toggles).map(([key, value]) => (
-            <div key={key} className="flex items-center">
-              <input type="checkbox" id={key} checked={value} onChange={() => handleToggle(key as keyof typeof toggles)} className="mr-2" />
-              <label htmlFor={key}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
-            </div>
-          ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Status and Backups */}
+        <div className="lg:col-span-1 space-y-8">
+          <h2 className="text-xl font-semibold text-glow">System Status</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+            {systemStatus ? (
+              <>
+                <StatusTile title="Mailgun" status={systemStatus.mailgun} />
+                <StatusTile title="Redis" status={systemStatus.redis} />
+                <StatusTile title="Database" status={systemStatus.database} />
+              </>
+            ) : <p className="text-gray-500">Loading status...</p>}
+          </div>
+          
+          <h2 className="text-xl font-semibold text-glow">Backups</h2>
+          <div className="bg-gray-900 p-6 rounded-lg">
+            <p className="text-gray-400">Last backup: {systemStatus ? new Date(systemStatus.lastBackup).toLocaleString() : 'N/A'}</p>
+            <button className="mt-4 w-full px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors">Backup Now</button>
+          </div>
         </div>
-      </div>
 
-      {/* Security Logs */}
-      <div className="bg-gray-900 p-6 rounded-lg mb-8">
-        <h2 className="text-2xl font-bold mb-4">Security Logs</h2>
-        <table className="w-full text-left">
-          <thead className="bg-gray-800">
-            <tr>
-              <th className="p-3">User</th>
-              <th className="p-3">Action</th>
-              <th className="p-3">IP Hash</th>
-              <th className="p-3">Timestamp</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockLogs.map((log, index) => (
-              <tr key={index} className="border-b border-gray-800">
-                <td className="p-3">{log.user}</td>
-                <td className="p-3">{log.action}</td>
-                <td className="p-3 font-mono text-sm">{log.ipHash}</td>
-                <td className="p-3">{new Date(log.timestamp).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        {/* Middle Column: Feature Toggles */}
+        <div className="lg:col-span-1 space-y-8">
+          <h2 className="text-xl font-semibold text-glow">Feature Toggles</h2>
+          <div className="space-y-4">
+            {featureToggles.length > 0 ? (
+              featureToggles.map(toggle => (
+                <FeatureToggle key={toggle.key} toggle={toggle} onToggle={handleToggle} />
+              ))
+            ) : <p className="text-gray-500">Loading toggles...</p>}
+          </div>
+        </div>
 
-      {/* Env Check */}
-      <div className="bg-gray-900 p-6 rounded-lg">
-        <h2 className="text-2xl font-bold mb-4">Environment Check</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Object.entries(mockEnv).map(([key, value]) => (
-            <div key={key} className="flex items-center">
-              <span className={`w-4 h-4 rounded-full mr-2 ${value === 'present' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-              <span>{key}</span>
-            </div>
-          ))}
+        {/* Right Column: Security Logs */}
+        <div className="lg:col-span-1 space-y-8">
+          <h2 className="text-xl font-semibold text-glow">Security Logs</h2>
+          <div className="bg-gray-900 rounded-lg overflow-hidden h-[600px] overflow-y-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-800 sticky top-0">
+                <tr>
+                  <th className="p-3">Action</th>
+                  <th className="p-3">Target</th>
+                  <th className="p-3">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {securityLogs.length > 0 ? (
+                  securityLogs.map(log => (
+                    <tr key={log.id} className="border-b border-gray-800">
+                      <td className="p-3 font-mono">{log.action}</td>
+                      <td className="p-3 font-mono">{log.target_id}</td>
+                      <td className="p-3">{new Date(log.created_at).toLocaleString()}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center py-16 text-gray-500">No logs found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

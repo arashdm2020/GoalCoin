@@ -3,23 +3,24 @@
 import { useState } from 'react';
 
 interface Reviewer {
-  id: number;
+  id: string;
   wallet: string;
+  user?: { wallet: string };
 }
 
 interface AssignReviewerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (reviewerIds: number[]) => void;
+  onSubmit: (reviewerIds: string[]) => void;
   reviewers: Reviewer[];
 }
 
 const AssignReviewerModal = ({ isOpen, onClose, onSubmit, reviewers }: AssignReviewerModalProps) => {
-  const [selectedReviewers, setSelectedReviewers] = useState<number[]>([]);
+  const [selectedReviewers, setSelectedReviewers] = useState<string[]>([]);
 
   if (!isOpen) return null;
 
-  const handleSelect = (id: number) => {
+  const handleSelect = (id: string) => {
     if (selectedReviewers.includes(id)) {
       setSelectedReviewers(selectedReviewers.filter(item => item !== id));
     } else {
@@ -47,7 +48,7 @@ const AssignReviewerModal = ({ isOpen, onClose, onSubmit, reviewers }: AssignRev
                 onChange={() => handleSelect(reviewer.id)}
                 className="mr-3"
               />
-              <label htmlFor={`reviewer-${reviewer.id}`} className="font-mono text-sm">{reviewer.wallet}</label>
+              <label htmlFor={`reviewer-${reviewer.id}`} className="font-mono text-sm">{reviewer.user?.wallet || reviewer.wallet}</label>
             </div>
           ))}
         </div>

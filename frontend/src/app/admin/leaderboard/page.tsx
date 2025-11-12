@@ -1,114 +1,128 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-// Mock data for demonstration
-const mockLeaderboard = {
-  global: [
-    { rank: 1, handle: 'user_a', points: 1000, country: 'US', sport: 'Running' },
-    { rank: 2, handle: 'user_b', points: 950, country: 'CA', sport: 'Cycling' },
-    { rank: 3, handle: 'user_c', points: 900, country: 'GB', sport: 'Swimming' },
-  ],
-  country: [],
-  sport: [],
-  fans: [],
-  players: [],
-  reviewers: [],
+const TABS = ['Global', 'Country', 'Sport', 'Fans', 'Players', 'Reviewers'];
+
+const LeaderboardRow = ({ user, rank }: { user: any; rank: number }) => {
+  let rankColor = '';
+  if (rank === 1) rankColor = 'text-yellow-400';
+  if (rank === 2) rankColor = 'text-gray-300';
+  if (rank === 3) rankColor = 'text-yellow-600';
+
+  return (
+    <tr className={`border-b border-gray-800 hover:bg-gray-800/50 ${rank <= 3 ? 'font-bold' : ''}`}>
+      <td className={`p-4 ${rankColor}`}>{rank}</td>
+      <td className="p-4"><a href={`/admin/users/${user.id}`} className="hover:underline text-blue-400">{user.handle || 'N/A'}</a></td>
+      <td className="p-4">{user.country_code || 'N/A'}</td>
+      <td className="p-4 font-bold text-yellow-500">{user.goal_points}</td>
+      <td className="p-4">{user.xp_points}</td>
+    </tr>
+  );
 };
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState('global');
+  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [filters, setFilters] = useState({ country: 'All', sport: 'All', dateRange: '' });
 
-  const filteredLeaderboard = mockLeaderboard[activeTab as keyof typeof mockLeaderboard].filter(entry => {
-    if (filters.country !== 'All' && entry.country !== filters.country) return false;
-    if (filters.sport !== 'All' && entry.sport !== filters.sport) return false;
-    // Date range filtering logic will go here
-    return true;
-  });
+  const fetchData = useCallback(async () => {
+    const params = new URLSearchParams({
+      type: activeTab.toLowerCase(),
+      country: filters.country === 'All' ? '' : filters.country,
+      sport: filters.sport === 'All' ? '' : filters.sport,
+      dateRange: filters.dateRange,
+    }).toString();
 
-  const handleExportCSV = () => {
-    const headers = ['Rank', 'Handle', 'Points', 'Country', 'Sport'];
-    const rows = filteredLeaderboard.map(entry => 
-      [entry.rank, entry.handle, entry.points, entry.country, entry.sport].join(',')
-    );
+    try {
+      const response = await fetch(`/api/admin/leaderboard?${params}`);
+      const result = await response.json();
+      if (result.success) {
+        setLeaderboardData(result.data || []);
+      } else {
+        setLeaderboardData([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+      setLeaderboardData([]);
+    }
+  }, [activeTab, filters]);
 
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${activeTab}_leaderboard.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleRecompute = async () => {
+    try {
+      const response = await fetch('/api/admin/leaderboard/recalculate', { method: 'POST' });
+      const result = await response.json();
+      if (result.success) {
+        alert('Leaderboard recalculation triggered! Data will refresh shortly.');
+        setTimeout(fetchData, 3000); // Refresh data after a delay
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to recompute leaderboard:', error);
+    }
   };
 
   return (
     <div className="min-h-screen bg-black text-white p-8">
       <h1 className="text-3xl font-bold text-white text-glow mb-8">Leaderboard Management</h1>
 
-      {/* Filters and Actions */}
+      {/* Tabs and Filters */}
       <div className="flex justify-between items-center mb-6 bg-gray-900 p-4 rounded-lg">
+        <div className="flex items-center space-x-2">
+          {TABS.map(tab => (
+            <button 
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold ${activeTab === tab ? 'bg-yellow-500 text-black' : 'bg-gray-800 hover:bg-gray-700'}`}>
+              {tab}
+            </button>
+          ))}
+        </div>
         <div className="flex items-center space-x-4">
-          <span className="text-gray-400">Filters:</span>
-          <select onChange={e => setFilters({ ...filters, country: e.target.value })} className="px-4 py-2 bg-gray-800 rounded-lg">
+          <select className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, country: e.target.value})}>
             <option value="All">All Countries</option>
+            {/* TODO: Populate with actual countries from an API */}
             <option value="US">United States</option>
             <option value="CA">Canada</option>
-            <option value="GB">United Kingdom</option>
           </select>
-          <select onChange={e => setFilters({ ...filters, sport: e.target.value })} className="px-4 py-2 bg-gray-800 rounded-lg">
+          <select className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, sport: e.target.value})}>
             <option value="All">All Sports</option>
-            <option value="Running">Running</option>
-            <option value="Cycling">Cycling</option>
-            <option value="Swimming">Swimming</option>
+            {/* TODO: Populate with actual sports */}
           </select>
-          <input type="date" onChange={e => setFilters({ ...filters, dateRange: e.target.value })} className="px-4 py-2 bg-gray-800 rounded-lg" />
-        </div>
-        <div>
-          <button className="px-4 py-2 bg-blue-600 rounded-lg mr-2">Recompute/Refresh</button>
-          <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 rounded-lg">Export CSV</button>
+          <input type="date" className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, dateRange: e.target.value})}/>
+          <button onClick={handleRecompute} className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500">Recompute</button>
+          <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500">Export CSV</button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-700 mb-6">
-        <button onClick={() => setActiveTab('global')} className={`px-4 py-2 ${activeTab === 'global' ? 'border-b-2 border-yellow-500' : ''}`}>Global</button>
-        <button onClick={() => setActiveTab('country')} className={`px-4 py-2 ${activeTab === 'country' ? 'border-b-2 border-yellow-500' : ''}`}>Country</button>
-        <button onClick={() => setActiveTab('sport')} className={`px-4 py-2 ${activeTab === 'sport' ? 'border-b-2 border-yellow-500' : ''}`}>Sport</button>
-        <button onClick={() => setActiveTab('fans')} className={`px-4 py-2 ${activeTab === 'fans' ? 'border-b-2 border-yellow-500' : ''}`}>Fans</button>
-        <button onClick={() => setActiveTab('players')} className={`px-4 py-2 ${activeTab === 'players' ? 'border-b-2 border-yellow-500' : ''}`}>Players</button>
-        <button onClick={() => setActiveTab('reviewers')} className={`px-4 py-2 ${activeTab === 'reviewers' ? 'border-b-2 border-yellow-500' : ''}`}>Reviewers</button>
-      </div>
-
-      {/* Tab Content */}
-      <div>
-        <div className="bg-gray-900 rounded-lg overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-gray-800">
+      <div className="bg-gray-900 rounded-lg overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-gray-800">
+            <tr>
+              <th className="p-4 w-16">Rank</th>
+              <th className="p-4">User</th>
+              <th className="p-4">Country</th>
+              <th className="p-4">Goal Points</th>
+              <th className="p-4">XP Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leaderboardData.length > 0 ? (
+              leaderboardData.map((user, index) => (
+                <LeaderboardRow key={user.id || index} user={user} rank={index + 1} />
+              ))
+            ) : (
               <tr>
-                <th className="p-4">Rank</th>
-                <th className="p-4">Handle</th>
-                <th className="p-4">Points</th>
-                <th className="p-4">Country</th>
-                <th className="p-4">Sport</th>
+                <td colSpan={5} className="text-center py-16 text-gray-500">No data available for this view.</td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredLeaderboard.map((entry, index) => (
-                <tr key={index} className={`border-b border-gray-800 ${index < 3 ? 'font-bold' : ''}`}>
-                  <td className={`p-4 ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-yellow-600' : ''}`}>{entry.rank}</td>
-                  <td className="p-4"><a href="#" className="hover:underline">{entry.handle}</a></td>
-                  <td className="p-4">{entry.points}</td>
-                  <td className="p-4">{entry.country}</td>
-                  <td className="p-4">{entry.sport}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

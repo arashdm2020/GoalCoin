@@ -2,16 +2,46 @@
 
 import { useRouter } from 'next/navigation';
 
-const RoadmapNode = ({ phase, title, description, animationPlaceholder }: {
+// Placeholder Animation Components
+const IgnitionAnimation = () => (
+  <svg className="w-24 h-24 text-gray-500" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+    {/* Simple representation of a walking silhouette */}
+    <circle cx="50" cy="30" r="10" />
+    <path d="M50 40V70" />
+    <path d="M50 50L30 70" />
+    <path d="M50 50L70 70" />
+    <path d="M50 70L30 90" />
+    <path d="M50 70L70 90" />
+  </svg>
+);
+
+const ExpansionAnimation = () => (
+  <svg className="w-24 h-24 text-gray-500" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+    {/* Simple representation of a gold ring */}
+    <circle cx="50" cy="50" r="40" />
+  </svg>
+);
+
+const AscensionAnimation = () => (
+  <svg className="w-24 h-24 text-gray-500" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+    {/* Simple representation of a globe and GC logo */}
+    <circle cx="50" cy="50" r="40" />
+    <path d="M50 10V90" />
+    <path d="M10 50H90" />
+    <path d="M20 30Q50 10 80 30" />
+    <path d="M20 70Q50 90 80 70" />
+  </svg>
+);
+
+const RoadmapNode = ({ phase, title, description, children }: { 
   phase: string;
   title: string;
   description: string;
-  animationPlaceholder: string;
+  children: React.ReactNode;
 }) => (
   <div className="group relative flex flex-col items-center text-center p-8 bg-gray-900/50 rounded-lg border border-transparent hover:border-[#FFD700]/50 transition-all duration-300 ripple-on-hover">
-    {/* Placeholder for SVG/Lottie Animation */}
-    <div className="w-32 h-32 bg-gray-800 rounded-full mb-4 flex items-center justify-center">
-      <p className="text-gray-500">{animationPlaceholder}</p>
+    <div className="w-32 h-32 mb-4 flex items-center justify-center">
+      {children}
     </div>
     <h2 className="text-2xl font-bold text-[#FFD700] mb-2">{phase}</h2>
     <h3 className="text-xl font-semibold text-white">{title}</h3>
@@ -42,20 +72,23 @@ export default function RoadmapPage() {
             phase="Phase 1"
             title="Ignition"
             description="Origin · Will · Spark"
-            animationPlaceholder="Walking Silhouette"
-          />
+          >
+            <IgnitionAnimation />
+          </RoadmapNode>
           <RoadmapNode 
             phase="Phase 2"
             title="Expansion"
             description="Unity · Competition · Energy"
-            animationPlaceholder="10 Sports in Gold Ring"
-          />
+          >
+            <ExpansionAnimation />
+          </RoadmapNode>
           <RoadmapNode 
             phase="Phase 3"
             title="Ascension"
             description="Empire · Legacy · GoalCoin"
-            animationPlaceholder="Globe + GC Logo"
-          />
+          >
+            <AscensionAnimation />
+          </RoadmapNode>
         </div>
       </div>
     </div>

@@ -5,55 +5,62 @@ import { useState } from 'react';
 interface AddCommissionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (commission: { wallet: string; amount: number; currency: 'USDT' | 'GC' }) => void;
+  onSubmit: (commission: { reviewer_wallet: string; submission_id: string; amount_usdt: number; reason: string; }) => void;
 }
 
 const AddCommissionModal = ({ isOpen, onClose, onSubmit }: AddCommissionModalProps) => {
-  const [wallet, setWallet] = useState('');
-  const [amount, setAmount] = useState(0);
-  const [currency, setCurrency] = useState<'USDT' | 'GC'>('USDT');
+  const [reviewer_wallet, setReviewerWallet] = useState('');
+  const [submission_id, setSubmissionId] = useState('');
+  const [amount_usdt, setAmount] = useState(0);
+  const [reason, setReason] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    onSubmit({ wallet, amount, currency });
-    setWallet('');
+    onSubmit({ reviewer_wallet, submission_id, amount_usdt, reason });
+    setReviewerWallet('');
+    setSubmissionId('');
     setAmount(0);
-    setCurrency('USDT');
+    setReason('');
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-gray-900 p-8 rounded-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Add Manual Commission</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+      <div className="bg-gray-900 p-8 rounded-lg w-full max-w-md border border-yellow-500/30">
+        <h2 className="text-2xl font-bold mb-6 text-glow">Add Manual Commission</h2>
         <div className="space-y-4 mb-6">
           <input
             type="text"
-            value={wallet}
-            onChange={(e) => setWallet(e.target.value)}
-            placeholder="Wallet Address"
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+            value={reviewer_wallet}
+            onChange={(e) => setReviewerWallet(e.target.value)}
+            placeholder="Reviewer Wallet Address"
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-yellow-500 focus:border-yellow-500"
+          />
+          <input
+            type="text"
+            value={submission_id}
+            onChange={(e) => setSubmissionId(e.target.value)}
+            placeholder="Submission ID"
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-yellow-500 focus:border-yellow-500"
           />
           <input
             type="number"
-            value={amount}
+            value={amount_usdt}
             onChange={(e) => setAmount(Number(e.target.value))}
-            placeholder="Amount"
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+            placeholder="Amount (USDT)"
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-yellow-500 focus:border-yellow-500"
           />
-          <select 
-            value={currency} 
-            onChange={e => setCurrency(e.target.value as 'USDT' | 'GC')}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-          >
-            <option value="USDT">USDT</option>
-            <option value="GC">GC</option>
-          </select>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason (optional)"
+            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white h-24 resize-none focus:ring-yellow-500 focus:border-yellow-500"
+          />
         </div>
-        <div className="flex justify-end">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-700 rounded-lg mr-2">Cancel</button>
-          <button onClick={handleSubmit} className="px-4 py-2 bg-green-600 rounded-lg">Add Commission</button>
+        <div className="flex justify-end space-x-4">
+          <button onClick={onClose} className="px-6 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">Cancel</button>
+          <button onClick={handleSubmit} className="px-6 py-2 bg-green-600 rounded-lg hover:bg-green-500 transition-colors">Add Commission</button>
         </div>
       </div>
     </div>

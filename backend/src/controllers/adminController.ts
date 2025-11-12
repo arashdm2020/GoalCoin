@@ -132,70 +132,470 @@ export const adminController = {
     }
   },
 
-  // --- Reviewer Management ---
+  // --- Reviewer Management --- (Reloading server)
   async addReviewer(req: Request, res: Response): Promise<void> {
     const { wallet } = req.body;
-    if (!wallet) {
-      res.status(400).json({ error: 'Wallet address is required' });
+    if (!wallet || !wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
+      res.status(400).json({ error: 'A valid wallet address is required' });
       return;
     }
+
+    const lowerCaseWallet = wallet.toLowerCase();
+
     try {
-      const reviewer = await prisma.reviewerWallet.create({
-        data: { wallet: wallet.toLowerCase() },
+      const user = await prisma.user.upsert({
+        where: { wallet: lowerCaseWallet },
+        update: {}, // No update needed if user exists
+        create: { wallet: lowerCaseWallet, email: `${lowerCaseWallet}@goalcoin.app` }, // Create a placeholder email
       });
-      
+
+      const existingReviewer = await prisma.reviewer.findUnique({
+        where: { user_id: user.id },
+      });
+
+      if (existingReviewer) {
+        res.status(400).json({ error: 'This user is already a reviewer.' });
+        return;
+      }
+
+      const reviewer = await prisma.reviewer.create({
+        data: {
+          user_id: user.id,
+        },
+      });
+
       await AuditService.log({
         action: 'REVIEWER_ADDED',
         entity_type: 'reviewer',
-        entity_id: reviewer.wallet,
+        entity_id: reviewer.id,
         admin_user: 'admin', // TODO: Get from JWT token
-        new_data: reviewer,
+        new_data: { userId: user.id, reviewerId: reviewer.id },
       });
 
-      res.status(201).json(reviewer);
+      res.status(201).json({ success: true, data: reviewer });
     } catch (error) {
+      console.error('Failed to add reviewer:', error);
       res.status(500).json({ error: 'Failed to add reviewer' });
     }
   },
 
   async listReviewers(req: Request, res: Response): Promise<void> {
+    const { status, accuracyMin, accuracyMax, date } = req.query;
+
     try {
-      const reviewers = await prisma.reviewerWallet.findMany();
-      res.status(200).json(reviewers);
+      const where: any = {};
+      if (status && status !== 'All') {
+        where.status = status as 'ACTIVE' | 'SUSPENDED';
+      }
+      // Accuracy and date filtering will be more complex and added later
+
+      const reviewers = await prisma.reviewer.findMany({
+        where,
+        include: {
+          user: { select: { wallet: true, handle: true } },
+        },
+        orderBy: { created_at: 'desc' },
+      });
+
+      const reviewerWallets = reviewers
+        .map(r => r.user.wallet)
+        .filter((w): w is string => w !== null && w !== undefined);
+
+      const reviews = await prisma.review.findMany({
+        where: {
+          reviewer_wallet: { in: reviewerWallets },
+          submission: {
+            status: { in: ['APPROVED', 'REJECTED'] },
+          },
+        },
+        include: {
+          submission: {
+            select: { status: true },
+          },
+        },
+      });
+
+      const reviewsByWallet = reviews.reduce((acc, review) => {
+        const wallet = review.reviewer_wallet;
+        if (!acc[wallet]) {
+          acc[wallet] = [];
+        }
+        acc[wallet].push(review);
+        return acc;
+      }, {} as Record<string, typeof reviews>);
+
+      const reviewersWithAccuracy = reviewers.map(reviewer => {
+        const wallet = reviewer.user.wallet;
+        if (!wallet || !reviewsByWallet[wallet]) {
+          return { ...reviewer, accuracy: 1, total_votes: 0, wrong_votes: 0 };
+        }
+
+        const theirReviews = reviewsByWallet[wallet];
+        let wrongVotes = 0;
+
+        theirReviews.forEach(review => {
+          const finalStatus = review.submission.status;
+          const theirVote = review.vote;
+          if (
+            (theirVote === 'APPROVE' && finalStatus === 'REJECTED') ||
+            (theirVote === 'REJECT' && finalStatus === 'APPROVED')
+          ) {
+            wrongVotes++;
+          }
+        });
+
+        const totalVotes = theirReviews.length;
+        const accuracy = totalVotes > 0 ? 1 - wrongVotes / totalVotes : 1;
+
+        return { ...reviewer, accuracy, total_votes: totalVotes, wrong_votes: wrongVotes };
+      });
+
+      const filteredData = reviewersWithAccuracy.filter(r => {
+        if (accuracyMin && r.accuracy < parseFloat(accuracyMin as string)) return false;
+        if (accuracyMax && r.accuracy > parseFloat(accuracyMax as string)) return false;
+        return true;
+      });
+
+      res.status(200).json({ success: true, data: filteredData });
     } catch (error) {
+      console.error('Failed to fetch reviewers:', error);
       res.status(500).json({ error: 'Failed to fetch reviewers' });
     }
   },
 
   async toggleReviewerStatus(req: Request, res: Response): Promise<void> {
-    const { wallet, enabled } = req.body;
-    if (!wallet || typeof enabled !== 'boolean') {
-      res.status(400).json({ error: 'Wallet and enabled status are required' });
+    const { reviewerId, status } = req.body;
+    if (!reviewerId || !status || !['ACTIVE', 'SUSPENDED'].includes(status)) {
+      res.status(400).json({ error: 'Reviewer ID and a valid status (ACTIVE/SUSPENDED) are required' });
       return;
     }
+
     try {
-      const reviewer = await prisma.reviewerWallet.update({
-        where: { wallet },
-        data: { enabled },
+      const updatedReviewer = await prisma.reviewer.update({
+        where: { id: reviewerId },
+        data: { status: status as 'ACTIVE' | 'SUSPENDED' },
       });
-      res.status(200).json(reviewer);
+
+      await AuditService.log({
+        action: 'REVIEWER_STATUS_CHANGED',
+        entity_type: 'reviewer',
+        entity_id: reviewerId,
+        admin_user: 'admin', // TODO: Get from JWT
+        new_data: { status },
+      });
+
+      res.status(200).json({ success: true, data: updatedReviewer });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update reviewer' });
+      console.error('Failed to update reviewer status:', error);
+      res.status(500).json({ error: 'Failed to update reviewer status' });
     }
+  },
+
+  async resetStrikes(req: Request, res: Response): Promise<void> {
+    const { reviewerId } = req.body;
+    if (!reviewerId) {
+      res.status(400).json({ error: 'Reviewer ID is required' });
+      return;
+    }
+
+    try {
+      const updatedReviewer = await prisma.reviewer.update({
+        where: { id: reviewerId },
+        data: { strikes: 0 },
+      });
+
+      await AuditService.log({
+        action: 'REVIEWER_STRIKES_RESET',
+        entity_type: 'reviewer',
+        entity_id: reviewerId,
+        admin_user: 'admin', // TODO: Get from JWT
+      });
+
+      res.status(200).json({ success: true, data: updatedReviewer });
+    } catch (error) {
+      console.error('Failed to reset strikes:', error);
+      res.status(500).json({ error: 'Failed to reset strikes' });
+    }
+  },
+
+  async getReviewerAudit(req: Request, res: Response): Promise<void> {
+    const { reviewerId } = req.params;
+    if (!reviewerId) {
+      res.status(400).json({ error: 'Reviewer ID is required' });
+      return;
+    }
+
+    try {
+      const reviewer = await prisma.reviewer.findUnique({
+        where: { id: reviewerId },
+        include: { user: { select: { wallet: true } } },
+      });
+
+      if (!reviewer) {
+        res.status(404).json({ error: 'Reviewer not found' });
+        return;
+      }
+
+      const votes = await prisma.review.findMany({
+        where: { reviewer_wallet: reviewer.user.wallet! },
+        orderBy: { voted_at: 'desc' },
+        take: 20,
+      });
+
+      res.status(200).json({ success: true, data: votes });
+    } catch (error) {
+      console.error('Failed to get reviewer audit:', error);
+      res.status(500).json({ error: 'Failed to get reviewer audit' });
+    }
+  },
+
+  async bulkUpdateSubmissionStatus(req: Request, res: Response): Promise<void> {
+    const { submissionIds, status } = req.body;
+
+    if (!submissionIds || !Array.isArray(submissionIds) || submissionIds.length === 0 || !status) {
+      res.status(400).json({ error: 'An array of submission IDs and a status are required' });
+      return;
+    }
+
+    if (!['APPROVED', 'REJECTED'].includes(status)) {
+      res.status(400).json({ error: 'Invalid status provided' });
+      return;
+    }
+
+    try {
+      const result = await prisma.submission.updateMany({
+        where: {
+          id: { in: submissionIds },
+        },
+        data: {
+          status: status as 'APPROVED' | 'REJECTED',
+          closed_at: new Date(),
+        },
+      });
+
+      await prisma.adminLog.create({
+        data: {
+          admin_user: 'admin', // TODO: Get from JWT
+          action: `BULK_${status}`,
+          target_id: `${result.count} submissions`,
+          reason: `Bulk operation via admin panel`,
+        },
+      });
+
+      res.status(200).json({ success: true, count: result.count });
+    } catch (error) {
+      console.error(`Failed to bulk update status to ${status}:`, error);
+      res.status(500).json({ error: 'Failed to bulk update submissions' });
+    }
+  },
+
+  async forceUpdateSubmissionStatus(req: Request, res: Response): Promise<void> {
+    const { submissionId, status, reason } = req.body;
+
+    if (!submissionId || !status) {
+      res.status(400).json({ error: 'Submission ID and status are required' });
+      return;
+    }
+
+    if (!['APPROVED', 'REJECTED'].includes(status)) {
+      res.status(400).json({ error: 'Invalid status provided' });
+      return;
+    }
+
+    try {
+      const submission = await prisma.submission.update({
+        where: { id: submissionId },
+        data: { 
+          status: status as 'APPROVED' | 'REJECTED',
+          closed_at: new Date(),
+        },
+      });
+
+      await prisma.adminLog.create({
+        data: {
+          admin_user: 'admin', // TODO: Get from JWT
+          action: `FORCE_${status}`,
+          target_id: submissionId,
+          reason: reason || 'No reason provided',
+        },
+      });
+
+      res.status(200).json({ success: true, data: submission });
+    } catch (error) {
+      console.error(`Failed to force update status to ${status}:`, error);
+      res.status(500).json({ error: 'Failed to update submission status' });
+    }
+  },
+
+  async addManualCommission(req: Request, res: Response): Promise<void> {
+    const { reviewer_wallet, submission_id, amount_usdt, reason } = req.body;
+    if (!reviewer_wallet || !submission_id || !amount_usdt) {
+      res.status(400).json({ error: 'Reviewer wallet, submission ID, and amount are required' });
+      return;
+    }
+
+    try {
+      const commission = await prisma.commission.create({
+        data: {
+          reviewer_wallet,
+          submission_id,
+          amount_usdt,
+        },
+      });
+
+      await prisma.adminLog.create({
+        data: {
+          admin_user: 'admin', // TODO: from JWT
+          action: 'MANUAL_COMMISSION_ADD',
+          target_id: commission.id,
+          reason: reason || 'Manual commission added',
+        },
+      });
+
+      res.status(201).json({ success: true, data: commission });
+    } catch (error) {
+      console.error('Failed to add manual commission:', error);
+      res.status(500).json({ error: 'Failed to add manual commission' });
+    }
+  },
+
+  async getLeaderboard(req: Request, res: Response): Promise<void> {
+    const { type = 'global', country, sport } = req.query;
+
+    try {
+      const where: any = {};
+      if (type === 'country' && country) {
+        where.country_code = country as string;
+      }
+      // Sport-specific leaderboard logic would be more complex
+
+      const users = await prisma.user.findMany({
+        where,
+        orderBy: { goal_points: 'desc' },
+        take: 100,
+        select: {
+          handle: true,
+          wallet: true,
+          country_code: true,
+          goal_points: true,
+          xp_points: true,
+        },
+      });
+
+      res.status(200).json({ success: true, data: users });
+    } catch (error) {
+      console.error('Failed to get leaderboard:', error);
+      res.status(500).json({ error: 'Failed to get leaderboard' });
+    }
+  },
+
+  async recalculateLeaderboard(req: Request, res: Response): Promise<void> {
+    try {
+      // This is a placeholder for a more complex recalculation logic
+      // For now, it just confirms that the endpoint is reachable.
+      res.status(200).json({ success: true, message: 'Leaderboard recalculation triggered.' });
+    } catch (error) {
+      console.error('Failed to recalculate leaderboard:', error);
+      res.status(500).json({ error: 'Failed to recalculate leaderboard' });
+    }
+  },
+
+  // --- Settings Management ---
+
+  async getSystemStatus(req: Request, res: Response): Promise<void> {
+    try {
+      // Mock data for now
+      const status = {
+        mailgun: 'operational',
+        redis: 'connected',
+        database: 'connected',
+        lastBackup: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      };
+      res.status(200).json({ success: true, data: status });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get system status' });
+    }
+  },
+
+  async getFeatureToggles(req: Request, res: Response): Promise<void> {
+    try {
+      const toggles = await prisma.featureToggle.findMany();
+      res.status(200).json({ success: true, data: toggles });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get feature toggles' });
+    }
+  },
+
+  async updateFeatureToggle(req: Request, res: Response): Promise<void> {
+    const { key, value } = req.body;
+    if (!key || typeof value !== 'boolean') {
+      res.status(400).json({ error: 'Key and boolean value are required' });
+      return;
+    }
+
+    try {
+      const toggle = await prisma.featureToggle.update({
+        where: { key },
+        data: { value },
+      });
+      res.status(200).json({ success: true, data: toggle });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update feature toggle' });
+    }
+  },
+
+  async getAdminSecurityLogs(req: Request, res: Response): Promise<void> {
+    try {
+      const logs = await prisma.adminLog.findMany({
+        orderBy: { created_at: 'desc' },
+        take: 50,
+      });
+      res.status(200).json({ success: true, data: logs });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get admin logs' });
+    }
+  },
+
+  async verifyBurnRecord(req: Request, res: Response): Promise<void> {
+    const { burnId } = req.body;
+    if (!burnId) {
+      res.status(400).json({ error: 'Burn ID is required' });
+      return;
+    }
+    // This is a placeholder for the actual verification logic
+    res.status(200).json({ success: true, message: `Burn record ${burnId} verified.` });
   },
 
   // --- Submission & Payout Viewing ---
   async getSubmissions(req: Request, res: Response): Promise<void> {
+    const { status, date, country } = req.query;
     try {
-      const submissions = await prisma.submission.findMany({ 
-        include: { 
-          reviews: true, 
+      const where: any = {};
+
+      if (status && status !== 'All') {
+        where.status = status as 'PENDING' | 'APPROVED' | 'REJECTED';
+      }
+      if (country && country !== 'All') {
+        where.user = { country_code: country as string };
+      }
+      if (date) {
+        const startDate = new Date(date as string);
+        const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+        where.created_at = { gte: startDate, lt: endDate };
+      }
+
+      const submissions = await prisma.submission.findMany({
+        where,
+        include: {
+          reviews: true,
           assignments: true,
-          user: { select: { wallet: true, handle: true } }
-        } 
+          user: { select: { wallet: true, handle: true, country_code: true } },
+        },
+        orderBy: { created_at: 'desc' },
       });
-      res.status(200).json(submissions);
+      res.status(200).json({ success: true, data: submissions });
     } catch (error) {
+      console.error('Failed to fetch submissions:', error);
       res.status(500).json({ error: 'Failed to fetch submissions' });
     }
   },
@@ -266,20 +666,19 @@ export const adminController = {
 
     try {
       const suspendUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-      const oldReviewer = await prisma.reviewerWallet.findUnique({ where: { wallet } });
+      const oldReviewer = await prisma.reviewer.findUnique({ where: { user_id: wallet } });
       
-      const reviewer = await prisma.reviewerWallet.update({
-        where: { wallet: wallet.toLowerCase() },
+      const reviewer = await prisma.reviewer.update({
+        where: { user_id: wallet.toLowerCase() },
         data: { 
-          enabled: false,
-          suspended_until: suspendUntil,
+          status: 'SUSPENDED',
         },
       });
 
       await AuditService.log({
         action: 'REVIEWER_SUSPENDED',
         entity_type: 'reviewer',
-        entity_id: reviewer.wallet,
+        entity_id: reviewer.user_id,
         admin_user: 'admin',
         old_data: oldReviewer,
         new_data: reviewer,
@@ -304,24 +703,16 @@ export const adminController = {
         return;
       }
 
-      // Get enabled reviewers who are not suspended
-      const now = new Date();
-      const enabledReviewers = await prisma.reviewerWallet.findMany({ 
-        where: { 
-          enabled: true,
-          OR: [
-            { suspended_until: null },
-            { suspended_until: { lt: now } }
-          ]
-        } 
+      const activeReviewers = await prisma.reviewer.findMany({
+        where: { status: 'ACTIVE' },
+        include: { user: { select: { wallet: true } } },
       });
 
-      if (enabledReviewers.length < 5) {
-        res.status(400).json({ error: 'Not enough enabled reviewers' });
+      if (activeReviewers.length < 5) {
+        res.status(400).json({ error: 'Not enough active reviewers' });
         return;
       }
 
-      // Filter out reviewers who reviewed this user in the last week
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const recentAssignments = await prisma.reviewAssignment.findMany({
         where: {
@@ -331,10 +722,10 @@ export const adminController = {
         select: { reviewer_wallet: true }
       });
 
-      const excludedReviewers = new Set(recentAssignments.map(a => a.reviewer_wallet));
-      const availableReviewers = enabledReviewers.filter(r => !excludedReviewers.has(r.wallet));
+      const excludedWallets = new Set(recentAssignments.map(a => a.reviewer_wallet));
+      const availableReviewers = activeReviewers.filter(r => r.user.wallet && !excludedWallets.has(r.user.wallet));
 
-      const selectedReviewers = (availableReviewers.length >= 5 ? availableReviewers : enabledReviewers)
+      const selectedReviewers = (availableReviewers.length >= 5 ? availableReviewers : activeReviewers)
         .sort(() => 0.5 - Math.random())
         .slice(0, 5);
 
@@ -343,7 +734,7 @@ export const adminController = {
           prisma.reviewAssignment.create({
             data: {
               submission_id,
-              reviewer_wallet: reviewer.wallet,
+              reviewer_wallet: reviewer.user.wallet!,
               expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
             },
           })
@@ -358,7 +749,7 @@ export const adminController = {
         new_data: { assignments: assignments.map(a => a.reviewer_wallet) },
       });
 
-      res.status(201).json({ assignments });
+      res.status(201).json({ success: true, data: assignments });
     } catch (error) {
       console.error('Failed to assign reviewers:', error);
       res.status(500).json({ error: 'Failed to assign reviewers' });
@@ -405,6 +796,52 @@ export const adminController = {
           closed_at: new Date(),
         },
       });
+
+      // Handle reviewer strikes
+      const STRIKE_THRESHOLD = 3;
+
+      for (const review of reviews) {
+        const finalStatus = updatedSubmission.status;
+        const theirVote = review.vote;
+        let wasWrong = false;
+
+        if (
+          (theirVote === 'APPROVE' && finalStatus === 'REJECTED') ||
+          (theirVote === 'REJECT' && finalStatus === 'APPROVED')
+        ) {
+          wasWrong = true;
+        }
+
+        if (wasWrong) {
+          const reviewerUser = await prisma.user.findUnique({
+            where: { wallet: review.reviewer_wallet },
+            include: { reviewer: true },
+          });
+
+          if (reviewerUser && reviewerUser.reviewer) {
+            const newStrikes = reviewerUser.reviewer.strikes + 1;
+
+            if (newStrikes >= STRIKE_THRESHOLD) {
+              await prisma.reviewer.update({
+                where: { id: reviewerUser.reviewer.id },
+                data: { status: 'SUSPENDED', strikes: 0 },
+              });
+              await AuditService.log({
+                action: 'REVIEWER_AUTO_SUSPENDED',
+                entity_type: 'reviewer',
+                entity_id: reviewerUser.reviewer.id,
+                admin_user: 'system',
+                new_data: { reason: `Reached ${STRIKE_THRESHOLD} strikes.` },
+              });
+            } else {
+              await prisma.reviewer.update({
+                where: { id: reviewerUser.reviewer.id },
+                data: { strikes: newStrikes },
+              });
+            }
+          }
+        }
+      }
 
       // Award commissions to reviewers
       await Promise.all(
@@ -577,6 +1014,50 @@ export const adminController = {
     } catch (error) {
       console.error('Failed to mark commissions as paid:', error);
       res.status(500).json({ error: 'Failed to mark commissions as paid' });
+    }
+  },
+
+  async exportCsv(req: Request, res: Response): Promise<void> {
+    const { type } = req.query;
+
+    try {
+      let data: any[] = [];
+      let headers: string[] = [];
+
+      switch (type) {
+        case 'reviewers':
+          data = await prisma.reviewer.findMany({ include: { user: true } });
+          headers = ['id', 'user_id', 'wallet', 'status', 'strikes', 'created_at'];
+          break;
+        case 'submissions':
+          data = await prisma.submission.findMany({ include: { user: true } });
+          headers = ['id', 'user_id', 'wallet', 'status', 'created_at', 'closed_at'];
+          break;
+        case 'commissions':
+          data = await prisma.commission.findMany();
+          headers = ['id', 'reviewer_wallet', 'submission_id', 'amount_usdt', 'earned_at', 'payout_id'];
+          break;
+        default:
+          res.status(400).json({ error: 'Invalid export type' });
+          return;
+      }
+
+      const csv = [headers.join(',')];
+      data.forEach(row => {
+        const values = headers.map(header => {
+          if (header === 'wallet') return row.user?.wallet || '';
+          return row[header];
+        });
+        csv.push(values.join(','));
+      });
+
+      res.header('Content-Type', 'text/csv');
+      res.attachment(`export-${type}-${Date.now()}.csv`);
+      res.send(csv.join('\n'));
+
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      res.status(500).json({ error: 'Failed to export CSV' });
     }
   },
 

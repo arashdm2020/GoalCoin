@@ -132,31 +132,44 @@ export const reviewController = {
             // Update reviewer accuracy scores
             await Promise.all(
               allReviews.map(async (review) => {
-                const reviewer = await tx.reviewerWallet.findUnique({
-                  where: { wallet: review.reviewer_wallet }
+                const reviewer = await tx.reviewer.findFirst({
+                  where: { 
+                    user: {
+                      wallet: review.reviewer_wallet
+                    }
+                  }
                 });
                 
                 if (reviewer) {
                   const isCorrect = (finalStatus === 'APPROVED' && review.vote === 'APPROVE') ||
                                    (finalStatus === 'REJECTED' && review.vote === 'REJECT');
-                  
-                  const newTotalVotes = reviewer.total_votes + 1;
-                  const newWrongVotes = isCorrect ? reviewer.wrong_votes : reviewer.wrong_votes + 1;
-                  const newAccuracy = ((newTotalVotes - newWrongVotes) / newTotalVotes) * 100;
 
-                  await tx.reviewerWallet.update({
-                    where: { wallet: review.reviewer_wallet },
-                    data: {
-                      total_votes: newTotalVotes,
-                      wrong_votes: newWrongVotes,
-                      accuracy_7d: newAccuracy,
-                      // Auto-suspend if accuracy < 85%
-                      ...(newAccuracy < 85 && {
-                        enabled: false,
-                        suspended_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                      })
-                    },
-                  });
+                  if (!isCorrect) {
+                    const updatedReviewer = await tx.reviewer.update({
+                      where: { id: reviewer.id },
+                      data: {
+                        strikes: {
+                          increment: 1,
+                        },
+                      },
+                    });
+
+                    // Check for auto-suspension
+                    if (updatedReviewer.strikes >= 3) {
+                      await tx.reviewer.update({
+                        where: { id: reviewer.id },
+                        data: { status: 'SUSPENDED' },
+                      });
+
+                      await AuditService.log({
+                        action: 'REVIEWER_AUTO_SUSPENDED',
+                        entity_type: 'reviewer',
+                        entity_id: reviewer.id,
+                        admin_user: 'system',
+                        new_data: { strikes: updatedReviewer.strikes },
+                      });
+                    }
+                  }
                 }
               })
             );
