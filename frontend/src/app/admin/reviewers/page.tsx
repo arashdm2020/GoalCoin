@@ -25,19 +25,31 @@ export default function ReviewersPage() {
   const fetchCountries = useCallback(async () => {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
+      if (!authHeader) {
+        console.log('No auth header found');
+        return;
+      }
+      
+      console.log('Fetching countries from:', `${getBackendUrl()}/api/admin/countries`);
       const response = await fetch(`${getBackendUrl()}/api/admin/countries`, {
         headers: { 'Authorization': authHeader }
       });
       
+      console.log('Countries response status:', response.status);
+      
       if (!response.ok) {
-        console.error('Failed to fetch countries:', response.status);
+        console.error('Failed to fetch countries:', response.status, response.statusText);
         return;
       }
       
       const result = await response.json();
+      console.log('Countries result:', result);
+      
       if (result.success) {
+        console.log('Setting countries:', result.data);
         setAvailableCountries(result.data || []);
+      } else {
+        console.error('Countries API returned error:', result);
       }
     } catch (error) {
       console.error('Failed to fetch countries:', error);
@@ -70,7 +82,10 @@ export default function ReviewersPage() {
       }
       
       const result = await response.json();
+      console.log('Reviewers result:', result);
+      
       if (result.success) {
+        console.log('Setting reviewers:', result.data?.length, 'total:', result.total);
         setReviewers(result.data || []);
         setTotalItems(result.total || 0);
       } else {
