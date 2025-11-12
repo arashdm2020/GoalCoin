@@ -30,12 +30,23 @@ export default function ReviewersPage() {
       const response = await fetch(`${getBackendUrl()}/api/admin/reviewers?${params}`, {
         headers: { 'Authorization': authHeader }
       });
+      
+      if (!response.ok) {
+        console.error('API Error:', response.status, response.statusText);
+        setReviewers([]);
+        return;
+      }
+      
       const result = await response.json();
       if (result.success) {
-        setReviewers(result.data);
+        setReviewers(result.data || []);
+      } else {
+        console.error('API returned error:', result);
+        setReviewers([]);
       }
     } catch (error) {
       console.error('Failed to fetch reviewers:', error);
+      setReviewers([]);
     }
   }, [filters]);
 
@@ -186,39 +197,50 @@ export default function ReviewersPage() {
               </tr>
             </thead>
             <tbody>
-              {reviewers.map(reviewer => (
-                <tr key={reviewer.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                  <td className="p-2 md:p-4">
-                    <div className="font-mono text-xs md:text-sm break-all">
-                      {reviewer.user?.wallet ? `${reviewer.user.wallet.slice(0, 6)}...${reviewer.user.wallet.slice(-4)}` : 'N/A'}
-                    </div>
-                  </td>
-                  <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.voting_weight}x</td>
-                  <td className="p-2 md:p-4 text-xs md:text-sm">
-                    <Tooltip content={`Votes: ${reviewer.total_votes} | Wrong: ${reviewer.wrong_votes}`}>
-                      {(reviewer.accuracy * 100).toFixed(2)}%
-                    </Tooltip>
-                  </td>
-                  <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.strikes}</td>
-                  <td className="p-2 md:p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs ${reviewer.status === 'ACTIVE' ? 'bg-green-600' : 'bg-red-600'}`}>
-                      {reviewer.status}
-                    </span>
-                  </td>
-                  <td className="p-2 md:p-4">
-                    <div className="flex flex-col md:flex-row gap-1 text-xs">
-                      {reviewer.status === 'ACTIVE' ? (
-                        <button onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} className="text-yellow-400 hover:underline">Suspend</button>
-                      ) : (
-                        <button onClick={() => handleStatusChange(reviewer.id, 'ACTIVE')} className="text-green-400 hover:underline">Reinstate</button>
-                      )}
-                      <button onClick={() => handleResetStrikes(reviewer.id)} className="text-blue-400 hover:underline">Reset</button>
-                      <button onClick={() => handleRemove(reviewer.id)} className="text-red-400 hover:underline">Remove</button>
-                      <button onClick={() => handleViewAudit(reviewer)} className="text-gray-400 hover:underline">Audit</button>
+              {reviewers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                    <div className="flex flex-col items-center space-y-2">
+                      <p className="text-lg">هیچ reviewer ای پیدا نشد</p>
+                      <p className="text-sm">برای اضافه کردن reviewer جدید از دکمه "Add Reviewer" استفاده کنید</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                reviewers.map(reviewer => (
+                  <tr key={reviewer.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                    <td className="p-2 md:p-4">
+                      <div className="font-mono text-xs md:text-sm break-all">
+                        {reviewer.user?.wallet ? `${reviewer.user.wallet.slice(0, 6)}...${reviewer.user.wallet.slice(-4)}` : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.voting_weight}x</td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm">
+                      <Tooltip content={`Votes: ${reviewer.total_votes} | Wrong: ${reviewer.wrong_votes}`}>
+                        {(reviewer.accuracy * 100).toFixed(2)}%
+                      </Tooltip>
+                    </td>
+                    <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.strikes}</td>
+                    <td className="p-2 md:p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs ${reviewer.status === 'ACTIVE' ? 'bg-green-600' : 'bg-red-600'}`}>
+                        {reviewer.status}
+                      </span>
+                    </td>
+                    <td className="p-2 md:p-4">
+                      <div className="flex flex-col md:flex-row gap-1 text-xs">
+                        {reviewer.status === 'ACTIVE' ? (
+                          <button onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} className="text-yellow-400 hover:underline">Suspend</button>
+                        ) : (
+                          <button onClick={() => handleStatusChange(reviewer.id, 'ACTIVE')} className="text-green-400 hover:underline">Reinstate</button>
+                        )}
+                        <button onClick={() => handleResetStrikes(reviewer.id)} className="text-blue-400 hover:underline">Reset</button>
+                        <button onClick={() => handleRemove(reviewer.id)} className="text-red-400 hover:underline">Remove</button>
+                        <button onClick={() => handleViewAudit(reviewer)} className="text-gray-400 hover:underline">Audit</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
