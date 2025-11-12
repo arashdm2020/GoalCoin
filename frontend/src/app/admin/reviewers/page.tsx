@@ -112,23 +112,31 @@ export default function ReviewersPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <h1 className="text-3xl font-bold text-white text-glow mb-8">Reviewer Management</h1>
+      <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-6 md:mb-8">Reviewer Management</h1>
 
       {/* Filters and Actions */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 bg-gray-900 p-4 rounded-lg gap-4">
-        <div>
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-400">Filters:</span>
+      <div className="flex flex-col space-y-4 mb-6 bg-gray-900 p-4 rounded-lg">
+        {/* Filters Row */}
+        <div className="flex flex-col space-y-3">
+          <span className="text-gray-400 text-sm font-medium">Filters:</span>
+          <div className="flex flex-col sm:flex-row gap-3">
             <select 
-              className="px-4 py-2 bg-gray-800 rounded-lg"
+              className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0"
               onChange={e => setFilters({ ...filters, status: e.target.value })}
             >
               <option value="All">All Statuses</option>
               <option value="ACTIVE">Active</option>
               <option value="SUSPENDED">Suspended</option>
             </select>
-            <div className="flex flex-wrap items-center gap-2 md:gap-4">
-              <span className="text-gray-400">Accuracy:</span>
+            <input 
+              type="date" 
+              className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
+              onChange={e => setFilters({ ...filters, date: e.target.value })}
+            />
+          </div>
+          <div className="flex flex-col space-y-2">
+            <span className="text-gray-400 text-sm">Accuracy Range:</span>
+            <div className="px-2">
               <RangeSlider 
                 min={0} 
                 max={1} 
@@ -136,16 +144,12 @@ export default function ReviewersPage() {
                 onChange={({ min, max }) => setFilters({ ...filters, accuracyMin: min, accuracyMax: max })}
               />
             </div>
-            <input 
-              type="date" 
-              className="px-4 py-2 bg-gray-800 rounded-lg" 
-              onChange={e => setFilters({ ...filters, date: e.target.value })}
-            />
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg">Add Reviewer</button>
-          <button onClick={handleExportCSV} className="px-4 py-2 bg-blue-600 rounded-lg">Export CSV</button>
+        {/* Actions Row */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">Add Reviewer</button>
+          <button onClick={handleExportCSV} className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Export CSV</button>
         </div>
       </div>
 
@@ -164,58 +168,60 @@ export default function ReviewersPage() {
         />
       )}
 
-      <div className="bg-gray-900 rounded-lg overflow-hidden overflow-x-auto">
-        <table className="w-full text-left min-w-[800px]">
-          <thead className="bg-gray-800">
-            <tr>
-              <th className="p-4">Wallet</th>
-              <th className="p-4">Voting Weight</th>
-              <th className="p-4">
-                <Tooltip content="accuracy = 1 - wrong/total">
-                  Accuracy
-                </Tooltip>
-              </th>
-              <th className="p-4">Strikes</th>
-              <th className="p-4">Status</th>
-              <th className="p-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reviewers.map(reviewer => (
-              <tr key={reviewer.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                <td className="p-4">
-                  <div className="font-mono text-sm break-all">
-                    {reviewer.user?.wallet ? `${reviewer.user.wallet.slice(0, 6)}...${reviewer.user.wallet.slice(-4)}` : 'N/A'}
-                  </div>
-                </td>
-                <td className="p-4">{reviewer.voting_weight}x</td>
-                <td className="p-4">
-                  <Tooltip content={`Votes: ${reviewer.total_votes} | Wrong: ${reviewer.wrong_votes}`}>
-                    {(reviewer.accuracy * 100).toFixed(2)}%
+      <div className="bg-gray-900 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[700px]">
+            <thead className="bg-gray-800">
+              <tr>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Wallet</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Weight</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">
+                  <Tooltip content="accuracy = 1 - wrong/total">
+                    Accuracy
                   </Tooltip>
-                </td>
-                <td className="p-4">{reviewer.strikes}</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-sm ${reviewer.status === 'ACTIVE' ? 'bg-green-600' : 'bg-red-600'}`}>
-                    {reviewer.status}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <div className="flex flex-wrap gap-1 text-sm">
-                    {reviewer.status === 'ACTIVE' ? (
-                      <button onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} className="text-yellow-400 hover:underline">Suspend</button>
-                    ) : (
-                      <button onClick={() => handleStatusChange(reviewer.id, 'ACTIVE')} className="text-green-400 hover:underline">Reinstate</button>
-                    )}
-                    <button onClick={() => handleResetStrikes(reviewer.id)} className="text-blue-400 hover:underline">Reset Strikes</button>
-                    <button onClick={() => handleRemove(reviewer.id)} className="text-red-400 hover:underline">Remove</button>
-                    <button onClick={() => handleViewAudit(reviewer)} className="text-gray-400 hover:underline">View Audit</button>
-                  </div>
-                </td>
+                </th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Strikes</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Status</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {reviewers.map(reviewer => (
+                <tr key={reviewer.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                  <td className="p-2 md:p-4">
+                    <div className="font-mono text-xs md:text-sm break-all">
+                      {reviewer.user?.wallet ? `${reviewer.user.wallet.slice(0, 6)}...${reviewer.user.wallet.slice(-4)}` : 'N/A'}
+                    </div>
+                  </td>
+                  <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.voting_weight}x</td>
+                  <td className="p-2 md:p-4 text-xs md:text-sm">
+                    <Tooltip content={`Votes: ${reviewer.total_votes} | Wrong: ${reviewer.wrong_votes}`}>
+                      {(reviewer.accuracy * 100).toFixed(2)}%
+                    </Tooltip>
+                  </td>
+                  <td className="p-2 md:p-4 text-xs md:text-sm">{reviewer.strikes}</td>
+                  <td className="p-2 md:p-4">
+                    <span className={`px-2 py-1 rounded-full text-xs ${reviewer.status === 'ACTIVE' ? 'bg-green-600' : 'bg-red-600'}`}>
+                      {reviewer.status}
+                    </span>
+                  </td>
+                  <td className="p-2 md:p-4">
+                    <div className="flex flex-col md:flex-row gap-1 text-xs">
+                      {reviewer.status === 'ACTIVE' ? (
+                        <button onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} className="text-yellow-400 hover:underline">Suspend</button>
+                      ) : (
+                        <button onClick={() => handleStatusChange(reviewer.id, 'ACTIVE')} className="text-green-400 hover:underline">Reinstate</button>
+                      )}
+                      <button onClick={() => handleResetStrikes(reviewer.id)} className="text-blue-400 hover:underline">Reset</button>
+                      <button onClick={() => handleRemove(reviewer.id)} className="text-red-400 hover:underline">Remove</button>
+                      <button onClick={() => handleViewAudit(reviewer)} className="text-gray-400 hover:underline">Audit</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
