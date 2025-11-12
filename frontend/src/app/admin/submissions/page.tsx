@@ -207,32 +207,32 @@ export default function SubmissionsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <h1 className="text-3xl font-bold text-white text-glow mb-8">Submissions Management</h1>
+      <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-6 md:mb-8">Submissions Management</h1>
 
       {/* Filters and Actions */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 bg-gray-900 p-4 rounded-lg gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-          <span className="text-gray-400">Filters:</span>
-          <select 
-            className="px-4 py-2 bg-gray-800 rounded-lg" 
-            onChange={e => setFilters({ ...filters, status: e.target.value })}
-          >
+      <div className="flex flex-col space-y-4 mb-6 bg-gray-900 p-4 rounded-lg">
+        <div className="flex flex-col space-y-3">
+          <span className="text-gray-400 text-sm font-medium">Filters:</span>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <select 
+              className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
+              onChange={e => setFilters({ ...filters, status: e.target.value })}
+            >
             <option value="All">All Statuses</option>
             <option value="Pending">Pending</option>
             <option value="Approved">Approved</option>
             <option value="Rejected">Rejected</option>
             <option value="Flagged">Flagged</option>
           </select>
-          <input 
-            type="date" 
-            className="px-4 py-2 bg-gray-800 rounded-lg" 
-            onChange={e => setFilters({ ...filters, date: e.target.value })}
-          />
-          <select 
-            className="px-4 py-2 bg-gray-800 rounded-lg" 
-            onChange={e => setFilters({ ...filters, country: e.target.value })}
-          >
+            <input 
+              type="date" 
+              className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
+              onChange={e => setFilters({ ...filters, date: e.target.value })}
+            />
+            <select 
+              className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
+              onChange={e => setFilters({ ...filters, country: e.target.value })}
+            >
             <option value="All">All Countries</option>
             <option value="US">United States</option>
             <option value="CA">Canada</option>
@@ -240,7 +240,7 @@ export default function SubmissionsPage() {
             <option value="AU">Australia</option>
             {/* Add other countries as needed */}
           </select>
-        </div>
+          </div>
         </div>
         <div>
           <div className="relative inline-block">
@@ -280,42 +280,44 @@ export default function SubmissionsPage() {
       />
 
       {/* Submissions Table */}
-      <div className="bg-gray-900 rounded-lg overflow-hidden overflow-x-auto">
-        <table className="w-full text-left min-w-[900px]">
-          <thead className="bg-gray-800">
-            <tr>
-              <th className="p-4"><input type="checkbox" onChange={() => setSelected(selected.length === submissions.length ? [] : submissions.map(s => s.id))} /></th>
-              <th className="p-4">Thumbnail</th>
-              <th className="p-4">User</th>
-              <th className="p-4">Status</th>
-              <th className="p-4">Date (UTC)</th>
-              <th className="p-4">Country</th>
-              <th className="p-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSubmissions.map(submission => (
-              <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                <td className="p-4"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
-                <td className="p-4">
-                  <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg" />
-                </td>
-                <td className="p-4"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline">{submission.user?.handle || 'N/A'}</a></td>
-                <td className="p-4">{submission.status}</td>
-                <td className="p-4">{new Date(submission.created_at).toLocaleString()}</td>
-                <td className="p-4">{submission.user?.country_code || 'N/A'}</td>
-                <td className="p-4">
-                  <div className="flex flex-wrap gap-1 text-sm">
-                    <button onClick={() => handleViewEvidence(submission)} className="text-blue-400 hover:underline">View</button>
-                    <button onClick={() => handleForceAction(submission, 'Approve')} className="text-green-400 hover:underline">Approve</button>
-                    <button onClick={() => handleForceAction(submission, 'Reject')} className="text-red-400 hover:underline">Reject</button>
-                    <button onClick={() => handleAssign(submission)} className="text-yellow-400 hover:underline">Assign</button>
-                  </div>
-                </td>
+      <div className="bg-gray-900 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[800px]">
+            <thead className="bg-gray-800">
+              <tr>
+                <th className="p-2 md:p-4 text-xs md:text-sm"><input type="checkbox" onChange={() => setSelected(selected.length === submissions.length ? [] : submissions.map(s => s.id))} /></th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Thumbnail</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">User</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Status</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Date</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Country</th>
+                <th className="p-2 md:p-4 text-xs md:text-sm">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredSubmissions.map(submission => (
+                <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                  <td className="p-2 md:p-4"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
+                  <td className="p-2 md:p-4">
+                    <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-10 h-10 md:w-12 md:h-12 object-cover rounded-lg" />
+                  </td>
+                  <td className="p-2 md:p-4 text-xs md:text-sm"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline">{submission.user?.handle || 'N/A'}</a></td>
+                  <td className="p-2 md:p-4 text-xs md:text-sm">{submission.status}</td>
+                  <td className="p-2 md:p-4 text-xs md:text-sm">{new Date(submission.created_at).toLocaleDateString()}</td>
+                  <td className="p-2 md:p-4 text-xs md:text-sm">{submission.user?.country_code || 'N/A'}</td>
+                  <td className="p-2 md:p-4">
+                    <div className="flex flex-col md:flex-row gap-1 text-xs">
+                      <button onClick={() => handleViewEvidence(submission)} className="text-blue-400 hover:underline">View</button>
+                      <button onClick={() => handleForceAction(submission, 'Approve')} className="text-green-400 hover:underline">Approve</button>
+                      <button onClick={() => handleForceAction(submission, 'Reject')} className="text-red-400 hover:underline">Reject</button>
+                      <button onClick={() => handleAssign(submission)} className="text-yellow-400 hover:underline">Assign</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
