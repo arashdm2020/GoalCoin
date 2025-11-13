@@ -50,7 +50,7 @@ export default function UserStatsPage() {
   const fetchUserStats = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         router.push('/auth');
         return;
@@ -159,9 +159,9 @@ export default function UserStatsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p>Loading your stats...</p>
         </div>
       </div>
@@ -170,12 +170,12 @@ export default function UserStatsPage() {
 
   if (error || !stats) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-500 mb-4">{error || 'Failed to load stats'}</p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="px-6 py-2 bg-yellow-500 text-black rounded-lg"
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Back to Dashboard
           </button>
@@ -185,27 +185,33 @@ export default function UserStatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-yellow-500">📊 Your Stats</h1>
-            <p className="text-sm text-gray-400 mt-1">@{stats.user.handle}</p>
+      <header className="bg-black/50 backdrop-blur-md border-b border-gray-800/50">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div>
+                <h1 className="text-xl font-bold">Your Statistics</h1>
+                <p className="text-sm text-gray-400">@{stats.user.handle}</p>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            ← Back to Dashboard
-          </button>
         </div>
       </header>
 
       <main className="container mx-auto px-6 py-8">
         {/* Profile Overview */}
         <section className="mb-8">
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg p-8 border border-gray-700">
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-8">
             <div className="flex items-center gap-6">
               <div className="text-6xl">
                 {getTierIcon(stats.user.fan_tier)}
@@ -238,8 +244,8 @@ export default function UserStatsPage() {
 
         {/* Tier Progress */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4 text-yellow-500">Tier Progress</h2>
-          <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+          <h2 className="text-xl font-bold mb-4 text-white">Tier Progress</h2>
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
             {stats.tier_progress.nextTier ? (
               <>
                 <div className="flex justify-between items-center mb-4">
@@ -275,19 +281,19 @@ export default function UserStatsPage() {
 
         {/* Rankings */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4 text-yellow-500">Rankings</h2>
+          <h2 className="text-xl font-bold mb-4 text-white">Rankings</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-900 rounded-lg p-6 border border-gray-800 text-center">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 text-center">
               <p className="text-sm text-gray-400 mb-2">Global Rank</p>
               <p className="text-4xl font-bold text-yellow-500">#{stats.rankings.global_rank}</p>
               <p className="text-xs text-gray-500 mt-2">out of {stats.rankings.total_users.toLocaleString()}</p>
             </div>
-            <div className="bg-gray-900 rounded-lg p-6 border border-gray-800 text-center">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 text-center">
               <p className="text-sm text-gray-400 mb-2">Country Rank</p>
               <p className="text-4xl font-bold text-blue-500">#{stats.rankings.country_rank}</p>
               <p className="text-xs text-gray-500 mt-2">{stats.user.country_code || 'N/A'}</p>
             </div>
-            <div className="bg-gray-900 rounded-lg p-6 border border-gray-800 text-center">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 text-center">
               <p className="text-sm text-gray-400 mb-2">Burn Multiplier</p>
               <p className="text-4xl font-bold text-orange-500">{stats.user.burn_multiplier.toFixed(2)}x</p>
               <p className="text-xs text-gray-500 mt-2">Tier bonus</p>
@@ -297,23 +303,23 @@ export default function UserStatsPage() {
 
         {/* Activity Stats */}
         <section>
-          <h2 className="text-xl font-bold mb-4 text-yellow-500">Activity</h2>
+          <h2 className="text-xl font-bold mb-4 text-white">Activity</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-gray-400">Total Workouts</p>
                 <span className="text-2xl">💪</span>
               </div>
               <p className="text-3xl font-bold">{stats.activity.total_workouts}</p>
             </div>
-            <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-gray-400">Meals Logged</p>
                 <span className="text-2xl">🍽️</span>
               </div>
               <p className="text-3xl font-bold">{stats.activity.total_meals_logged}</p>
             </div>
-            <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-gray-400">Warmups Done</p>
                 <span className="text-2xl">🔥</span>
