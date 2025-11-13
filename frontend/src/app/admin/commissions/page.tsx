@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import AddCommissionModal from '../../../components/AddCommissionModal';
+import Pagination from '@/components/admin/Pagination';
 
 const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
 
@@ -13,26 +14,52 @@ export default function CommissionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filters, setFilters] = useState({ status: 'All', date: '' });
   const [summary, setSummary] = useState({ total: '0.00', pending: 0, this_week: '0.00' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
 
   const fetchData = useCallback(async () => {
     let url = '';
     if (activeTab === 'Reviewer Payouts') {
-      url = `/api/admin/commissions?status=${filters.status}&date=${filters.date}`;
+      const statusParam = filters.status === 'All' ? '' : 
+                         filters.status === 'PENDING' ? 'unpaid' : 
+                         filters.status === 'PAID' ? 'paid' : '';
+      url = `/api/admin/commissions?status=${statusParam}&date=${filters.date}&page=${currentPage}&limit=${itemsPerPage}`;
     } else {
       // Placeholder for other tabs
       setData([]);
       setSummary({ total: '0.00', pending: 0, this_week: '0.00' });
+      setTotalItems(0);
       return;
     }
 
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
+      if (!authHeader) {
+        console.log('No auth header found');
+        return;
+      }
+      
+      console.log('Fetching commissions from:', `${getBackendUrl()}${url}`);
       const response = await fetch(`${getBackendUrl()}${url}`, { headers: { 'Authorization': authHeader } });
+      
+      console.log('Commissions response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('API Error:', response.status, response.statusText);
+        setData([]);
+        setTotalItems(0);
+        return;
+      }
+      
       const result = await response.json();
+      console.log('Commissions result:', result);
+      
       if (result.success) {
         const fetchedData = result.data || [];
         setData(fetchedData);
+        setTotalItems(result.total || 0);
+        
         // Calculate summary
         const totalUnpaid = fetchedData
           .filter((item: any) => !item.payout_id)
@@ -40,13 +67,16 @@ export default function CommissionsPage() {
         const pendingCount = fetchedData.filter((item: any) => !item.payout_id).length;
         setSummary({ total: totalUnpaid.toFixed(2), pending: pendingCount, this_week: 'N/A' });
       } else {
+        console.error('API returned error:', result);
         setData([]);
+        setTotalItems(0);
       }
     } catch (error) {
       console.error(`Failed to fetch ${activeTab}:`, error);
       setData([]);
+      setTotalItems(0);
     }
-  }, [activeTab, filters]);
+  }, [activeTab, filters, currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchData();
@@ -74,36 +104,74 @@ export default function CommissionsPage() {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'Reviewer Payouts':
         return (
-          <table className="w-full text-left">
-            <thead className="bg-gray-800">
-              <tr>
-                <th className="p-4">Reviewer Wallet</th>
-                <th className="p-4">Submission ID</th>
-                <th className="p-4">Amount (USDT)</th>
-                <th className="p-4">Earned At</th>
-                <th className="p-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map(item => (
-                <tr key={item.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                  <td className="p-4 font-mono"><a href={`https://etherscan.io/address/${item.reviewer_wallet}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">{item.reviewer_wallet}</a></td>
-                  <td className="p-4 font-mono">{item.submission_id.substring(0, 10)}...</td>
-                  <td className="p-4">${item.amount_usdt.toFixed(4)}</td>
-                  <td className="p-4">{new Date(item.earned_at).toLocaleString()}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-sm ${item.payout_id ? 'bg-green-600' : 'bg-yellow-600'}`}>
-                      {item.payout_id ? 'PAID' : 'PENDING'}
-                    </span>
-                  </td>
+          <div>
+            <table className="w-full text-left">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="p-2 text-sm">Reviewer Wallet</th>
+                  <th className="p-2 text-sm">Submission ID</th>
+                  <th className="p-2 text-sm">Amount (USDT)</th>
+                  <th className="p-2 text-sm">Earned At</th>
+                  <th className="p-2 text-sm">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-gray-500">
+                      <div className="flex flex-col items-center space-y-2">
+                        <p className="text-lg">No commissions found</p>
+                        <p className="text-sm">No commissions match your current filters</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  data.map(item => (
+                    <tr key={item.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                      <td className="p-2 text-sm font-mono">
+                        <a href={`https://etherscan.io/address/${item.reviewer_wallet}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">
+                          {item.reviewer_wallet.substring(0, 6)}...{item.reviewer_wallet.substring(item.reviewer_wallet.length - 4)}
+                        </a>
+                      </td>
+                      <td className="p-2 text-sm font-mono">{item.submission_id.substring(0, 10)}...</td>
+                      <td className="p-2 text-sm font-bold text-green-400">${item.amount_usdt.toFixed(2)}</td>
+                      <td className="p-2 text-sm">{new Date(item.earned_at).toLocaleDateString()}</td>
+                      <td className="p-2">
+                        <span className={`px-2 py-1 rounded-full text-xs ${item.payout_id ? 'bg-green-600' : 'bg-yellow-600'}`}>
+                          {item.payout_id ? 'PAID' : 'PENDING'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            
+            {/* Pagination */}
+            {totalItems > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalItems / itemsPerPage)}
+                onPageChange={handlePageChange}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                totalItems={totalItems}
+              />
+            )}
+          </div>
         );
       default:
         return <div className="text-center py-16"><p className="text-gray-500">{activeTab} is under construction.</p></div>;
@@ -143,12 +211,21 @@ export default function CommissionsPage() {
           ))}
         </div>
         <div className="flex items-center space-x-4">
-          <select className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, status: e.target.value})}>
+          <select 
+            className="px-4 py-2 bg-gray-800 rounded-lg" 
+            value={filters.status}
+            onChange={e => setFilters({...filters, status: e.target.value})}
+          >
             <option value="All">All Statuses</option>
             <option value="PENDING">Pending</option>
             <option value="PAID">Paid</option>
           </select>
-          <input type="date" className="px-4 py-2 bg-gray-800 rounded-lg" onChange={e => setFilters({...filters, date: e.target.value})}/>
+          <input 
+            type="date" 
+            className="px-4 py-2 bg-gray-800 rounded-lg" 
+            value={filters.date}
+            onChange={e => setFilters({...filters, date: e.target.value})}
+          />
           <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg">Add Manual</button>
           <button className="px-4 py-2 bg-blue-600 rounded-lg">Export CSV</button>
         </div>
