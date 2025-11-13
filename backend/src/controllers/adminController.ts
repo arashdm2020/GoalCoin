@@ -1259,6 +1259,117 @@ export const adminController = {
     }
   },
 
+  // --- User Details ---
+  async getUserDetails(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const user = await prisma.user.findUnique({
+        where: { id },
+        include: {
+          submissions: {
+            select: {
+              id: true,
+              status: true,
+              created_at: true,
+              week_no: true,
+            },
+          },
+          warmup_logs: {
+            select: {
+              id: true,
+              completed_at: true,
+              xp_earned: true,
+            },
+          },
+          workout_logs: {
+            select: {
+              id: true,
+              completed_at: true,
+              workout_type: true,
+              duration_min: true,
+            },
+          },
+          meal_logs: {
+            select: {
+              id: true,
+              completed_at: true,
+              meal_type: true,
+              calories: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      console.error('Failed to fetch user details:', error);
+      res.status(500).json({ error: 'Failed to fetch user details' });
+    }
+  },
+
+  async getUserStats(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      // Check if user exists
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Get submission stats
+      const submissionStats = await prisma.submission.groupBy({
+        by: ['status'],
+        where: { user_id: id },
+        _count: true,
+      });
+
+      const totalSubmissions = submissionStats.reduce((sum, stat) => sum + stat._count, 0);
+      const approvedSubmissions = submissionStats.find(s => s.status === 'APPROVED')?._count || 0;
+      const pendingSubmissions = submissionStats.find(s => s.status === 'PENDING')?._count || 0;
+      const rejectedSubmissions = submissionStats.find(s => s.status === 'REJECTED')?._count || 0;
+      const successRate = totalSubmissions > 0 ? Math.round((approvedSubmissions / totalSubmissions) * 100) : 0;
+
+      // Get activity counts
+      const [totalWarmups, totalWorkouts, totalMeals] = await Promise.all([
+        prisma.warmupLog.count({ where: { user_id: id } }),
+        prisma.workoutLog.count({ where: { user_id: id } }),
+        prisma.mealLog.count({ where: { user_id: id } }),
+      ]);
+
+      res.status(200).json({
+        success: true,
+        stats: {
+          totalSubmissions,
+          approvedSubmissions,
+          pendingSubmissions,
+          rejectedSubmissions,
+          successRate,
+          totalWarmups,
+          totalWorkouts,
+          totalMeals,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch user stats:', error);
+      res.status(500).json({ error: 'Failed to fetch user stats' });
+    }
+  },
+
   // --- Clear All Users (MVP Only) ---
   async clearAllUsers(req: Request, res: Response): Promise<void> {
     try {
