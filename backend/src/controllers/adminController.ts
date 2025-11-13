@@ -397,7 +397,7 @@ export const adminController = {
 
       const updatedReviewer = await prisma.reviewer.update({
         where: { id: reviewerId },
-        data: { status: status as 'ACTIVE' | 'SUSPENDED' },
+        data: { status: status },
       });
 
       // TODO: Add audit logging when audit table is ready
