@@ -738,14 +738,56 @@ export const adminController = {
   },
 
   async getCommissions(req: Request, res: Response): Promise<void> {
+    const { status, date, page = '1', limit = '25' } = req.query;
+    
     try {
+      const where: any = {};
+      
+      // Filter by status (paid/unpaid)
+      if (status === 'paid') {
+        where.payout_id = { not: null };
+      } else if (status === 'unpaid') {
+        where.payout_id = null;
+      }
+      
+      // Filter by date
+      if (date) {
+        const filterDate = new Date(date as string);
+        where.earned_at = {
+          gte: filterDate,
+          lt: new Date(filterDate.getTime() + 24 * 60 * 60 * 1000)
+        };
+      }
+      
+      // Get total count for pagination
+      const totalCount = await prisma.commission.count({ where });
+      
+      // Apply pagination
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const skip = (pageNum - 1) * limitNum;
+      
       const commissions = await prisma.commission.findMany({ 
-        where: { payout_id: null },
-        orderBy: { earned_at: 'desc' }
+        where,
+        orderBy: { earned_at: 'desc' },
+        skip,
+        take: limitNum
       });
-      res.status(200).json(commissions);
+      
+      res.status(200).json({ 
+        success: true, 
+        data: commissions,
+        total: totalCount,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum)
+      });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch commissions' });
+      console.error('Failed to fetch commissions:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch commissions' 
+      });
     }
   },
 
