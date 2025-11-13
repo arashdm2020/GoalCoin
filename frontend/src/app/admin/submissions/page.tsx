@@ -1,15 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { getCountryName } from '@/utils/countries';
 import EvidenceViewer from '../../../components/EvidenceViewer';
 import ReasonModal from '../../../components/ReasonModal';
 import AssignReviewerModal from '../../../components/AssignReviewerModal';
+import Pagination from '@/components/admin/Pagination';
 
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [availableCountries, setAvailableCountries] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -296,13 +302,13 @@ export default function SubmissionsPage() {
           <table className="w-full text-left min-w-[800px]">
             <thead className="bg-gray-800">
               <tr>
-                <th className="p-2 md:p-4 text-xs md:text-sm"><input type="checkbox" onChange={() => setSelected(selected.length === submissions.length ? [] : submissions.map(s => s.id))} /></th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Thumbnail</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">User</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Status</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Date</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Country</th>
-                <th className="p-2 md:p-4 text-xs md:text-sm">Actions</th>
+                <th className="p-2 text-sm"><input type="checkbox" onChange={() => setSelected(selected.length === submissions.length ? [] : submissions.map(s => s.id))} /></th>
+                <th className="p-2 text-sm">Thumbnail</th>
+                <th className="p-2 text-sm">User</th>
+                <th className="p-2 text-sm">Status</th>
+                <th className="p-2 text-sm">Date</th>
+                <th className="p-2 text-sm">Country</th>
+                <th className="p-2 text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -318,20 +324,57 @@ export default function SubmissionsPage() {
               ) : (
                 filteredSubmissions.map(submission => (
                   <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td className="p-2 md:p-4"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
-                    <td className="p-2 md:p-4">
-                      <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-10 h-10 md:w-12 md:h-12 object-cover rounded-lg" />
+                    <td className="p-2"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
+                    <td className="p-2">
+                      <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-10 h-10 object-cover rounded-lg" />
                     </td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline">{submission.user?.handle || 'N/A'}</a></td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm">{submission.status}</td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm">{new Date(submission.created_at).toLocaleDateString()}</td>
-                    <td className="p-2 md:p-4 text-xs md:text-sm">{submission.user?.country_code || 'N/A'}</td>
-                    <td className="p-2 md:p-4">
-                      <div className="flex flex-col md:flex-row gap-1 text-xs">
-                        <button onClick={() => handleViewEvidence(submission)} className="text-blue-400 hover:underline">View</button>
-                        <button onClick={() => handleForceAction(submission, 'Approve')} className="text-green-400 hover:underline">Approve</button>
-                        <button onClick={() => handleForceAction(submission, 'Reject')} className="text-red-400 hover:underline">Reject</button>
-                        <button onClick={() => handleAssign(submission)} className="text-yellow-400 hover:underline">Assign</button>
+                    <td className="p-2 text-sm"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline text-blue-400">{submission.user?.handle || 'N/A'}</a></td>
+                    <td className="p-2 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        submission.status === 'APPROVED' ? 'bg-green-600' : 
+                        submission.status === 'REJECTED' ? 'bg-red-600' : 
+                        submission.status === 'PENDING' ? 'bg-yellow-600' : 'bg-gray-600'
+                      }`}>
+                        {submission.status}
+                      </span>
+                    </td>
+                    <td className="p-2 text-sm">{new Date(submission.created_at).toLocaleDateString()}</td>
+                    <td className="p-2 text-sm">
+                      <div className="flex items-center gap-1">
+                        <span>{submission.user?.country_code || 'N/A'}</span>
+                        {submission.user?.country_code && (
+                          <span className="text-gray-400 text-xs">
+                            ({getCountryName(submission.user.country_code)})
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      <div className="flex flex-wrap gap-1">
+                        <button 
+                          onClick={() => handleViewEvidence(submission)} 
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white"
+                        >
+                          View
+                        </button>
+                        <button 
+                          onClick={() => handleForceAction(submission, 'Approve')} 
+                          className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white"
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          onClick={() => handleForceAction(submission, 'Reject')} 
+                          className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs text-white"
+                        >
+                          Reject
+                        </button>
+                        <button 
+                          onClick={() => handleAssign(submission)} 
+                          className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs text-white"
+                        >
+                          Assign
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -340,6 +383,21 @@ export default function SubmissionsPage() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination */}
+        {totalItems > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={(page) => setCurrentPage(page)}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={(newItemsPerPage) => {
+              setItemsPerPage(newItemsPerPage);
+              setCurrentPage(1);
+            }}
+            totalItems={totalItems}
+          />
+        )}
       </div>
     </div>
   );
