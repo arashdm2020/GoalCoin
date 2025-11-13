@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { getCountryName } from '@/utils/countries';
 import EvidenceViewer from '../../../components/EvidenceViewer';
 import ReasonModal from '../../../components/ReasonModal';
@@ -11,6 +12,7 @@ import Pagination from '@/components/admin/Pagination';
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function SubmissionsPage() {
+  const router = useRouter();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [availableCountries, setAvailableCountries] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -118,13 +120,24 @@ export default function SubmissionsPage() {
   };
 
   const handleBulkAction = async (action: 'Approve' | 'Reject') => {
-    if (selected.length === 0) return;
+    if (selected.length === 0) {
+      alert('Please select at least one submission');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to ${action.toLowerCase()} ${selected.length} submission(s)?`)) {
+      return;
+    }
 
     const newStatus = action === 'Approve' ? 'APPROVED' : 'REJECTED';
 
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+      
       const response = await fetch(`${getBackendUrl()}/api/admin/submissions/bulk-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
@@ -133,15 +146,17 @@ export default function SubmissionsPage() {
 
       const result = await response.json();
       if (result.success) {
+        alert(`${selected.length} submission(s) ${action.toLowerCase()}d successfully`);
         setSelected([]);
         setIsBulkActionsOpen(false);
-        // Refetch submissions to update the list
-        fetchSubmissions();
+        fetchSubmissions(); // Refetch submissions to update the list
       } else {
+        alert('Failed to perform bulk action: ' + (result.error || 'Unknown error'));
         console.error('Failed to perform bulk action:', result.error);
       }
     } catch (error) {
       console.error('Error in handleBulkAction:', error);
+      alert('Failed to perform bulk action. Please try again.');
     }
   };
 
@@ -156,25 +171,33 @@ export default function SubmissionsPage() {
 
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+      
       const response = await fetch(`${getBackendUrl()}/api/admin/submissions/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
         body: JSON.stringify({ 
-          submissionId: selectedSubmission.id,
+          submission_id: selectedSubmission.id, // Backend expects submission_id not submissionId
           reviewerIds,
         }),
       });
 
       const result = await response.json();
       if (result.success) {
+        alert(`Reviewers assigned successfully to submission`);
         setIsAssignModalOpen(false);
-        // Optionally, show a success message
+        setSelectedSubmission(null);
+        fetchSubmissions(); // Refresh to show updated assignments
       } else {
+        alert('Failed to assign reviewers: ' + (result.error || 'Unknown error'));
         console.error('Failed to assign reviewers:', result.error);
       }
     } catch (error) {
       console.error('Error in handleAssignSubmit:', error);
+      alert('Failed to assign reviewers. Please try again.');
     }
   };
 
@@ -189,7 +212,11 @@ export default function SubmissionsPage() {
 
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+      
       const response = await fetch(`${getBackendUrl()}/api/admin/submissions/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
@@ -202,19 +229,25 @@ export default function SubmissionsPage() {
 
       const result = await response.json();
       if (result.success) {
+        alert(`Submission ${modalAction.toLowerCase()}d successfully`);
         setIsReasonModalOpen(false);
-        // Refetch submissions to update the list
-        fetchSubmissions();
+        setSelectedSubmission(null);
+        fetchSubmissions(); // Refetch submissions to update the list
       } else {
-        // TODO: Show an error message to the user
+        alert('Failed to update submission status: ' + (result.error || 'Unknown error'));
         console.error('Failed to update submission status:', result.error);
       }
     } catch (error) {
       console.error('Error in handleReasonSubmit:', error);
+      alert('Failed to update submission status. Please try again.');
     }
   };
 
   const handleViewEvidence = (submission: any) => {
+    if (!submission.file_url) {
+      alert('No evidence file available for this submission');
+      return;
+    }
     setSelectedMedia(submission.file_url);
     setIsViewerOpen(true);
   };
@@ -333,7 +366,14 @@ export default function SubmissionsPage() {
                     <td className="p-2">
                       <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-10 h-10 object-cover rounded-lg" />
                     </td>
-                    <td className="p-2 text-sm"><a href={`/admin/users/${submission.user?.id}`} className="hover:underline text-blue-400">{submission.user?.handle || 'N/A'}</a></td>
+                    <td className="p-2 text-sm">
+                      <button 
+                        onClick={() => router.push(`/admin/users/${submission.user?.id}`)}
+                        className="hover:underline text-blue-400 cursor-pointer"
+                      >
+                        {submission.user?.handle || 'N/A'}
+                      </button>
+                    </td>
                     <td className="p-2 text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         submission.status === 'APPROVED' ? 'bg-green-600' : 
