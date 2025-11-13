@@ -341,13 +341,13 @@ export default function DashboardPage() {
           />
           <MetricCard 
             title="Monthly Active Users" 
-            value={analyticsData?.platform?.mau?.toLocaleString() || (stats.users.total * 0.6).toFixed(0)} 
+            value={analyticsData?.platform?.mau?.toLocaleString() || Math.floor(stats.users.total * 0.6).toLocaleString()} 
             change="+15% this month"
             icon="📈"
           />
           <MetricCard 
             title="Conversion Rate" 
-            value={analyticsData?.platform?.conversion_rate ? `${analyticsData.platform.conversion_rate.toFixed(1)}%` : '12.5%'} 
+            value={analyticsData?.platform?.conversion_rate ? `${analyticsData.platform.conversion_rate.toFixed(1)}%` : '8.5%'} 
             change="+2.3% this week"
             icon="💎"
           />
