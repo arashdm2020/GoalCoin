@@ -459,14 +459,12 @@ export const adminController = {
 
       // Use transaction to handle foreign key constraints
       await prisma.$transaction(async (tx) => {
-        // Delete related audit logs first (if audit_logs table exists)
+        // Delete related audit logs first using raw SQL to avoid Prisma model issues
         try {
-          await (tx as any).auditLog.deleteMany({
-            where: { reviewer_id: reviewerId }
-          });
+          await tx.$executeRaw`DELETE FROM audit_logs WHERE reviewer_id = ${reviewerId}`;
+          console.log('Deleted audit logs for reviewer:', reviewerId);
         } catch (auditError) {
-          // Ignore if audit_logs table doesn't exist
-          console.log('No audit logs to delete or table does not exist');
+          console.log('No audit logs to delete or table does not exist:', auditError);
         }
 
         // Delete related review assignments
