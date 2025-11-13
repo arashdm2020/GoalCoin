@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { AuditService } from '../services/auditService';
+// import { AuditService } from '../services/auditService'; // Disabled until audit table is ready
 
 const prisma = new PrismaClient();
 
@@ -164,13 +164,8 @@ export const adminController = {
         },
       });
 
-      await AuditService.log({
-        action: 'REVIEWER_ADDED',
-        entity_type: 'reviewer',
-        entity_id: reviewer.id,
-        admin_user: 'admin', // TODO: Get from JWT token
-        new_data: { userId: user.id, reviewerId: reviewer.id },
-      });
+      // TODO: Add audit logging when audit table is ready
+      console.log('Reviewer added:', { userId: user.id, reviewerId: reviewer.id });
 
       res.status(201).json({ success: true, data: reviewer });
     } catch (error) {
@@ -393,13 +388,8 @@ export const adminController = {
         data: { status: status as 'ACTIVE' | 'SUSPENDED' },
       });
 
-      await AuditService.log({
-        action: 'REVIEWER_STATUS_CHANGED',
-        entity_type: 'reviewer',
-        entity_id: reviewerId,
-        admin_user: 'admin', // TODO: Get from JWT
-        new_data: { status },
-      });
+      // TODO: Add audit logging when audit table is ready
+      console.log('Reviewer status changed:', { reviewerId, status });
 
       res.status(200).json({ success: true, data: updatedReviewer });
     } catch (error) {
@@ -421,12 +411,8 @@ export const adminController = {
         data: { strikes: 0 },
       });
 
-      await AuditService.log({
-        action: 'REVIEWER_STRIKES_RESET',
-        entity_type: 'reviewer',
-        entity_id: reviewerId,
-        admin_user: 'admin', // TODO: Get from JWT
-      });
+      // TODO: Add audit logging when audit table is ready
+      console.log('Reviewer strikes reset:', { reviewerId });
 
       res.status(200).json({ success: true, data: updatedReviewer });
     } catch (error) {
@@ -459,13 +445,8 @@ export const adminController = {
         where: { id: reviewerId },
       });
 
-      await AuditService.log({
-        action: 'REVIEWER_REMOVED',
-        entity_type: 'reviewer',
-        entity_id: reviewerId,
-        admin_user: 'admin', // TODO: Get from JWT
-        old_data: { wallet: reviewer.user.wallet },
-      });
+      // TODO: Add audit logging when audit table is ready
+      console.log('Reviewer removed:', { reviewerId, wallet: reviewer.user.wallet });
 
       res.status(200).json({ 
         success: true, 
