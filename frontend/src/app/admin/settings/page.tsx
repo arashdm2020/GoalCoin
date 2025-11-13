@@ -6,12 +6,12 @@ const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goal
 
 // Settings Categories
 const SETTINGS_CATEGORIES = [
-  { id: 'general', name: 'General', icon: '⚙️' },
-  { id: 'system', name: 'System', icon: '🖥️' },
-  { id: 'security', name: 'Security', icon: '🔒' },
-  { id: 'notifications', name: 'Notifications', icon: '🔔' },
-  { id: 'performance', name: 'Performance', icon: '⚡' },
-  { id: 'maintenance', name: 'Maintenance', icon: '🔧' }
+  { id: 'general', name: 'General' },
+  { id: 'system', name: 'System' },
+  { id: 'security', name: 'Security' },
+  { id: 'notifications', name: 'Notifications' },
+  { id: 'performance', name: 'Performance' },
+  { id: 'maintenance', name: 'Maintenance' }
 ];
 
 // Setting Component
@@ -76,8 +76,8 @@ const SettingItem = ({ setting, onUpdate }: { setting: any; onUpdate: (key: stri
         <h4 className="font-medium text-white">{setting.name}</h4>
         <p className="text-sm text-gray-400 mt-1">{setting.description}</p>
         {setting.warning && (
-          <p className="text-xs text-yellow-400 mt-1 flex items-center">
-            ⚠️ {setting.warning}
+          <p className="text-xs text-yellow-400 mt-1">
+            Warning: {setting.warning}
           </p>
         )}
       </div>
@@ -89,7 +89,7 @@ const SettingItem = ({ setting, onUpdate }: { setting: any; onUpdate: (key: stri
 };
 
 // Status Card Component
-const StatusCard = ({ title, status, details, icon }: { title: string; status: string; details?: string; icon: string }) => {
+const StatusCard = ({ title, status, details }: { title: string; status: string; details?: string }) => {
   const getStatusColor = () => {
     switch (status.toLowerCase()) {
       case 'operational':
@@ -109,16 +109,13 @@ const StatusCard = ({ title, status, details, icon }: { title: string; status: s
   };
 
   return (
-    <div className={`p-4 rounded-lg border ${getStatusColor()}`}>
+    <div className={`p-3 rounded-lg border ${getStatusColor()}`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <span className="text-2xl">{icon}</span>
-          <div>
-            <h3 className="font-medium">{title}</h3>
-            {details && <p className="text-xs opacity-75">{details}</p>}
-          </div>
+        <div>
+          <h3 className="font-medium text-sm">{title}</h3>
+          {details && <p className="text-xs opacity-75">{details}</p>}
         </div>
-        <span className="font-bold text-sm uppercase tracking-wide">{status}</span>
+        <span className="font-bold text-xs uppercase tracking-wide">{status}</span>
       </div>
     </div>
   );
@@ -128,6 +125,7 @@ export default function SettingsPage() {
   const [activeCategory, setActiveCategory] = useState('general');
   const [settings, setSettings] = useState<Record<string, any[]>>({});
   const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [backupRecords, setBackupRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Mock settings data (in real app, fetch from API)
@@ -288,19 +286,28 @@ export default function SettingsPage() {
   };
 
   const mockSystemStatus = {
-    database: { status: 'operational', details: 'PostgreSQL 14.2' },
-    redis: { status: 'operational', details: 'Redis 7.0' },
-    mailgun: { status: 'operational', details: 'API responding' },
+    database: { status: 'operational', details: 'PostgreSQL' },
+    redis: { status: 'operational', details: 'Cache' },
+    mailgun: { status: 'operational', details: 'Email Service' },
     storage: { status: 'operational', details: '85% used' },
     api: { status: 'operational', details: '99.9% uptime' },
-    blockchain: { status: 'operational', details: 'Ethereum mainnet' }
+    blockchain: { status: 'operational', details: 'Ethereum' }
   };
+
+  const mockBackupRecords = [
+    { date: '2024-11-13', time: '02:00 AM', size: '2.4 GB', status: 'completed' },
+    { date: '2024-11-12', time: '02:00 AM', size: '2.3 GB', status: 'completed' },
+    { date: '2024-11-11', time: '02:00 AM', size: '2.2 GB', status: 'completed' },
+    { date: '2024-11-10', time: '02:00 AM', size: '2.1 GB', status: 'completed' },
+    { date: '2024-11-09', time: '02:00 AM', size: '2.0 GB', status: 'failed' }
+  ];
 
   useEffect(() => {
     // Simulate loading
     setTimeout(() => {
       setSettings(mockSettings);
       setSystemStatus(mockSystemStatus);
+      setBackupRecords(mockBackupRecords);
       setLoading(false);
     }, 1000);
   }, []);
@@ -353,6 +360,29 @@ export default function SettingsPage() {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-8">Settings</h1>
 
+        {/* System Status - Horizontal */}
+        <div className="mb-8 bg-gray-900 rounded-lg p-6 border border-gray-800">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">System Status</h2>
+            <button
+              onClick={handleBackup}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors font-medium text-sm"
+            >
+              Backup Now
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {systemStatus && Object.entries(systemStatus).map(([key, data]: [string, any]) => (
+              <StatusCard
+                key={key}
+                title={key.charAt(0).toUpperCase() + key.slice(1)}
+                status={data.status}
+                details={data.details}
+              />
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
@@ -369,41 +399,32 @@ export default function SettingsPage() {
                         : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }`}
                   >
-                    <span className="text-lg">{category.icon}</span>
                     <span>{category.name}</span>
                   </button>
                 ))}
               </nav>
             </div>
 
-            {/* System Status */}
+            {/* Backup Records */}
             <div className="mt-8 bg-gray-900 rounded-lg p-4 border border-gray-800">
-              <h2 className="text-lg font-semibold mb-4">System Status</h2>
-              <div className="space-y-3">
-                {systemStatus && Object.entries(systemStatus).map(([key, data]: [string, any]) => (
-                  <StatusCard
-                    key={key}
-                    title={key.charAt(0).toUpperCase() + key.slice(1)}
-                    status={data.status}
-                    details={data.details}
-                    icon={
-                      key === 'database' ? '🗄️' :
-                      key === 'redis' ? '⚡' :
-                      key === 'mailgun' ? '📧' :
-                      key === 'storage' ? '💾' :
-                      key === 'api' ? '🔗' :
-                      key === 'blockchain' ? '⛓️' : '🖥️'
-                    }
-                  />
+              <h2 className="text-lg font-semibold mb-4">Recent Backups</h2>
+              <div className="space-y-2">
+                {backupRecords.map((backup, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-800 rounded text-sm">
+                    <div>
+                      <div className="font-medium">{backup.date}</div>
+                      <div className="text-gray-400 text-xs">{backup.time} • {backup.size}</div>
+                    </div>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      backup.status === 'completed' 
+                        ? 'bg-green-900/20 text-green-400' 
+                        : 'bg-red-900/20 text-red-400'
+                    }`}>
+                      {backup.status}
+                    </span>
+                  </div>
                 ))}
               </div>
-
-              <button
-                onClick={handleBackup}
-                className="w-full mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors font-medium"
-              >
-                🔄 Backup Now
-              </button>
             </div>
           </div>
 
@@ -412,7 +433,6 @@ export default function SettingsPage() {
             <div className="bg-gray-900 rounded-lg border border-gray-800">
               <div className="p-6 border-b border-gray-800">
                 <h2 className="text-xl font-semibold">
-                  {SETTINGS_CATEGORIES.find(cat => cat.id === activeCategory)?.icon}{' '}
                   {SETTINGS_CATEGORIES.find(cat => cat.id === activeCategory)?.name} Settings
                 </h2>
                 <p className="text-gray-400 mt-1">
