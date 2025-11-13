@@ -16,50 +16,65 @@ export default function SubmissionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
+  const [filters, setFilters] = useState({ status: 'All', date: '', country: 'All' });
 
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        // TODO: Add proper filtering and pagination
-        const authHeader = localStorage.getItem('admin_auth_header');
-        if (!authHeader) return;
-        const response = await fetch(`${getBackendUrl()}/api/admin/submissions`, { headers: { 'Authorization': authHeader } });
-        
-        if (!response.ok) {
-          console.error('API Error:', response.status, response.statusText);
-          setSubmissions([]);
-          return;
-        }
-        
-        const result = await response.json();
-        if (result.success) {
-          setSubmissions(result.data || []);
-        } else {
-          console.error('API returned error:', result);
-          setSubmissions([]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch submissions:', error);
+  const fetchSubmissions = useCallback(async () => {
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      
+      // Build query parameters for pagination and filtering
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+      });
+      
+      if (filters.status !== 'All') {
+        params.append('status', filters.status);
+      }
+      if (filters.country !== 'All') {
+        params.append('country', filters.country);
+      }
+      if (filters.date) {
+        params.append('date', filters.date);
+      }
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/submissions?${params.toString()}`, { 
+        headers: { 'Authorization': authHeader } 
+      });
+      
+      if (!response.ok) {
+        console.error('API Error:', response.status, response.statusText);
+        setSubmissions([]);
+        return;
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        setSubmissions(result.data || []);
+        setTotalItems(result.total || 0);
+      } else {
+        console.error('API returned error:', result);
         setSubmissions([]);
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch submissions:', error);
+      setSubmissions([]);
+    }
+  }, [currentPage, itemsPerPage, filters]);
 
+  useEffect(() => {
     fetchSubmissions();
-  }, []);
+  }, [fetchSubmissions]);
   const [selected, setSelected] = useState<number[]>([]);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState('');
   const [isReasonModalOpen, setIsReasonModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<'Approve' | 'Reject'>('Approve');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  const [filters, setFilters] = useState({ status: 'All', date: '', country: 'All' });
 
-  const filteredSubmissions = submissions.filter(s => {
-    if (filters.status !== 'All' && s.status !== filters.status) return false;
-    if (filters.country !== 'All' && s.country !== filters.country) return false;
-    // Date filtering logic will go here
-    return true;
-  });
+  // Remove client-side filtering since we're doing server-side pagination
+  const filteredSubmissions = submissions;
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [reviewers, setReviewers] = useState<any[]>([]);
 
@@ -121,11 +136,6 @@ export default function SubmissionsPage() {
         setSelected([]);
         setIsBulkActionsOpen(false);
         // Refetch submissions to update the list
-        const fetchSubmissions = async () => {
-          const res = await fetch('/api/admin/submissions');
-          const data = await res.json();
-          if (data.success) setSubmissions(data.data);
-        };
         fetchSubmissions();
       } else {
         console.error('Failed to perform bulk action:', result.error);
@@ -194,11 +204,6 @@ export default function SubmissionsPage() {
       if (result.success) {
         setIsReasonModalOpen(false);
         // Refetch submissions to update the list
-        const fetchSubmissions = async () => {
-          const res = await fetch('/api/admin/submissions');
-          const data = await res.json();
-          if (data.success) setSubmissions(data.data);
-        };
         fetchSubmissions();
       } else {
         // TODO: Show an error message to the user
