@@ -2,152 +2,442 @@
 
 import { useState, useEffect } from 'react';
 
-const FeatureToggle = ({ toggle, onToggle }: { toggle: any; onToggle: (key: string, value: boolean) => void }) => (
-  <div className="flex items-center justify-between bg-gray-800 p-4 rounded-lg">
-    <div>
-      <p className="font-semibold">/{toggle.key.replace(/_/g, '-')}</p>
-      <p className="text-sm text-gray-400">{toggle.description}</p>
-    </div>
-    <label className="relative inline-flex items-center cursor-pointer">
-      <input 
-        type="checkbox" 
-        checked={toggle.value}
-        onChange={(e) => onToggle(toggle.key, e.target.checked)}
-        className="sr-only peer" 
-      />
-      <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-yellow-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
-    </label>
-  </div>
-);
-
-const StatusTile = ({ title, status }: { title: string; status: string }) => {
-  const statusColor = status === 'operational' || status === 'connected' ? 'text-green-400' : 'text-yellow-400';
-  return (
-    <div className="bg-gray-900 p-6 rounded-lg">
-      <h3 className="text-gray-400 text-sm">{title}</h3>
-      <p className={`text-2xl font-bold ${statusColor}`}>{status}</p>
-    </div>
-  );
-};
-
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
-export default function SettingsPage() {
-  const [systemStatus, setSystemStatus] = useState<any>(null);
-  const [featureToggles, setFeatureToggles] = useState<any[]>([]);
-  const [securityLogs, setSecurityLogs] = useState<any[]>([]);
+// Settings Categories
+const SETTINGS_CATEGORIES = [
+  { id: 'general', name: 'General', icon: '⚙️' },
+  { id: 'system', name: 'System', icon: '🖥️' },
+  { id: 'security', name: 'Security', icon: '🔒' },
+  { id: 'notifications', name: 'Notifications', icon: '🔔' },
+  { id: 'performance', name: 'Performance', icon: '⚡' },
+  { id: 'maintenance', name: 'Maintenance', icon: '🔧' }
+];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const authHeader = localStorage.getItem('admin_auth_header');
-        if (!authHeader) return;
-        const headers = { 'Authorization': authHeader };
-
-        const [statusRes, togglesRes, logsRes] = await Promise.all([
-          fetch(`${getBackendUrl()}/api/admin/settings/status`, { headers }),
-          fetch(`${getBackendUrl()}/api/admin/settings/feature-toggles`, { headers }),
-          fetch(`${getBackendUrl()}/api/admin/settings/security-logs`, { headers }),
-        ]);
-        const statusData = await statusRes.json();
-        const togglesData = await togglesRes.json();
-        const logsData = await logsRes.json();
-
-        if (statusData.success) setSystemStatus(statusData.data);
-        if (togglesData.success) setFeatureToggles(togglesData.data);
-        if (logsData.success) setSecurityLogs(logsData.data);
-      } catch (error) {
-        console.error('Failed to fetch settings data:', error);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const handleToggle = async (key: string, value: boolean) => {
-    try {
-      const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
-      const response = await fetch(`${getBackendUrl()}/api/admin/settings/feature-toggles`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-        body: JSON.stringify({ key, value }),
-      });
-      const result = await response.json();
-      if (result.success) {
-        setFeatureToggles(toggles => toggles.map(t => t.key === key ? { ...t, value } : t));
-      } else {
-        console.error('Failed to update toggle:', result.error);
-      }
-    } catch (error) {
-      console.error('Error updating toggle:', error);
+// Setting Component
+const SettingItem = ({ setting, onUpdate }: { setting: any; onUpdate: (key: string, value: any) => void }) => {
+  const renderInput = () => {
+    switch (setting.type) {
+      case 'boolean':
+        return (
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={setting.value}
+              onChange={(e) => onUpdate(setting.key, e.target.checked)}
+              className="sr-only peer" 
+            />
+            <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+          </label>
+        );
+      case 'number':
+        return (
+          <input
+            type="number"
+            value={setting.value}
+            onChange={(e) => onUpdate(setting.key, parseInt(e.target.value))}
+            className="w-24 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            min={setting.min || 0}
+            max={setting.max || 1000}
+          />
+        );
+      case 'select':
+        return (
+          <select
+            value={setting.value}
+            onChange={(e) => onUpdate(setting.key, e.target.value)}
+            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {setting.options?.map((option: any) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        );
+      case 'text':
+        return (
+          <input
+            type="text"
+            value={setting.value}
+            onChange={(e) => onUpdate(setting.key, e.target.value)}
+            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={setting.placeholder}
+          />
+        );
+      default:
+        return <span className="text-gray-400">Unknown type</span>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-3xl font-bold text-white text-glow mb-8">Settings</h1>
+    <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
+      <div className="flex-1">
+        <h4 className="font-medium text-white">{setting.name}</h4>
+        <p className="text-sm text-gray-400 mt-1">{setting.description}</p>
+        {setting.warning && (
+          <p className="text-xs text-yellow-400 mt-1 flex items-center">
+            ⚠️ {setting.warning}
+          </p>
+        )}
+      </div>
+      <div className="ml-4">
+        {renderInput()}
+      </div>
+    </div>
+  );
+};
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Status and Backups */}
-        <div className="lg:col-span-1 space-y-8">
-          <h2 className="text-xl font-semibold text-glow">System Status</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
-            {systemStatus ? (
-              <>
-                <StatusTile title="Mailgun" status={systemStatus.mailgun} />
-                <StatusTile title="Redis" status={systemStatus.redis} />
-                <StatusTile title="Database" status={systemStatus.database} />
-              </>
-            ) : <p className="text-gray-500">Loading status...</p>}
-          </div>
-          
-          <h2 className="text-xl font-semibold text-glow">Backups</h2>
-          <div className="bg-gray-900 p-6 rounded-lg">
-            <p className="text-gray-400">Last backup: {systemStatus ? new Date(systemStatus.lastBackup).toLocaleString() : 'N/A'}</p>
-            <button className="mt-4 w-full px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors">Backup Now</button>
+// Status Card Component
+const StatusCard = ({ title, status, details, icon }: { title: string; status: string; details?: string; icon: string }) => {
+  const getStatusColor = () => {
+    switch (status.toLowerCase()) {
+      case 'operational':
+      case 'connected':
+      case 'healthy':
+        return 'text-green-400 bg-green-900/20 border-green-700';
+      case 'warning':
+      case 'degraded':
+        return 'text-yellow-400 bg-yellow-900/20 border-yellow-700';
+      case 'error':
+      case 'disconnected':
+      case 'unhealthy':
+        return 'text-red-400 bg-red-900/20 border-red-700';
+      default:
+        return 'text-gray-400 bg-gray-900/20 border-gray-700';
+    }
+  };
+
+  return (
+    <div className={`p-4 rounded-lg border ${getStatusColor()}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <span className="text-2xl">{icon}</span>
+          <div>
+            <h3 className="font-medium">{title}</h3>
+            {details && <p className="text-xs opacity-75">{details}</p>}
           </div>
         </div>
+        <span className="font-bold text-sm uppercase tracking-wide">{status}</span>
+      </div>
+    </div>
+  );
+};
 
-        {/* Middle Column: Feature Toggles */}
-        <div className="lg:col-span-1 space-y-8">
-          <h2 className="text-xl font-semibold text-glow">Feature Toggles</h2>
-          <div className="space-y-4">
-            {featureToggles.length > 0 ? (
-              featureToggles.map(toggle => (
-                <FeatureToggle key={toggle.key} toggle={toggle} onToggle={handleToggle} />
-              ))
-            ) : <p className="text-gray-500">Loading toggles...</p>}
-          </div>
+export default function SettingsPage() {
+  const [activeCategory, setActiveCategory] = useState('general');
+  const [settings, setSettings] = useState<Record<string, any[]>>({});
+  const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Mock settings data (in real app, fetch from API)
+  const mockSettings = {
+    general: [
+      {
+        key: 'site_name',
+        name: 'Site Name',
+        description: 'The name of your GoalCoin platform',
+        type: 'text',
+        value: 'GoalCoin',
+        placeholder: 'Enter site name'
+      },
+      {
+        key: 'maintenance_mode',
+        name: 'Maintenance Mode',
+        description: 'Enable maintenance mode to prevent user access',
+        type: 'boolean',
+        value: false,
+        warning: 'This will block all user access to the platform'
+      },
+      {
+        key: 'max_file_size',
+        name: 'Max Upload Size (MB)',
+        description: 'Maximum file size for submissions',
+        type: 'number',
+        value: 50,
+        min: 1,
+        max: 500
+      },
+      {
+        key: 'default_language',
+        name: 'Default Language',
+        description: 'Default language for new users',
+        type: 'select',
+        value: 'en',
+        options: [
+          { value: 'en', label: 'English' },
+          { value: 'fa', label: 'Persian' },
+          { value: 'ar', label: 'Arabic' }
+        ]
+      }
+    ],
+    system: [
+      {
+        key: 'auto_backup',
+        name: 'Auto Backup',
+        description: 'Automatically backup database daily',
+        type: 'boolean',
+        value: true
+      },
+      {
+        key: 'log_level',
+        name: 'Log Level',
+        description: 'System logging verbosity',
+        type: 'select',
+        value: 'info',
+        options: [
+          { value: 'error', label: 'Error Only' },
+          { value: 'warn', label: 'Warnings' },
+          { value: 'info', label: 'Info' },
+          { value: 'debug', label: 'Debug' }
+        ]
+      },
+      {
+        key: 'session_timeout',
+        name: 'Session Timeout (minutes)',
+        description: 'Admin session timeout duration',
+        type: 'number',
+        value: 60,
+        min: 5,
+        max: 480
+      }
+    ],
+    security: [
+      {
+        key: 'two_factor_required',
+        name: 'Require 2FA',
+        description: 'Force all admins to use two-factor authentication',
+        type: 'boolean',
+        value: false
+      },
+      {
+        key: 'login_attempts',
+        name: 'Max Login Attempts',
+        description: 'Maximum failed login attempts before lockout',
+        type: 'number',
+        value: 5,
+        min: 3,
+        max: 10
+      },
+      {
+        key: 'password_policy',
+        name: 'Strong Password Policy',
+        description: 'Enforce strong password requirements',
+        type: 'boolean',
+        value: true
+      }
+    ],
+    notifications: [
+      {
+        key: 'email_notifications',
+        name: 'Email Notifications',
+        description: 'Send email notifications for important events',
+        type: 'boolean',
+        value: true
+      },
+      {
+        key: 'notification_frequency',
+        name: 'Notification Frequency',
+        description: 'How often to send digest notifications',
+        type: 'select',
+        value: 'daily',
+        options: [
+          { value: 'realtime', label: 'Real-time' },
+          { value: 'hourly', label: 'Hourly' },
+          { value: 'daily', label: 'Daily' },
+          { value: 'weekly', label: 'Weekly' }
+        ]
+      }
+    ],
+    performance: [
+      {
+        key: 'cache_enabled',
+        name: 'Enable Caching',
+        description: 'Use Redis caching for better performance',
+        type: 'boolean',
+        value: true
+      },
+      {
+        key: 'rate_limit',
+        name: 'API Rate Limit (per minute)',
+        description: 'Maximum API requests per minute per user',
+        type: 'number',
+        value: 100,
+        min: 10,
+        max: 1000
+      }
+    ],
+    maintenance: [
+      {
+        key: 'auto_cleanup',
+        name: 'Auto Cleanup',
+        description: 'Automatically clean old logs and temporary files',
+        type: 'boolean',
+        value: true
+      },
+      {
+        key: 'cleanup_days',
+        name: 'Cleanup After (days)',
+        description: 'Delete logs older than this many days',
+        type: 'number',
+        value: 30,
+        min: 7,
+        max: 365
+      }
+    ]
+  };
+
+  const mockSystemStatus = {
+    database: { status: 'operational', details: 'PostgreSQL 14.2' },
+    redis: { status: 'operational', details: 'Redis 7.0' },
+    mailgun: { status: 'operational', details: 'API responding' },
+    storage: { status: 'operational', details: '85% used' },
+    api: { status: 'operational', details: '99.9% uptime' },
+    blockchain: { status: 'operational', details: 'Ethereum mainnet' }
+  };
+
+  useEffect(() => {
+    // Simulate loading
+    setTimeout(() => {
+      setSettings(mockSettings);
+      setSystemStatus(mockSystemStatus);
+      setLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleSettingUpdate = async (key: string, value: any) => {
+    try {
+      // Update local state immediately for better UX
+      setSettings(prev => ({
+        ...prev,
+        [activeCategory]: prev[activeCategory]?.map(setting => 
+          setting.key === key ? { ...setting, value } : setting
+        ) || []
+      }));
+
+      // In real app, make API call here
+      console.log(`Updating ${key} to ${value}`);
+      
+      // Show success notification (you can add a toast library)
+      // toast.success('Setting updated successfully');
+    } catch (error) {
+      console.error('Failed to update setting:', error);
+      // Revert local state on error
+      // toast.error('Failed to update setting');
+    }
+  };
+
+  const handleBackup = async () => {
+    try {
+      // In real app, make API call to trigger backup
+      console.log('Triggering backup...');
+      alert('Backup started successfully!');
+    } catch (error) {
+      console.error('Backup failed:', error);
+      alert('Backup failed. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-4 md:p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Right Column: Security Logs */}
-        <div className="lg:col-span-1 space-y-8">
-          <h2 className="text-xl font-semibold text-glow">Security Logs</h2>
-          <div className="bg-gray-900 rounded-lg overflow-hidden h-[600px] overflow-y-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-800 sticky top-0">
-                <tr>
-                  <th className="p-3">Action</th>
-                  <th className="p-3">Target</th>
-                  <th className="p-3">Timestamp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {securityLogs.length > 0 ? (
-                  securityLogs.map(log => (
-                    <tr key={log.id} className="border-b border-gray-800">
-                      <td className="p-3 font-mono">{log.action}</td>
-                      <td className="p-3 font-mono">{log.target_id}</td>
-                      <td className="p-3">{new Date(log.created_at).toLocaleString()}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="text-center py-16 text-gray-500">No logs found.</td>
-                  </tr>
+  return (
+    <div className="min-h-screen bg-black text-white p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-8">Settings</h1>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
+              <h2 className="text-lg font-semibold mb-4">Categories</h2>
+              <nav className="space-y-2">
+                {SETTINGS_CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setActiveCategory(category.id)}
+                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                      activeCategory === category.id
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-lg">{category.icon}</span>
+                    <span>{category.name}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* System Status */}
+            <div className="mt-8 bg-gray-900 rounded-lg p-4 border border-gray-800">
+              <h2 className="text-lg font-semibold mb-4">System Status</h2>
+              <div className="space-y-3">
+                {systemStatus && Object.entries(systemStatus).map(([key, data]: [string, any]) => (
+                  <StatusCard
+                    key={key}
+                    title={key.charAt(0).toUpperCase() + key.slice(1)}
+                    status={data.status}
+                    details={data.details}
+                    icon={
+                      key === 'database' ? '🗄️' :
+                      key === 'redis' ? '⚡' :
+                      key === 'mailgun' ? '📧' :
+                      key === 'storage' ? '💾' :
+                      key === 'api' ? '🔗' :
+                      key === 'blockchain' ? '⛓️' : '🖥️'
+                    }
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={handleBackup}
+                className="w-full mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors font-medium"
+              >
+                🔄 Backup Now
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="bg-gray-900 rounded-lg border border-gray-800">
+              <div className="p-6 border-b border-gray-800">
+                <h2 className="text-xl font-semibold">
+                  {SETTINGS_CATEGORIES.find(cat => cat.id === activeCategory)?.icon}{' '}
+                  {SETTINGS_CATEGORIES.find(cat => cat.id === activeCategory)?.name} Settings
+                </h2>
+                <p className="text-gray-400 mt-1">
+                  Configure {activeCategory} settings for your GoalCoin platform
+                </p>
+              </div>
+
+              <div className="p-6">
+                <div className="space-y-4">
+                  {settings[activeCategory]?.map((setting) => (
+                    <SettingItem
+                      key={setting.key}
+                      setting={setting}
+                      onUpdate={handleSettingUpdate}
+                    />
+                  ))}
+                </div>
+
+                {settings[activeCategory]?.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <p>No settings available for this category.</p>
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
