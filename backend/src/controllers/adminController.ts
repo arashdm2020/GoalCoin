@@ -896,14 +896,7 @@ export const adminController = {
         },
       });
 
-      await AuditService.log({
-        action: 'REVIEWER_SUSPENDED',
-        entity_type: 'reviewer',
-        entity_id: reviewer.user_id,
-        admin_user: 'admin',
-        old_data: oldReviewer,
-        new_data: reviewer,
-      });
+      console.log('Reviewer suspended:', { reviewerId: reviewer.user_id, status: 'SUSPENDED' });
 
       res.status(200).json(reviewer);
     } catch (error) {
@@ -962,13 +955,8 @@ export const adminController = {
         )
       );
 
-      await AuditService.log({
-        action: 'REVIEWERS_ASSIGNED',
-        entity_type: 'submission',
-        entity_id: submission_id,
-        admin_user: 'admin',
-        new_data: { assignments: assignments.map(a => a.reviewer_wallet) },
-      });
+      // TODO: Add audit logging when audit table is ready
+      console.log('Reviewers assigned:', { submissionId: submission_id, assignments: assignments.map(a => a.reviewer_wallet) });
 
       res.status(201).json({ success: true, data: assignments });
     } catch (error) {
@@ -1047,13 +1035,8 @@ export const adminController = {
                 where: { id: reviewerUser.reviewer.id },
                 data: { status: 'SUSPENDED', strikes: 0 },
               });
-              await AuditService.log({
-                action: 'REVIEWER_AUTO_SUSPENDED',
-                entity_type: 'reviewer',
-                entity_id: reviewerUser.reviewer.id,
-                admin_user: 'system',
-                new_data: { reason: `Reached ${STRIKE_THRESHOLD} strikes.` },
-              });
+              // TODO: Add audit logging when audit table is ready
+              console.log('Reviewer auto-suspended:', { reviewerId: reviewerUser.reviewer.id, reason: `Reached ${STRIKE_THRESHOLD} strikes.` });
             } else {
               await prisma.reviewer.update({
                 where: { id: reviewerUser.reviewer.id },
@@ -1077,14 +1060,8 @@ export const adminController = {
         )
       );
 
-      await AuditService.log({
-        action: 'SUBMISSION_CLOSED',
-        entity_type: 'submission',
-        entity_id: submission_id,
-        admin_user: 'admin',
-        old_data: { status: 'PENDING' },
-        new_data: { status: finalStatus, closed_at: updatedSubmission.closed_at },
-      });
+      // TODO: Add audit logging when audit table is ready
+      console.log('Submission closed:', { submissionId: submission_id, status: finalStatus });
 
       res.status(200).json(updatedSubmission);
     } catch (error) {
@@ -1213,18 +1190,8 @@ export const adminController = {
         return newPayout;
       });
 
-      await AuditService.log({
-        action: 'COMMISSIONS_MARKED_PAID',
-        entity_type: 'payout',
-        entity_id: payout.id,
-        admin_user: 'admin',
-        new_data: { 
-          payout_id: payout.id,
-          commission_ids,
-          tx_hash,
-          amount: totalAmount,
-        },
-      });
+      // TODO: Add audit logging when audit table is ready
+      console.log('Commissions marked as paid:', { payoutId: payout.id, commissionIds: commission_ids, amount: totalAmount });
 
       res.status(200).json({ 
         success: true, 
