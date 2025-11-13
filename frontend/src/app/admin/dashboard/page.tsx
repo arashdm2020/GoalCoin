@@ -93,7 +93,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'burns' | 'treasury' | 'users'>('burns');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchData = async () => {
     try {
