@@ -377,23 +377,40 @@ export const adminController = {
 
   async toggleReviewerStatus(req: Request, res: Response): Promise<void> {
     const { reviewerId, status } = req.body;
+    console.log('Toggle reviewer status request:', { reviewerId, status, body: req.body });
+    
     if (!reviewerId || !status || !['ACTIVE', 'SUSPENDED'].includes(status)) {
       res.status(400).json({ error: 'Reviewer ID and a valid status (ACTIVE/SUSPENDED) are required' });
       return;
     }
 
     try {
+      // First check if reviewer exists
+      const existingReviewer = await prisma.reviewer.findUnique({
+        where: { id: reviewerId },
+      });
+
+      if (!existingReviewer) {
+        res.status(404).json({ error: 'Reviewer not found' });
+        return;
+      }
+
       const updatedReviewer = await prisma.reviewer.update({
         where: { id: reviewerId },
         data: { status: status as 'ACTIVE' | 'SUSPENDED' },
       });
 
       // TODO: Add audit logging when audit table is ready
-      console.log('Reviewer status changed:', { reviewerId, status });
+      console.log('Reviewer status changed:', { reviewerId, status, updatedReviewer });
 
       res.status(200).json({ success: true, data: updatedReviewer });
     } catch (error) {
       console.error('Failed to update reviewer status:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        reviewerId,
+        status
+      });
       res.status(500).json({ error: 'Failed to update reviewer status' });
     }
   },
@@ -440,9 +457,39 @@ export const adminController = {
         return;
       }
 
-      // Delete the reviewer
-      await prisma.reviewer.delete({
-        where: { id: reviewerId },
+      // Use transaction to handle foreign key constraints
+      await prisma.$transaction(async (tx) => {
+        // Delete related audit logs first (if audit_logs table exists)
+        try {
+          await (tx as any).auditLog.deleteMany({
+            where: { reviewer_id: reviewerId }
+          });
+        } catch (auditError) {
+          // Ignore if audit_logs table doesn't exist
+          console.log('No audit logs to delete or table does not exist');
+        }
+
+        // Delete related review assignments
+        if (reviewer.user.wallet) {
+          await tx.reviewAssignment.deleteMany({
+            where: { reviewer_wallet: reviewer.user.wallet }
+          });
+
+          // Delete related reviews
+          await tx.review.deleteMany({
+            where: { reviewer_wallet: reviewer.user.wallet }
+          });
+
+          // Delete related commissions
+          await tx.commission.deleteMany({
+            where: { reviewer_wallet: reviewer.user.wallet }
+          });
+        }
+
+        // Finally delete the reviewer
+        await tx.reviewer.delete({
+          where: { id: reviewerId },
+        });
       });
 
       // TODO: Add audit logging when audit table is ready
