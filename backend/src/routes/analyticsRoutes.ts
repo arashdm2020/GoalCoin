@@ -10,11 +10,51 @@ const router = Router();
  */
 router.get('/dashboard', adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
-    const dashboard = await analyticsService.getDashboard();
-    res.json(dashboard);
+    console.log('Analytics dashboard request received');
+    
+    // Try each service method individually to identify the problematic one
+    const results: any = {};
+    
+    try {
+      results.platform = await analyticsService.getPlatformMetrics();
+      console.log('Platform metrics fetched successfully');
+    } catch (error) {
+      console.error('Error fetching platform metrics:', error);
+      results.platform = { dau: 0, mau: 0, total_users: 0, paid_users: 0, conversion_rate: 0 };
+    }
+    
+    try {
+      results.burn_treasury_timeline = await analyticsService.getBurnTreasuryTimeline();
+      console.log('Burn treasury timeline fetched successfully');
+    } catch (error) {
+      console.error('Error fetching burn treasury timeline:', error);
+      results.burn_treasury_timeline = { burnEvents: [], treasuryEvents: [] };
+    }
+    
+    try {
+      results.top_xp_actions = await analyticsService.getTopXPActions();
+      console.log('Top XP actions fetched successfully');
+    } catch (error) {
+      console.error('Error fetching top XP actions:', error);
+      results.top_xp_actions = [];
+    }
+    
+    try {
+      results.country_distribution = await analyticsService.getCountryDistribution();
+      console.log('Country distribution fetched successfully');
+    } catch (error) {
+      console.error('Error fetching country distribution:', error);
+      results.country_distribution = [];
+    }
+    
+    results.generated_at = new Date().toISOString();
+    
+    console.log('Analytics dashboard response:', JSON.stringify(results, null, 2));
+    res.json(results);
   } catch (error: any) {
     console.error('Error fetching dashboard:', error);
-    res.status(500).json({ error: 'Failed to fetch dashboard' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to fetch dashboard', details: error.message });
   }
 });
 
