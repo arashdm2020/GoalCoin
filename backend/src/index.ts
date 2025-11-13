@@ -40,8 +40,11 @@ import { emailTestRoutes } from './routes/emailTestRoutes';
 import { apiLimiter, authLimiter, xpLimiter, adminLimiter } from './middleware/rateLimiter';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
-import './queue/workers'; // Start BullMQ workers
-
+// Temporarily disable BullMQ workers to reduce Redis usage
+// import './queue/workers'; 
+console.log('⚠️ BullMQ workers disabled to reduce Redis usage');
+// await startWorkers();
+console.log('✅ Server started without background workers');
 const prisma = new PrismaClient();
 
 const app = express();
