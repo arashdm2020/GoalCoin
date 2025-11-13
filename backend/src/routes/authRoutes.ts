@@ -16,6 +16,12 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 
 /**
+ * POST /api/auth/test-login
+ * Test login for UAT testing without Web3
+ */
+router.post('/test-login', authController.testLogin);
+
+/**
  * POST /api/auth/link-wallet
  * Link wallet to existing email account (requires JWT)
  */
