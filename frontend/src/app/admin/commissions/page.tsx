@@ -55,22 +55,36 @@ export default function CommissionsPage() {
       const result = await response.json();
       console.log('Commissions result:', result);
       
-      if (result.success) {
-        const fetchedData = result.data || [];
-        setData(fetchedData);
-        setTotalItems(result.total || 0);
-        
-        // Calculate summary
-        const totalUnpaid = fetchedData
-          .filter((item: any) => !item.payout_id)
-          .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
-        const pendingCount = fetchedData.filter((item: any) => !item.payout_id).length;
-        setSummary({ total: totalUnpaid.toFixed(2), pending: pendingCount, this_week: 'N/A' });
+      // Handle both old format (Array) and new format ({ success: true, data: [...] })
+      let fetchedData = [];
+      let totalCount = 0;
+      
+      if (Array.isArray(result)) {
+        // Old format - direct array
+        fetchedData = result;
+        totalCount = result.length;
+        console.log('Using old format (direct array)');
+      } else if (result.success) {
+        // New format - { success: true, data: [...] }
+        fetchedData = result.data || [];
+        totalCount = result.total || 0;
+        console.log('Using new format (success object)');
       } else {
         console.error('API returned error:', result);
         setData([]);
         setTotalItems(0);
+        return;
       }
+      
+      setData(fetchedData);
+      setTotalItems(totalCount);
+      
+      // Calculate summary
+      const totalUnpaid = fetchedData
+        .filter((item: any) => !item.payout_id)
+        .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
+      const pendingCount = fetchedData.filter((item: any) => !item.payout_id).length;
+      setSummary({ total: totalUnpaid.toFixed(2), pending: pendingCount, this_week: 'N/A' });
     } catch (error) {
       console.error(`Failed to fetch ${activeTab}:`, error);
       setData([]);
