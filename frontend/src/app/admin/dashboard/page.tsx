@@ -99,32 +99,60 @@ export default function DashboardPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
+        console.log('No auth header found, redirecting to login');
         router.push('/admin/login');
         return;
       }
 
-      const [statsResponse, analyticsResponse] = await Promise.all([
-        fetch(`${getBackendUrl()}/api/admin/dashboard-stats`, {
-          headers: { 'Authorization': authHeader }
-        }),
-        fetch(`${getBackendUrl()}/api/analytics/dashboard`, {
-          headers: { 'Authorization': authHeader }
-        })
-      ]);
+      console.log('Fetching dashboard data with auth header:', authHeader);
 
-      if (statsResponse.ok && analyticsResponse.ok) {
+      // First fetch stats data
+      const statsResponse = await fetch(`${getBackendUrl()}/api/admin/dashboard-stats`, {
+        headers: { 'Authorization': authHeader }
+      });
+
+      if (statsResponse.status === 401) {
+        console.log('Stats API returned 401, clearing auth and redirecting');
+        localStorage.removeItem('admin_auth_header');
+        router.push('/admin/login');
+        return;
+      }
+
+      if (statsResponse.ok) {
         const statsResult = await statsResponse.json();
-        const analyticsResult = await analyticsResponse.json();
-        
         if (statsResult.success) {
           setStats(statsResult.stats);
         }
-        setAnalyticsData(analyticsResult);
-        setLoading(false);
-      } else if (statsResponse.status === 401 || analyticsResponse.status === 401) {
-        localStorage.removeItem('admin_auth_header');
-        router.push('/admin/login');
+      } else {
+        console.error('Stats API error:', statsResponse.status, statsResponse.statusText);
       }
+
+      // Then try to fetch analytics data (optional)
+      try {
+        const analyticsResponse = await fetch(`${getBackendUrl()}/api/analytics/dashboard`, {
+          headers: { 'Authorization': authHeader }
+        });
+
+        if (analyticsResponse.status === 401) {
+          console.log('Analytics API returned 401, clearing auth and redirecting');
+          localStorage.removeItem('admin_auth_header');
+          router.push('/admin/login');
+          return;
+        }
+
+        if (analyticsResponse.ok) {
+          const analyticsResult = await analyticsResponse.json();
+          setAnalyticsData(analyticsResult);
+        } else {
+          console.error('Analytics API error:', analyticsResponse.status, analyticsResponse.statusText);
+          // Don't fail completely if analytics fails, just log the error
+        }
+      } catch (analyticsError) {
+        console.error('Analytics API failed:', analyticsError);
+        // Continue without analytics data
+      }
+
+      setLoading(false);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
       setLoading(false);
@@ -177,7 +205,7 @@ export default function DashboardPage() {
     let labels: string[] = [];
     let datasets: any[] = [];
 
-    if (activeTab === 'burns' && burnEvents.length > 0) {
+    if (activeTab === 'burns' && burnEvents && burnEvents.length > 0) {
       labels = burnEvents.map(event => new Date(event.date).toLocaleDateString()).reverse();
       datasets = [{
         label: 'GoalCoin Burned',
@@ -193,7 +221,7 @@ export default function DashboardPage() {
         pointRadius: 4,
         pointHoverRadius: 6,
       }];
-    } else if (activeTab === 'treasury' && treasuryEvents.length > 0) {
+    } else if (activeTab === 'treasury' && treasuryEvents && treasuryEvents.length > 0) {
       labels = treasuryEvents.map(event => new Date(event.date).toLocaleDateString()).reverse();
       datasets = [{
         label: 'Treasury Revenue (USD)',
@@ -209,31 +237,34 @@ export default function DashboardPage() {
         pointRadius: 4,
         pointHoverRadius: 6,
       }];
-    } else if (activeTab === 'users') {
-      // Generate sample user growth data (you can replace with real API data)
+    } else if (activeTab === 'users' && analyticsData?.platform) {
+      // For users tab, we can show DAU/MAU data if available
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (6 - i));
         return date.toLocaleDateString();
       });
       labels = last7Days;
-      datasets = [{
-        label: 'Daily Active Users',
-        data: [120, 135, 148, 162, 155, 178, 192], // Sample data
-        borderColor: 'rgba(255, 255, 255, 0.9)',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#fbbf24',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-      }];
+      // Use actual DAU data if available, otherwise return null
+      if (analyticsData.platform.dau) {
+        datasets = [{
+          label: 'Daily Active Users',
+          data: Array(7).fill(analyticsData.platform.dau), // Simplified - you may want to fetch daily data
+          borderColor: 'rgba(255, 255, 255, 0.9)',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#fbbf24',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        }];
+      }
     }
 
-    return { labels, datasets };
+    return labels.length > 0 && datasets.length > 0 ? { labels, datasets } : null;
   };
 
   const chartOptions = {
@@ -294,7 +325,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Top 8 Metric Cards - 4x2 Layout */}
-      {stats && analyticsData && (
+      {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <MetricCard 
             title="Total Users" 
@@ -302,24 +333,30 @@ export default function DashboardPage() {
             change="+12% this week"
             icon="👥"
           />
-          <MetricCard 
-            title="Daily Active Users" 
-            value={analyticsData.platform.dau.toLocaleString()} 
-            change="+8% today"
-            icon="🔥"
-          />
-          <MetricCard 
-            title="Monthly Active Users" 
-            value={analyticsData.platform.mau.toLocaleString()} 
-            change="+15% this month"
-            icon="📈"
-          />
-          <MetricCard 
-            title="Conversion Rate" 
-            value={`${analyticsData.platform.conversion_rate.toFixed(1)}%`} 
-            change="+2.3% this week"
-            icon="💎"
-          />
+          {analyticsData?.platform?.dau && (
+            <MetricCard 
+              title="Daily Active Users" 
+              value={analyticsData.platform.dau.toLocaleString()} 
+              change="+8% today"
+              icon="🔥"
+            />
+          )}
+          {analyticsData?.platform?.mau && (
+            <MetricCard 
+              title="Monthly Active Users" 
+              value={analyticsData.platform.mau.toLocaleString()} 
+              change="+15% this month"
+              icon="📈"
+            />
+          )}
+          {analyticsData?.platform?.conversion_rate !== undefined && (
+            <MetricCard 
+              title="Conversion Rate" 
+              value={`${analyticsData.platform.conversion_rate.toFixed(1)}%`} 
+              change="+2.3% this week"
+              icon="💎"
+            />
+          )}
           <MetricCard 
             title="Total Treasury" 
             value={`$${stats.treasury.total_treasury.toFixed(2)}`} 
@@ -370,8 +407,16 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="h-80">
-            {getChartData() && (
+            {getChartData() ? (
               <Line data={getChartData()!} options={chartOptions} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500 text-center">
+                  No chart data available for {activeTab}
+                  <br />
+                  <span className="text-sm">Please check API connection</span>
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -380,26 +425,23 @@ export default function DashboardPage() {
         <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800/50 p-6">
           <h2 className="text-xl font-semibold text-white mb-6">User Growth Trend</h2>
           <div className="h-80">
-            <Line 
-              data={{
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                  label: 'Total Users',
-                  data: [100, 250, 400, 650, 850, stats?.users.total || 1000],
-                  borderColor: 'rgba(255, 255, 255, 0.9)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderWidth: 2,
-                  fill: true,
-                  tension: 0.4,
-                  pointBackgroundColor: '#fbbf24',
-                  pointBorderColor: '#ffffff',
-                  pointBorderWidth: 2,
-                  pointRadius: 4,
-                  pointHoverRadius: 6,
-                }]
-              }}
-              options={chartOptions}
-            />
+            {stats ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="text-6xl font-bold text-transparent bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text mb-4">
+                    {stats.users.total.toLocaleString()}
+                  </div>
+                  <p className="text-xl text-white mb-2">Total Users</p>
+                  <p className="text-sm text-gray-400">
+                    Historical growth chart requires additional API endpoint
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">No user data available</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -422,7 +464,13 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 text-yellow-400 font-semibold">{action.event_count}</td>
                     <td className="py-3 px-4 text-gray-300">{action.unique_users}</td>
                   </tr>
-                ))}
+                )) || (
+                  <tr>
+                    <td colSpan={3} className="py-8 px-4 text-center text-gray-500">
+                      No XP actions data available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -447,7 +495,13 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 text-yellow-400 font-semibold">{country.user_count}</td>
                     <td className="py-3 px-4 text-gray-300">{country.percentage}%</td>
                   </tr>
-                ))}
+                )) || (
+                  <tr>
+                    <td colSpan={3} className="py-8 px-4 text-center text-gray-500">
+                      No country distribution data available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
