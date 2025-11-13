@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 
 export default function LinkWalletPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [signed, setSigned] = useState(false);
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { signMessage } = useSignMessage();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -29,16 +31,48 @@ export default function LinkWalletPage() {
     }
   }, [router]);
 
-  useEffect(() => {
-    if (isConnected && address && user && !user.wallet) {
-      handleLinkWallet(address);
-    }
-  }, [isConnected, address, user]);
+  // Remove automatic linking - require manual signature
 
-  const handleLinkWallet = async (walletAddress: string) => {
+  const handleSignAndLinkWallet = async () => {
+    if (!isConnected || !address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Create message to sign
+      const message = `I want to link this wallet to my GoalCoin account.\n\nWallet: ${address}\nUser: ${user.email || user.handle}\nTimestamp: ${Date.now()}`;
+
+      // Request signature
+      let signature: string = '';
+      try {
+        await new Promise<void>((resolve, reject) => {
+          signMessage(
+            { message },
+            {
+              onSuccess: (data) => {
+                signature = data;
+                resolve();
+              },
+              onError: (error) => {
+                reject(error);
+              },
+            }
+          );
+        });
+        
+        if (!signature) {
+          throw new Error('Signature required to link wallet');
+        }
+      } catch (signError: any) {
+        throw new Error(signError.message || 'Signature required to link wallet');
+      }
+
+      setSigned(true);
+
+      // Send to backend with signature
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
       const token = localStorage.getItem('auth_token');
 
@@ -50,7 +84,9 @@ export default function LinkWalletPage() {
         },
         body: JSON.stringify({
           email: user.email,
-          wallet: walletAddress,
+          wallet: address,
+          signature: signature,
+          message: message,
         }),
       });
 
@@ -58,16 +94,21 @@ export default function LinkWalletPage() {
 
       if (response.ok) {
         // Update local storage
-        const updatedUser = { ...user, wallet: walletAddress };
+        const updatedUser = { ...user, wallet: address };
         localStorage.setItem('user', JSON.stringify(updatedUser));
 
-        alert('✅ Wallet connected successfully!');
+        alert('✅ Wallet connected and verified successfully!');
         router.push('/dashboard');
       } else {
         throw new Error(data.error);
       }
     } catch (error: any) {
-      alert(error.message || 'Failed to link wallet');
+      setSigned(false);
+      if (error.message.includes('User rejected')) {
+        alert('Wallet signature is required to link your wallet');
+      } else {
+        alert(error.message || 'Failed to link wallet');
+      }
     } finally {
       setLoading(false);
     }
@@ -96,23 +137,51 @@ export default function LinkWalletPage() {
           )}
 
           <div className="space-y-4">
-            <p className="text-sm text-gray-400">
-              Click the "Connect Wallet" button in the top right corner to link your MetaMask wallet.
-            </p>
-
-            {loading && (
-              <div className="text-center py-4">
-                <div className="text-lg">Linking wallet...</div>
+            {!isConnected && (
+              <div className="p-4 bg-yellow-900/30 border border-yellow-500/30 rounded-lg">
+                <p className="text-sm text-yellow-200">
+                  <strong>Step 1:</strong> Connect your wallet using the button in the top right corner
+                </p>
               </div>
             )}
 
-            {isConnected && address && (
+            {isConnected && address && !signed && (
+              <div className="space-y-4">
+                <div className="p-4 bg-green-900/30 border border-green-500/30 rounded-lg">
+                  <p className="text-sm text-green-200">
+                    <strong>✓ Wallet Connected:</strong>
+                  </p>
+                  <p className="text-xs text-green-100 mt-1 font-mono">
+                    {address}
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-blue-900/30 border border-blue-500/30 rounded-lg">
+                  <p className="text-sm text-blue-200">
+                    <strong>Step 2:</strong> Sign a message to verify wallet ownership
+                  </p>
+                  <p className="text-xs text-blue-100 mt-1">
+                    This signature proves you own this wallet address
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleSignAndLinkWallet}
+                  disabled={loading}
+                  className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Signing & Linking...' : '✍️ Sign Message & Link Wallet'}
+                </button>
+              </div>
+            )}
+
+            {signed && (
               <div className="p-4 bg-green-900/30 border border-green-500/30 rounded-lg">
                 <p className="text-sm text-green-200">
-                  <strong>Wallet Connected:</strong>
+                  <strong>✅ Wallet Successfully Linked!</strong>
                 </p>
-                <p className="text-xs text-green-100 mt-1 font-mono">
-                  {address}
+                <p className="text-xs text-green-100 mt-1">
+                  Your wallet has been verified and linked to your account
                 </p>
               </div>
             )}
