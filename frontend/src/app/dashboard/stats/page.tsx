@@ -58,19 +58,60 @@ export default function UserStatsPage() {
 
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
       
-      // Fetch user profile
-      const profileRes = await fetch(`${backendUrl}/api/users/profile`, {
+      // Fetch user profile using auth/me endpoint
+      const profileRes = await fetch(`${backendUrl}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!profileRes.ok) {
+        if (profileRes.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user');
+          router.push('/auth');
+          return;
+        }
         throw new Error('Failed to fetch profile');
       }
 
       const profileData = await profileRes.json();
 
-      // Mock additional stats (you can add real endpoints later)
-      const mockStats: UserStats = {
+      // Fetch real activity data
+      const [warmupHistory, mealHistory, workoutHistory] = await Promise.all([
+        fetch(`${backendUrl}/api/warmups/history?limit=1000`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.ok ? res.json() : { history: [] }),
+        
+        fetch(`${backendUrl}/api/meals/history?limit=1000`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.ok ? res.json() : { history: [] }),
+        
+        fetch(`${backendUrl}/api/fitness/progress/${profileData.user.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.ok ? res.json() : { workouts: [] })
+      ]);
+
+      // Get rankings from leaderboard
+      const [globalLeaderboard, countryLeaderboard] = await Promise.all([
+        fetch(`${backendUrl}/api/leaderboard?scope=global`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.ok ? res.json() : { leaderboard: [] }),
+        
+        fetch(`${backendUrl}/api/leaderboard?scope=country&country=${profileData.user.country_code}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.ok ? res.json() : { leaderboard: [] })
+      ]);
+
+      // Calculate rankings
+      const globalRank = globalLeaderboard.leaderboard?.findIndex((user: any) => 
+        user.wallet === profileData.user.wallet || user.handle === profileData.user.handle
+      ) + 1 || 0;
+
+      const countryRank = countryLeaderboard.leaderboard?.findIndex((user: any) => 
+        user.wallet === profileData.user.wallet || user.handle === profileData.user.handle
+      ) + 1 || 0;
+
+      const realStats: UserStats = {
         user: profileData.user,
         tier_progress: {
           currentTier: profileData.user.fan_tier || 'MINTED',
@@ -80,19 +121,19 @@ export default function UserStatsPage() {
           xpNeeded: calculateXPNeeded(profileData.user.xp_points, profileData.user.fan_tier),
         },
         rankings: {
-          global_rank: Math.floor(Math.random() * 1000) + 1,
-          country_rank: Math.floor(Math.random() * 100) + 1,
-          total_users: 5000,
+          global_rank: globalRank || 999,
+          country_rank: countryRank || 99,
+          total_users: globalLeaderboard.leaderboard?.length || 0,
         },
         activity: {
-          total_workouts: Math.floor(Math.random() * 50),
-          total_meals_logged: Math.floor(Math.random() * 100),
-          total_warmups: Math.floor(Math.random() * 30),
+          total_workouts: workoutHistory.workouts?.length || 0,
+          total_meals_logged: mealHistory.history?.length || 0,
+          total_warmups: warmupHistory.history?.length || 0,
           last_activity: new Date().toISOString(),
         },
       };
 
-      setStats(mockStats);
+      setStats(realStats);
     } catch (err: any) {
       setError(err.message);
     } finally {
