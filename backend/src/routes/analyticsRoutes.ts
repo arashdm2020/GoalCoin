@@ -49,8 +49,13 @@ router.get('/dashboard', adminAuthMiddleware, async (req: Request, res: Response
     
     results.generated_at = new Date().toISOString();
     
-    console.log('Analytics dashboard response:', JSON.stringify(results, null, 2));
-    res.json(results);
+    // Convert BigInt to string for JSON serialization
+    const serializedResults = JSON.parse(JSON.stringify(results, (key, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    ));
+    
+    console.log('Analytics dashboard response:', JSON.stringify(serializedResults, null, 2));
+    res.json(serializedResults);
   } catch (error: any) {
     console.error('Error fetching dashboard:', error);
     console.error('Error stack:', error.stack);
