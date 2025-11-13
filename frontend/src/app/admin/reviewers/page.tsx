@@ -134,46 +134,192 @@ export default function ReviewersPage() {
   };
 
   const handleAddReviewer = async (wallet: string) => {
-    const success = await handleApiCall('/api/admin/reviewers', 'POST', { wallet });
-    if (success) setIsModalOpen(false);
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/reviewers`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({ wallet }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        alert('Reviewer added successfully');
+        fetchReviewers(); // Refresh the list
+        setIsModalOpen(false);
+      } else {
+        alert('Failed to add reviewer: ' + (result.error || 'Unknown error'));
+        throw new Error(result.error || 'Failed to add reviewer');
+      }
+    } catch (error) {
+      console.error('Failed to add reviewer:', error);
+      throw error; // Re-throw so modal can handle it
+    }
   };
 
   const handleStatusChange = async (reviewerId: string, status: 'ACTIVE' | 'SUSPENDED') => {
-    await handleApiCall('/api/admin/reviewers/status', 'PUT', { reviewerId, status });
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/reviewers/status`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({ reviewerId, status }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        alert(`Reviewer ${status.toLowerCase()} successfully`);
+        fetchReviewers(); // Refresh the list
+      } else {
+        alert('Failed to update reviewer status: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Failed to update reviewer status:', error);
+      alert('Failed to update reviewer status. Please try again.');
+    }
   };
 
   const handleResetStrikes = async (reviewerId: string) => {
-    await handleApiCall('/api/admin/reviewers/reset-strikes', 'POST', { reviewerId });
+    if (!confirm('Are you sure you want to reset strikes for this reviewer?')) {
+      return;
+    }
+    
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/reviewers/reset-strikes`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({ reviewerId }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        alert('Reviewer strikes reset successfully');
+        fetchReviewers(); // Refresh the list
+      } else {
+        alert('Failed to reset strikes: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Failed to reset strikes:', error);
+      alert('Failed to reset strikes. Please try again.');
+    }
   };
 
   const handleRemove = async (reviewerId: string) => {
-    // TODO: Implement a proper 'remove' endpoint in the backend
-    alert(`This should call an API to remove reviewer ${reviewerId}`);
+    if (!confirm('Are you sure you want to remove this reviewer? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/reviewers/remove`, {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({ reviewerId }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        alert('Reviewer removed successfully');
+        fetchReviewers(); // Refresh the list
+      } else {
+        alert('Failed to remove reviewer: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Failed to remove reviewer:', error);
+      alert('Failed to remove reviewer. Please try again.');
+    }
   };
 
   const handleViewAudit = async (reviewer: any) => {
     setSelectedReviewer(reviewer);
+    setIsDrawerOpen(true);
+    
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
+      if (!authHeader) {
+        alert('Authentication required');
+        setAuditVotes([]);
+        return;
+      }
+      
       const response = await fetch(`${getBackendUrl()}/api/admin/reviewers/${reviewer.id}/audit`, {
         headers: { 'Authorization': authHeader }
       });
+      
       const result = await response.json();
       if (result.success) {
-        setAuditVotes(result.data);
+        setAuditVotes(result.data || []);
       } else {
+        console.error('Failed to fetch audit data:', result.error);
         setAuditVotes([]);
+        alert('Failed to load audit data: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Failed to fetch audit data:', error);
       setAuditVotes([]);
+      alert('Failed to load audit data. Please try again.');
     }
-    setIsDrawerOpen(true);
   };
 
-  const handleExportCSV = () => {
-    window.open('/api/admin/export-csv?type=reviewers', '_blank');
+  const handleExportCSV = async () => {
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/export-csv?type=reviewers`, {
+        headers: { 'Authorization': authHeader }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reviewers-export-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Failed to export CSV. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      alert('Failed to export CSV. Please try again.');
+    }
   };
 
   const handlePageChange = (page: number) => {

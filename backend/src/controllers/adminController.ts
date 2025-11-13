@@ -435,6 +435,48 @@ export const adminController = {
     }
   },
 
+  async removeReviewer(req: Request, res: Response): Promise<void> {
+    const { reviewerId } = req.body;
+    if (!reviewerId) {
+      res.status(400).json({ error: 'Reviewer ID is required' });
+      return;
+    }
+
+    try {
+      // First check if reviewer exists
+      const reviewer = await prisma.reviewer.findUnique({
+        where: { id: reviewerId },
+        include: { user: { select: { wallet: true } } },
+      });
+
+      if (!reviewer) {
+        res.status(404).json({ error: 'Reviewer not found' });
+        return;
+      }
+
+      // Delete the reviewer
+      await prisma.reviewer.delete({
+        where: { id: reviewerId },
+      });
+
+      await AuditService.log({
+        action: 'REVIEWER_REMOVED',
+        entity_type: 'reviewer',
+        entity_id: reviewerId,
+        admin_user: 'admin', // TODO: Get from JWT
+        old_data: { wallet: reviewer.user.wallet },
+      });
+
+      res.status(200).json({ 
+        success: true, 
+        message: 'Reviewer removed successfully' 
+      });
+    } catch (error) {
+      console.error('Failed to remove reviewer:', error);
+      res.status(500).json({ error: 'Failed to remove reviewer' });
+    }
+  },
+
   async getReviewerAudit(req: Request, res: Response): Promise<void> {
     const { reviewerId } = req.params;
     if (!reviewerId) {
