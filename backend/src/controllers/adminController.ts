@@ -185,7 +185,7 @@ export const adminController = {
     try {
       const where: any = {};
       if (status && status !== 'All') {
-        where.status = status as 'ACTIVE' | 'SUSPENDED';
+        where.status = status;
       }
       // Accuracy and date filtering will be more complex and added later
 
@@ -704,13 +704,14 @@ export const adminController = {
   },
 
   // --- Submission & Payout Viewing ---
-  async getSubmissions(req: Request, res: Response): Promise<void> {
-    const { status, date, country } = req.query;
+  async listSubmissions(req: Request, res: Response): Promise<void> {
+    const { status, country, date, page = '1', limit = '25' } = req.query;
+
     try {
       const where: any = {};
 
       if (status && status !== 'All') {
-        where.status = status as 'PENDING' | 'APPROVED' | 'REJECTED';
+        where.status = status;
       }
       if (country && country !== 'All') {
         where.user = { country_code: country as string };
@@ -721,6 +722,14 @@ export const adminController = {
         where.created_at = { gte: startDate, lt: endDate };
       }
 
+      // Parse pagination parameters
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+      const skip = (pageNum - 1) * limitNum;
+
+      // Get total count for pagination
+      const total = await prisma.submission.count({ where });
+
       const submissions = await prisma.submission.findMany({
         where,
         include: {
@@ -729,8 +738,18 @@ export const adminController = {
           user: { select: { wallet: true, handle: true, country_code: true } },
         },
         orderBy: { created_at: 'desc' },
+        skip,
+        take: limitNum,
       });
-      res.status(200).json({ success: true, data: submissions });
+
+      res.status(200).json({ 
+        success: true, 
+        data: submissions,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum)
+      });
     } catch (error) {
       console.error('Failed to fetch submissions:', error);
       res.status(500).json({ error: 'Failed to fetch submissions' });
