@@ -110,6 +110,63 @@ export const authController = {
   },
 
   /**
+   * POST /api/auth/test-login
+   * Simple test login for UAT without Web3 (MVP only)
+   */
+  async testLogin(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        res.status(400).json({ error: 'Email and password are required' });
+        return;
+      }
+
+      // Find user by email
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user || !user.password_hash) {
+        res.status(401).json({ error: 'Invalid credentials' });
+        return;
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password_hash);
+      if (!isValidPassword) {
+        res.status(401).json({ error: 'Invalid credentials' });
+        return;
+      }
+
+      // Generate JWT
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, wallet: user.wallet },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.status(200).json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          handle: user.handle,
+          wallet: user.wallet,
+          tier: user.tier,
+          xp_points: user.xp_points,
+          goal_points: user.goal_points,
+          current_streak: user.current_streak,
+        },
+      });
+    } catch (error) {
+      console.error('Test login error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  /**
    * POST /api/auth/login
    * Login with email and password
    */
