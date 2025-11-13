@@ -45,6 +45,8 @@ export const leaderboardController = {
           handle: true,
           country_code: true,
           tier: true,
+          xp_points: true,
+          current_streak: true,
           created_at: true,
           submissions: {
             select: {
@@ -66,16 +68,23 @@ export const leaderboardController = {
           handle: user.handle,
           country_code: user.country_code,
           tier: user.tier,
+          xp_points: user.xp_points || 0,
+          current_streak: user.current_streak || 0,
           total_submissions: totalSubmissions,
           approved_submissions: approvedSubmissions,
           success_rate: Math.round(successRate * 100) / 100,
           joined_at: user.created_at,
         };
       }).sort((a, b) => {
-        // Sort by approved submissions first, then by success rate
+        // Sort by XP points first (primary ranking metric)
+        if (a.xp_points !== b.xp_points) {
+          return b.xp_points - a.xp_points;
+        }
+        // Then by approved submissions
         if (a.approved_submissions !== b.approved_submissions) {
           return b.approved_submissions - a.approved_submissions;
         }
+        // Finally by success rate
         return b.success_rate - a.success_rate;
       });
 
