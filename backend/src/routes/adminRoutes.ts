@@ -9,6 +9,8 @@ router.get('/dashboard-stats', basicAuthMiddleware, adminController.getDashboard
 
 // User management
 router.get('/users', basicAuthMiddleware, adminController.getUsers);
+router.get('/users/:id', basicAuthMiddleware, adminController.getUserDetails);
+router.get('/users/:id/stats', basicAuthMiddleware, adminController.getUserStats);
 
 // Reviewer management
 router.get('/reviewers', basicAuthMiddleware, adminController.listReviewers);

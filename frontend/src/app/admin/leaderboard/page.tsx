@@ -1,21 +1,33 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { getCountryName } from '@/utils/countries';
 import Pagination from '@/components/admin/Pagination';
 
 const TABS = ['Global', 'Country', 'Sport', 'Fans', 'Players', 'Reviewers'];
 
-const LeaderboardRow = ({ user, rank }: { user: any; rank: number }) => {
+const LeaderboardRow = ({ user, rank, router }: { user: any; rank: number; router: any }) => {
   let rankColor = '';
   if (rank === 1) rankColor = 'text-yellow-400';
   if (rank === 2) rankColor = 'text-gray-300';
   if (rank === 3) rankColor = 'text-yellow-600';
 
+  const handleUserClick = () => {
+    router.push(`/admin/users/${user.id}`);
+  };
+
   return (
     <tr className={`border-b border-gray-800 hover:bg-gray-800/50 ${rank <= 3 ? 'font-bold' : ''}`}>
       <td className={`p-2 text-sm ${rankColor}`}>{rank}</td>
-      <td className="p-2 text-sm"><a href={`/admin/users/${user.id}`} className="hover:underline text-blue-400">{user.handle || 'N/A'}</a></td>
+      <td className="p-2 text-sm">
+        <button 
+          onClick={handleUserClick}
+          className="hover:underline text-blue-400 cursor-pointer"
+        >
+          {user.handle || 'N/A'}
+        </button>
+      </td>
       <td className="p-2 text-sm">
         <div className="flex items-center gap-1">
           <span>{user.country_code || 'N/A'}</span>
@@ -35,6 +47,7 @@ const LeaderboardRow = ({ user, rank }: { user: any; rank: number }) => {
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function LeaderboardPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [filters, setFilters] = useState({ country: 'All', sport: 'All', dateRange: '' });
@@ -180,7 +193,7 @@ export default function LeaderboardPage() {
           <tbody>
             {leaderboardData.length > 0 ? (
               leaderboardData.map((user, index) => (
-                <LeaderboardRow key={user.id || index} user={user} rank={(currentPage - 1) * itemsPerPage + index + 1} />
+                <LeaderboardRow key={user.id || index} user={user} rank={(currentPage - 1) * itemsPerPage + index + 1} router={router} />
               ))
             ) : (
               <tr>
