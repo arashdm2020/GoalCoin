@@ -17,6 +17,7 @@ router.get('/reviewers', basicAuthMiddleware, adminController.listReviewers);
 router.post('/reviewers', basicAuthMiddleware, adminController.addReviewer);
 router.put('/reviewers/status', basicAuthMiddleware, adminController.toggleReviewerStatus);
 router.post('/reviewers/reset-strikes', basicAuthMiddleware, adminController.resetStrikes);
+router.delete('/reviewers/remove', basicAuthMiddleware, adminController.removeReviewer);
 router.get('/reviewers/:reviewerId/audit', basicAuthMiddleware, adminController.getReviewerAudit);
 
 // Utility endpoints
