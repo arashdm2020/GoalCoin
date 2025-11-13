@@ -6,7 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 export const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
