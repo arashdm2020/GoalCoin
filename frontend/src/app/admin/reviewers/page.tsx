@@ -5,7 +5,6 @@ import { getCountryName } from '@/utils/countries';
 import AddReviewerModal from '../../../components/AddReviewerModal';
 import Tooltip from '../../../components/Tooltip';
 import AuditDrawer from '../../../components/AuditDrawer';
-import RangeSlider from '../../../components/RangeSlider';
 import Pagination from '@/components/admin/Pagination';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
@@ -198,6 +197,7 @@ export default function ReviewersPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <select 
               className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0"
+              value={filters.status}
               onChange={e => setFilters({ ...filters, status: e.target.value })}
             >
               <option value="All">All Statuses</option>
@@ -206,6 +206,7 @@ export default function ReviewersPage() {
             </select>
             <select 
               className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0"
+              value={filters.country}
               onChange={e => setFilters({ ...filters, country: e.target.value })}
             >
               <option value="All">All Countries</option>
@@ -218,25 +219,56 @@ export default function ReviewersPage() {
             <input 
               type="date" 
               className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
+              value={filters.date}
               onChange={e => setFilters({ ...filters, date: e.target.value })}
             />
           </div>
           <div className="flex flex-col space-y-2">
             <span className="text-gray-400 text-sm">Accuracy Range:</span>
-            <div className="px-2">
-              <RangeSlider 
-                min={0} 
-                max={1} 
-                step={0.01} 
-                onChange={({ min, max }) => setFilters({ ...filters, accuracyMin: min, accuracyMax: max })}
-              />
+            <div className="flex items-center gap-4 px-2">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-400">Min:</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="100" 
+                  step="1"
+                  value={Math.round(filters.accuracyMin * 100)}
+                  onChange={e => setFilters({...filters, accuracyMin: parseInt(e.target.value) / 100})}
+                  className="w-16 px-2 py-1 bg-gray-800 rounded text-sm"
+                />
+                <span className="text-sm text-gray-400">%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-400">Max:</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="100" 
+                  step="1"
+                  value={Math.round(filters.accuracyMax * 100)}
+                  onChange={e => setFilters({...filters, accuracyMax: parseInt(e.target.value) / 100})}
+                  className="w-16 px-2 py-1 bg-gray-800 rounded text-sm"
+                />
+                <span className="text-sm text-gray-400">%</span>
+              </div>
+              <button 
+                onClick={() => setFilters({...filters, accuracyMin: 0, accuracyMax: 1})}
+                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs"
+              >
+                Reset
+              </button>
             </div>
           </div>
         </div>
+        
         {/* Actions Row */}
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">Add Reviewer</button>
-          <button onClick={handleExportCSV} className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Export CSV</button>
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <span className="text-gray-400 text-sm font-medium">Actions:</span>
+          <div className="flex gap-3">
+            <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">Add Reviewer</button>
+            <button onClick={handleExportCSV} className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Export CSV</button>
+          </div>
         </div>
       </div>
 
@@ -314,15 +346,40 @@ export default function ReviewersPage() {
                       </span>
                     </td>
                     <td className="p-2">
-                      <div className="flex flex-col gap-1 text-xs">
+                      <div className="flex flex-wrap gap-1">
                         {reviewer.status === 'ACTIVE' ? (
-                          <button onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} className="text-yellow-400 hover:underline">Suspend</button>
+                          <button 
+                            onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} 
+                            className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs text-white"
+                          >
+                            Suspend
+                          </button>
                         ) : (
-                          <button onClick={() => handleStatusChange(reviewer.id, 'ACTIVE')} className="text-green-400 hover:underline">Reinstate</button>
+                          <button 
+                            onClick={() => handleStatusChange(reviewer.id, 'ACTIVE')} 
+                            className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white"
+                          >
+                            Activate
+                          </button>
                         )}
-                        <button onClick={() => handleResetStrikes(reviewer.id)} className="text-blue-400 hover:underline">Reset</button>
-                        <button onClick={() => handleRemove(reviewer.id)} className="text-red-400 hover:underline">Remove</button>
-                        <button onClick={() => handleViewAudit(reviewer)} className="text-gray-400 hover:underline">Audit</button>
+                        <button 
+                          onClick={() => handleResetStrikes(reviewer.id)} 
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white"
+                        >
+                          Reset
+                        </button>
+                        <button 
+                          onClick={() => handleRemove(reviewer.id)} 
+                          className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs text-white"
+                        >
+                          Remove
+                        </button>
+                        <button 
+                          onClick={() => handleViewAudit(reviewer)} 
+                          className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs text-white"
+                        >
+                          Audit
+                        </button>
                       </div>
                     </td>
                   </tr>
