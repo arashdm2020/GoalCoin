@@ -50,8 +50,11 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy for Render.com deployment
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// Security middleware - disable some features that interfere with CORS
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
 // CORS configuration - Allow all origins for now
 app.use(cors({
