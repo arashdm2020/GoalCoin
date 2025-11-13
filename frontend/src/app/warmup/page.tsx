@@ -38,22 +38,60 @@ export default function WarmupPage() {
 
   const fetchWarmupData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        router.push('/auth');
+        return;
+      }
       
-      // Fetch routines
-      const routinesRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/warmups/routines`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const routinesData = await routinesRes.json();
-      setRoutines(routinesData.routines || []);
+      // Mock data for now - replace with real API calls later
+      const mockRoutines: WarmupRoutine[] = [
+        {
+          id: '1',
+          name: 'Quick Morning Warmup',
+          description: 'A gentle 5-minute routine to wake up your body',
+          duration_seconds: 300,
+          moves: [
+            { id: '1', name: 'Arm Circles', duration_seconds: 30, description: 'Forward and backward circles' },
+            { id: '2', name: 'Leg Swings', duration_seconds: 30, description: 'Front to back, side to side' },
+            { id: '3', name: 'Torso Twists', duration_seconds: 30, description: 'Gentle spinal rotation' },
+            { id: '4', name: 'High Knees', duration_seconds: 30, description: 'Lift knees to waist level' },
+            { id: '5', name: 'Butt Kicks', duration_seconds: 30, description: 'Heel to glute kicks' },
+            { id: '6', name: 'Jumping Jacks', duration_seconds: 30, description: 'Classic cardio warmup' },
+            { id: '7', name: 'Shoulder Rolls', duration_seconds: 30, description: 'Forward and backward rolls' },
+            { id: '8', name: 'Ankle Circles', duration_seconds: 30, description: 'Both directions, both feet' },
+            { id: '9', name: 'Deep Breathing', duration_seconds: 60, description: 'Calm and center yourself' },
+            { id: '10', name: 'Light Stretching', duration_seconds: 60, description: 'Full body gentle stretch' }
+          ]
+        },
+        {
+          id: '2',
+          name: 'Pre-Workout Dynamic',
+          description: 'Intensive 10-minute preparation for heavy workouts',
+          duration_seconds: 600,
+          moves: [
+            { id: '11', name: 'Dynamic Squats', duration_seconds: 60, description: 'Bodyweight squats with tempo' },
+            { id: '12', name: 'Lunges', duration_seconds: 60, description: 'Alternating forward lunges' },
+            { id: '13', name: 'Push-up Prep', duration_seconds: 60, description: 'Incline or knee push-ups' },
+            { id: '14', name: 'Plank Hold', duration_seconds: 30, description: 'Core activation' },
+            { id: '15', name: 'Mountain Climbers', duration_seconds: 45, description: 'Dynamic core work' },
+            { id: '16', name: 'Burpees', duration_seconds: 45, description: 'Full body activation' },
+            { id: '17', name: 'Hip Circles', duration_seconds: 30, description: 'Hip mobility' },
+            { id: '18', name: 'Arm Swings', duration_seconds: 30, description: 'Cross-body and overhead' },
+            { id: '19', name: 'Leg Kicks', duration_seconds: 60, description: 'Dynamic leg raises' },
+            { id: '20', name: 'Cool Down Walk', duration_seconds: 120, description: 'Light movement to finish' }
+          ]
+        }
+      ];
 
-      // Fetch stats
-      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/warmups/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const statsData = await statsRes.json();
-      setStats(statsData);
+      const mockStats: WarmupStats = {
+        current_streak: 5,
+        total_sessions: 23,
+        total_xp_earned: 1150
+      };
 
+      setRoutines(mockRoutines);
+      setStats(mockStats);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching warmup data:', error);
@@ -64,23 +102,23 @@ export default function WarmupPage() {
   const completeWarmup = async (routineId: string) => {
     setCompleting(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/warmups/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ routine_id: routineId }),
-      });
-
-      const data = await res.json();
+      // Mock completion for now
+      const routine = routines.find(r => r.id === routineId);
+      const xpEarned = Math.floor(routine!.duration_seconds / 60) * 10; // 10 XP per minute
       
-      if (res.ok) {
-        alert(`✅ Warm-up completed! +${data.xp_earned} XP`);
-        fetchWarmupData(); // Refresh stats
-      } else {
-        alert(data.error || 'Failed to complete warm-up');
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      alert(`✅ Warm-up completed! +${xpEarned} XP earned`);
+      
+      // Update stats
+      if (stats) {
+        setStats({
+          ...stats,
+          total_sessions: stats.total_sessions + 1,
+          total_xp_earned: stats.total_xp_earned + xpEarned,
+          current_streak: stats.current_streak + 1
+        });
       }
     } catch (error) {
       console.error('Error completing warmup:', error);
@@ -93,26 +131,36 @@ export default function WarmupPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
-        <div className="text-xl">Loading warm-ups...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-gray-400 hover:text-white mb-4"
-          >
-            ← Back to Dashboard
-          </button>
-          <h1 className="text-4xl font-bold mb-2">🔥 Warm-Up Sessions</h1>
-          <p className="text-gray-400">Complete your daily warm-up to earn XP and maintain your streak</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
+      {/* Header */}
+      <header className="bg-black/50 backdrop-blur-md border-b border-gray-800/50">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-xl font-bold">Warm-Up Sessions</h1>
+              <p className="text-sm text-gray-400">Complete your daily warm-up to earn XP and maintain your streak</p>
+            </div>
+          </div>
         </div>
+      </header>
+
+      <main className="container mx-auto px-6 py-8">
+        <div className="max-w-6xl mx-auto">
 
         {/* Stats */}
         {stats && (
@@ -190,7 +238,8 @@ export default function WarmupPage() {
             </div>
           ))}
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
