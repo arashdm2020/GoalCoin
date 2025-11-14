@@ -37,6 +37,11 @@ COINPAYMENTS_MERCHANT_ID=your_merchant_id
 COINPAYMENTS_IPN_SECRET=your_ipn_secret
 COINPAYMENTS_IPN_URL=https://goalcoin.onrender.com/api/webhooks/coinpayments
 COINPAYMENTS_CURRENCY=USDT.MATIC
+
+# Cloudinary (for file uploads)
+CLOUDINARY_CLOUD_NAME=dxat5z9j1
+CLOUDINARY_API_KEY=577365329656591
+CLOUDINARY_API_SECRET=hGp4vdYNtqBu-q-ak-pW2Om7Rzk
 ```
 
 #### 2. Build Command for Render
@@ -134,6 +139,17 @@ After successful deployment, verify:
 2. **Admin Panel**: `GET https://goalcoin.onrender.com/api/admin/reviewers` (with Basic Auth)
 3. **Database**: Check that existing users are preserved with new schema
 4. **Logs**: Monitor Render logs for any errors
+
+#### Create Main Challenge (First Time Only)
+
+After first deployment, run this script to create the main challenge:
+
+```bash
+# SSH into Render shell or run locally with production DATABASE_URL
+npx ts-node src/scripts/createMainChallenge.ts
+```
+
+This creates the `main-challenge` required for weekly submissions.
 
 ### Troubleshooting
 
