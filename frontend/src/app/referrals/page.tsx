@@ -54,10 +54,12 @@ export default function ReferralsPage() {
       const referralCode = user.handle || wallet || user.id;
       setReferralLink(`${window.location.origin}/auth?ref=${referralCode}`);
       
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'https://goalcoin.onrender.com';
+      
       // Fetch leaderboard (don't fail if this errors)
       try {
         const leaderboardRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/leaderboard`,
+          `${backendUrl}/api/referrals/leaderboard`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -73,7 +75,7 @@ export default function ReferralsPage() {
       // Fetch prize info (don't fail if this errors)
       try {
         const prizeRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/prize`,
+          `${backendUrl}/api/referrals/prize`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -89,7 +91,7 @@ export default function ReferralsPage() {
       // Fetch user stats (don't fail if this errors)
       try {
         const statsRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/my-stats`,
+          `${backendUrl}/api/referrals/my-stats`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
