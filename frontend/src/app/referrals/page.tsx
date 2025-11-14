@@ -50,39 +50,57 @@ export default function ReferralsPage() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const wallet = user.wallet || user.id;
       
-      // Fetch leaderboard
-      const leaderboardRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/leaderboard`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const leaderboardData = await leaderboardRes.json();
-      setLeaderboard(leaderboardData.leaderboard || []);
-
-      // Fetch prize info
-      const prizeRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/prize`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const prizeData = await prizeRes.json();
-      setPrizeInfo(prizeData);
-
-      // Fetch user stats
-      const statsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/my-stats`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const statsData = await statsRes.json();
-      setUserStats(statsData);
-
-      // Set referral link using user handle or wallet
+      // Set referral link first (always show this even if APIs fail)
       const referralCode = user.handle || wallet || user.id;
       setReferralLink(`${window.location.origin}/auth?ref=${referralCode}`);
+      
+      // Fetch leaderboard (don't fail if this errors)
+      try {
+        const leaderboardRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/leaderboard`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (leaderboardRes.ok) {
+          const leaderboardData = await leaderboardRes.json();
+          setLeaderboard(leaderboardData.leaderboard || []);
+        }
+      } catch (err) {
+        console.error('Error fetching leaderboard:', err);
+      }
+
+      // Fetch prize info (don't fail if this errors)
+      try {
+        const prizeRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/prize`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (prizeRes.ok) {
+          const prizeData = await prizeRes.json();
+          setPrizeInfo(prizeData);
+        }
+      } catch (err) {
+        console.error('Error fetching prize info:', err);
+      }
+
+      // Fetch user stats (don't fail if this errors)
+      try {
+        const statsRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/referrals/my-stats`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setUserStats(statsData);
+        }
+      } catch (err) {
+        console.error('Error fetching user stats:', err);
+      }
 
       setLoading(false);
     } catch (error) {
