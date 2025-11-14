@@ -39,10 +39,13 @@ router.get('/today', authMiddleware, async (req: Request, res: Response) => {
     // Get user's country if not specified
     let countryCode = 'US';
     if (!region || region === 'auto') {
-      const user = await require('@prisma/client').PrismaClient().user.findUnique({
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { country_code: true },
       });
+      await prisma.$disconnect();
       countryCode = user?.country_code || 'US';
     } else {
       // Map region to a representative country code
