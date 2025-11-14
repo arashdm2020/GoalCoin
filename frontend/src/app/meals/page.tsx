@@ -2,14 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Toast from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 interface Meal {
   id: string;
-  name: string;
-  meal_type: 'breakfast' | 'lunch' | 'dinner';
-  calories: number;
+  title: string;
+  category: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  calories?: number;
   description: string;
   ingredients: string[];
+  tier: string;
+  prep_time_min: number;
+  protein_g?: number;
 }
 
 interface MealPlan {
@@ -33,6 +38,7 @@ export default function MealsPage() {
   const [loading, setLoading] = useState(true);
   const [logging, setLogging] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string>('auto');
+  const { toast, showToast, hideToast } = useToast();
 
   const regions = [
     { value: 'auto', label: 'Auto (Based on location)' },
@@ -48,7 +54,7 @@ export default function MealsPage() {
 
   const fetchMealData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       
       // Fetch today's meal plan
       const planRes = await fetch(
@@ -77,7 +83,7 @@ export default function MealsPage() {
   const logMeal = async (mealId: string, mealType: string, calories: number) => {
     setLogging(mealType);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/meals/complete`, {
         method: 'POST',
         headers: {
@@ -94,14 +100,14 @@ export default function MealsPage() {
       const data = await res.json();
       
       if (res.ok) {
-        alert(`✅ Meal logged! +${data.xp_earned} XP`);
+        showToast(`✅ Meal logged! +${data.xp_awarded || data.xp_earned} XP`, 'success');
         fetchMealData(); // Refresh stats
       } else {
-        alert(data.error || 'Failed to log meal');
+        showToast(data.error || 'Failed to log meal', 'error');
       }
     } catch (error) {
       console.error('Error logging meal:', error);
-      alert('Failed to log meal');
+      showToast('Failed to log meal', 'error');
     } finally {
       setLogging(null);
     }
@@ -176,7 +182,7 @@ export default function MealsPage() {
               meal={mealPlan.breakfast}
               icon="🌅"
               logging={logging === 'breakfast'}
-              onLog={() => logMeal(mealPlan.breakfast.id, 'breakfast', mealPlan.breakfast.calories)}
+              onLog={() => logMeal(mealPlan.breakfast.id, 'breakfast', mealPlan.breakfast.calories || 0)}
             />
 
             {/* Lunch */}
@@ -184,7 +190,7 @@ export default function MealsPage() {
               meal={mealPlan.lunch}
               icon="☀️"
               logging={logging === 'lunch'}
-              onLog={() => logMeal(mealPlan.lunch.id, 'lunch', mealPlan.lunch.calories)}
+              onLog={() => logMeal(mealPlan.lunch.id, 'lunch', mealPlan.lunch.calories || 0)}
             />
 
             {/* Dinner */}
@@ -192,11 +198,18 @@ export default function MealsPage() {
               meal={mealPlan.dinner}
               icon="🌙"
               logging={logging === 'dinner'}
-              onLog={() => logMeal(mealPlan.dinner.id, 'dinner', mealPlan.dinner.calories)}
+              onLog={() => logMeal(mealPlan.dinner.id, 'dinner', mealPlan.dinner.calories || 0)}
             />
           </div>
         )}
       </div>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }
@@ -218,12 +231,15 @@ function MealCard({
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">{icon}</span>
-            <h3 className="text-2xl font-bold capitalize">{meal.meal_type}</h3>
+            <h3 className="text-2xl font-bold capitalize">{meal.category}</h3>
           </div>
-          <h4 className="text-xl font-semibold mb-2">{meal.name}</h4>
+          <h4 className="text-xl font-semibold mb-2">{meal.title}</h4>
           <p className="text-gray-400 mb-3">{meal.description}</p>
           <div className="text-sm text-orange-500 font-semibold">
-            🔥 {meal.calories} calories
+            🔥 {meal.calories || 0} calories {meal.protein_g ? `| 💪 ${meal.protein_g}g protein` : ''}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            ⏱️ {meal.prep_time_min} min prep | Tier: {meal.tier}
           </div>
         </div>
         <button

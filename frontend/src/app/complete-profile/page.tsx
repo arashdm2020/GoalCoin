@@ -2,14 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-// Removed ConnectWalletButton import - using manual wallet connection
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import Toast from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 export default function CompleteProfilePage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { toast, showToast, hideToast } = useToast();
   // Form data
   const [handle, setHandle] = useState('');
   const [countryCode, setCountryCode] = useState('');
@@ -116,7 +121,7 @@ export default function CompleteProfilePage() {
         setError('');
         
         // Show success message with network info
-        alert('✅ Wallet connected to Polygon Network!\n\nYou can now use USDT on Polygon for payments.');
+        showToast('✅ Wallet connected to Polygon Network! You can now use USDT on Polygon for payments.', 'success');
       }
     } catch (err: any) {
       console.error('Wallet connection error:', err);
@@ -386,6 +391,13 @@ export default function CompleteProfilePage() {
           </button>
         </div>
       </div>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }

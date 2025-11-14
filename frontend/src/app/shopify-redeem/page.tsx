@@ -27,7 +27,8 @@ export default function ShopifyRedeemPage() {
 
   const handleVerify = async () => {
     if (!orderCode) {
-      alert('Please enter an order code');
+      setMessage('Please enter an order code');
+      setIsValid(false);
       return;
     }
 
@@ -38,12 +39,26 @@ export default function ShopifyRedeemPage() {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
       const response = await fetch(`${backendUrl}/api/shopify/verify/${orderCode}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to verify code');
+      }
+      
       const data = await response.json();
 
-      setIsValid(data.valid && !data.redeemed);
-      setMessage(data.message);
-    } catch (error) {
-      setMessage('Error verifying code');
+      if (data.valid && !data.redeemed) {
+        setIsValid(true);
+        setMessage('✅ Order code is valid and available');
+      } else if (data.redeemed) {
+        setIsValid(false);
+        setMessage('❌ This code has already been redeemed');
+      } else {
+        setIsValid(false);
+        setMessage('❌ Invalid order code');
+      }
+    } catch (error: any) {
+      setMessage(`❌ ${error.message || 'Error verifying code. Please try again.'}`);
       setIsValid(false);
     } finally {
       setVerifying(false);
@@ -52,7 +67,7 @@ export default function ShopifyRedeemPage() {
 
   const handleRedeem = async () => {
     if (!wallet) {
-      alert('Please provide a wallet address');
+      setMessage('❌ Please provide a wallet address');
       return;
     }
 
@@ -77,13 +92,17 @@ export default function ShopifyRedeemPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`🎉 Order code redeemed successfully!\n\nYou now have access to the 90-Day Challenge!`);
-        router.push('/dashboard');
+        setMessage('✅ Order code redeemed successfully! Redirecting...');
+        setIsValid(true);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
       } else {
-        throw new Error(data.error);
+        throw new Error(data.error || 'Failed to redeem code');
       }
     } catch (error: any) {
-      alert(error.message || 'Failed to redeem code');
+      setMessage(`❌ ${error.message || 'Failed to redeem code. Please try again.'}`);
+      setIsValid(false);
     } finally {
       setRedeeming(false);
     }

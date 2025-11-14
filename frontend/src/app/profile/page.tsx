@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Toast from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 interface User {
   id: string;
@@ -28,6 +30,7 @@ export default function ProfilePage() {
     country_code: ''
   });
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -83,12 +86,12 @@ export default function ProfilePage() {
         const data = await response.json();
         setUser(data.user);
         setEditing(false);
-        alert('Profile updated successfully!');
+        showToast('Profile updated successfully!', 'success');
       } else {
-        alert('Failed to update profile');
+        showToast('Failed to update profile', 'error');
       }
     } catch (error) {
-      alert('Error updating profile');
+      showToast('Error updating profile', 'error');
     }
   };
 
@@ -245,8 +248,8 @@ export default function ProfilePage() {
                   <span className="text-white font-bold">{user.xp_points.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-gray-800/50 rounded-lg">
-                  <span className="text-gray-400">GOAL Balance</span>
-                  <span className="text-green-400 font-bold">{user.goal_points.toLocaleString()}</span>
+                  <span className="text-gray-400">GC Balance</span>
+                  <span className="text-green-400 font-bold">{user.goal_points.toLocaleString()} GC</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-gray-800/50 rounded-lg">
                   <span className="text-gray-400">Current Streak</span>
@@ -327,6 +330,13 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useSignMessage } from 'wagmi';
+import Toast from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 export default function LinkWalletPage() {
   const [loading, setLoading] = useState(false);
@@ -11,6 +13,7 @@ export default function LinkWalletPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { signMessage } = useSignMessage();
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -35,7 +38,7 @@ export default function LinkWalletPage() {
 
   const handleSignAndLinkWallet = async () => {
     if (!isConnected || !address) {
-      alert('Please connect your wallet first');
+      showToast('Please connect your wallet first', 'warning');
       return;
     }
 
@@ -97,17 +100,17 @@ export default function LinkWalletPage() {
         const updatedUser = { ...user, wallet: address };
         localStorage.setItem('user', JSON.stringify(updatedUser));
 
-        alert('✅ Wallet connected and verified successfully!');
-        router.push('/dashboard');
+        showToast('✅ Wallet connected and verified successfully!', 'success');
+        setTimeout(() => router.push('/dashboard'), 1500);
       } else {
         throw new Error(data.error);
       }
     } catch (error: any) {
       setSigned(false);
       if (error.message.includes('User rejected')) {
-        alert('Wallet signature is required to link your wallet');
+        showToast('Wallet signature is required to link your wallet', 'warning');
       } else {
-        alert(error.message || 'Failed to link wallet');
+        showToast(error.message || 'Failed to link wallet', 'error');
       }
     } finally {
       setLoading(false);
@@ -205,6 +208,13 @@ export default function LinkWalletPage() {
           </ul>
         </div>
       </div>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }
