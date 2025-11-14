@@ -37,6 +37,7 @@ import analyticsRoutes from './routes/analyticsRoutes';
 import nftRoutes from './routes/nftRoutes';
 import { rateLimitRoutes } from './routes/rateLimitRoutes';
 import { emailTestRoutes } from './routes/emailTestRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 import { apiLimiter, authLimiter, xpLimiter, adminLimiter } from './middleware/rateLimiter';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
@@ -135,6 +136,9 @@ app.use('/api/webhooks/coinpayments', express.raw({ type: 'application/x-www-for
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Handle preflight requests explicitly
 app.options('*', (req, res) => {
   const origin = req.headers.origin;
@@ -192,6 +196,7 @@ app.use('/api/meals', mealRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/widgets', scoreboardWidgetRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api/nft', nftRoutes);
 app.use('/api/rate-limits', adminLimiter, rateLimitRoutes);
 app.use('/api/email-test', adminLimiter, emailTestRoutes);

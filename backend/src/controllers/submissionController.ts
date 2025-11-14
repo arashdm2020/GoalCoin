@@ -7,8 +7,13 @@ export const submissionController = {
   async createSubmission(req: Request, res: Response): Promise<void> {
     const { user_wallet, challenge_id, week_no, file_url, watermark_code } = req.body;
 
-    if (!user_wallet || !challenge_id || !week_no || !file_url || !watermark_code) {
-      res.status(400).json({ error: 'All fields are required' });
+    if (!user_wallet || !challenge_id || !week_no || !watermark_code) {
+      res.status(400).json({ error: 'user_wallet, challenge_id, week_no, and watermark_code are required' });
+      return;
+    }
+
+    if (!file_url) {
+      res.status(400).json({ error: 'file_url is required' });
       return;
     }
 
