@@ -26,8 +26,16 @@ export const uploadController = {
       // Save file to disk
       fs.writeFileSync(filepath, req.file.buffer);
 
-      // Generate public URL
-      const baseUrl = process.env.BACKEND_BASE_URL || 'http://localhost:3001';
+      // Generate public URL - auto-detect from request or use env variable
+      let baseUrl = process.env.BACKEND_BASE_URL;
+      
+      if (!baseUrl) {
+        // Auto-detect from request headers
+        const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+        const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3001';
+        baseUrl = `${protocol}://${host}`;
+      }
+      
       const fileUrl = `${baseUrl}/uploads/${filename}`;
 
       res.status(200).json({
