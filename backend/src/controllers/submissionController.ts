@@ -19,11 +19,24 @@ export const submissionController = {
 
     try {
       // Find user by wallet
+      console.log('Looking for user with wallet:', user_wallet);
       const user = await prisma.user.findUnique({ where: { wallet: user_wallet } });
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        console.error('User not found with wallet:', user_wallet);
+        res.status(404).json({ error: 'User not found', wallet: user_wallet });
         return;
       }
+      console.log('User found:', user.id);
+
+      // Verify challenge exists
+      console.log('Checking challenge:', challenge_id);
+      const challenge = await prisma.challenge.findUnique({ where: { id: challenge_id } });
+      if (!challenge) {
+        console.error('Challenge not found:', challenge_id);
+        res.status(404).json({ error: 'Challenge not found', challenge_id });
+        return;
+      }
+      console.log('Challenge found:', challenge.id);
 
       // Check if submission already exists for this week
       const existingSubmission = await prisma.submission.findFirst({
@@ -35,10 +48,12 @@ export const submissionController = {
       });
 
       if (existingSubmission) {
+        console.log('Submission already exists:', existingSubmission.id);
         res.status(400).json({ error: 'Submission already exists for this week' });
         return;
       }
 
+      console.log('Creating submission...');
       const submission = await prisma.submission.create({
         data: {
           user_id: user.id,
@@ -50,10 +65,19 @@ export const submissionController = {
         },
       });
 
+      console.log('Submission created successfully:', submission.id);
       res.status(201).json(submission);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create submission:', error);
-      res.status(500).json({ error: 'Failed to create submission' });
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+      });
+      res.status(500).json({ 
+        error: 'Failed to create submission',
+        details: error.message 
+      });
     }
   },
 
