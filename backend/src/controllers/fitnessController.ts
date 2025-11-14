@@ -238,7 +238,7 @@ const getUserProgress = async (req: Request, res: Response) => {
       prisma.mealLog.count({ where: { user_id: userId } }),
       prisma.workoutLog.findMany({
         where: { user_id: userId },
-        orderBy: { logged_at: 'desc' },
+        orderBy: { completed_at: 'desc' },
         take: 100,
       }),
     ]);
