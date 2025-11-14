@@ -46,8 +46,9 @@ export default function ReferralsPage() {
 
   const fetchReferralData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const wallet = localStorage.getItem('wallet');
+      const token = localStorage.getItem('auth_token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const wallet = user.wallet || user.id;
       
       // Fetch leaderboard
       const leaderboardRes = await fetch(
@@ -79,8 +80,9 @@ export default function ReferralsPage() {
       const statsData = await statsRes.json();
       setUserStats(statsData);
 
-      // Set referral link
-      setReferralLink(`${window.location.origin}/signup?ref=${wallet}`);
+      // Set referral link using user handle or wallet
+      const referralCode = user.handle || wallet || user.id;
+      setReferralLink(`${window.location.origin}/auth?ref=${referralCode}`);
 
       setLoading(false);
     } catch (error) {
@@ -181,6 +183,13 @@ export default function ReferralsPage() {
         {/* Leaderboard */}
         <div className="bg-gray-800 rounded-lg p-6">
           <h3 className="text-2xl font-bold mb-6">🏅 Top Referrers</h3>
+          {leaderboard.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🎯</div>
+              <p className="text-xl text-gray-400 mb-2">No referrers yet</p>
+              <p className="text-sm text-gray-500">Be the first to invite friends and climb the leaderboard!</p>
+            </div>
+          ) : (
           <div className="space-y-3">
             {leaderboard.map((entry) => (
               <div
@@ -217,6 +226,7 @@ export default function ReferralsPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
     </div>

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Toast from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 interface WarmupMove {
   id: string;
@@ -31,6 +33,7 @@ export default function WarmupPage() {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [selectedRoutine, setSelectedRoutine] = useState<string | null>(null);
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     fetchWarmupData();
@@ -109,20 +112,20 @@ export default function WarmupPage() {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      alert(`✅ Warm-up completed! +${xpEarned} XP earned`);
+      showToast(`✅ Warm-up completed! +${xpEarned} XP earned`, 'success');
       
       // Update stats
       if (stats) {
         setStats({
           ...stats,
+          current_streak: stats.current_streak + 1,
           total_sessions: stats.total_sessions + 1,
           total_xp_earned: stats.total_xp_earned + xpEarned,
-          current_streak: stats.current_streak + 1
         });
       }
     } catch (error) {
       console.error('Error completing warmup:', error);
-      alert('Failed to complete warm-up');
+      showToast('Failed to complete warm-up', 'error');
     } finally {
       setCompleting(false);
       setSelectedRoutine(null);
@@ -240,6 +243,13 @@ export default function WarmupPage() {
         </div>
         </div>
       </main>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }

@@ -25,6 +25,8 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const router = useRouter();
 
   // Mock messages data
@@ -166,7 +168,24 @@ GoalCoin Platform`,
     };
 
     fetchUser();
-  }, [router]);
+  }, [router, user]);
+
+  const handleArchive = () => {
+    if (selectedMessage) {
+      // Remove message from list
+      setMessages(messages.filter(m => m.id !== selectedMessage.id));
+      setSelectedMessage(null);
+      
+      // Show toast
+      setToastMessage('Message archived successfully');
+      setShowToast(true);
+      
+      // Hide toast after 3 seconds
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+    }
+  };
 
   const markAsRead = (messageId: string) => {
     setMessages(prev => 
@@ -323,7 +342,10 @@ GoalCoin Platform`,
                       <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm">
                         Forward
                       </button>
-                      <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm">
+                      <button 
+                        onClick={handleArchive}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                      >
                         Archive
                       </button>
                     </div>
@@ -349,6 +371,16 @@ GoalCoin Platform`,
           </div>
         </div>
       </main>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-8 right-8 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-fade-in">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

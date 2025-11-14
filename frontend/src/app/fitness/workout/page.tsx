@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Toast from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 export default function WorkoutPage() {
   const [workoutType, setWorkoutType] = useState('');
@@ -9,6 +11,7 @@ export default function WorkoutPage() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -33,9 +36,9 @@ export default function WorkoutPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: user.id,
-          workout_type: workoutType,
-          duration_minutes: parseInt(duration),
+          userId: user.id,
+          workoutType: workoutType,
+          durationMin: parseInt(duration),
           notes,
         }),
       });
@@ -43,13 +46,13 @@ export default function WorkoutPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`💪 Workout logged! +${data.xp_earned} XP earned!`);
-        router.push('/dashboard');
+        showToast(`💪 Workout logged! +${data.xp_earned} XP earned!`, 'success');
+        setTimeout(() => router.push('/dashboard'), 1500);
       } else {
         throw new Error(data.error);
       }
     } catch (error: any) {
-      alert(error.message || 'Failed to log workout');
+      showToast(error.message || 'Failed to log workout', 'error');
     } finally {
       setLoading(false);
     }
@@ -144,6 +147,13 @@ export default function WorkoutPage() {
           </div>
         </div>
       </main>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }

@@ -28,22 +28,49 @@ router.get('/', async (req: Request, res: Response) => {
 
 /**
  * GET /api/meals/today
- * Get meal of the day for a country
- * Query params: country, category
+ * Get full daily meal plan (breakfast, lunch, dinner)
+ * Query params: country, region
  */
-router.get('/today', async (req: Request, res: Response) => {
+router.get('/today', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { country = 'US', category = 'lunch' } = req.query;
+    const userId = (req as any).user.userId;
+    const { region } = req.query;
     
-    const meal = await mealService.getMealOfDay(
-      country as string,
-      category as any
-    );
+    // Get user's country if not specified
+    let countryCode = 'US';
+    if (!region || region === 'auto') {
+      const user = await require('@prisma/client').PrismaClient().user.findUnique({
+        where: { id: userId },
+        select: { country_code: true },
+      });
+      countryCode = user?.country_code || 'US';
+    } else {
+      // Map region to a representative country code
+      const regionMap: Record<string, string> = {
+        'middle_east': 'SA',
+        'north_america': 'US',
+        'europe': 'GB',
+        'asia': 'CN',
+        'africa': 'NG',
+      };
+      countryCode = regionMap[region as string] || 'US';
+    }
     
-    res.json({ meal });
+    // Get meals for all three categories
+    const breakfast = await mealService.getMealOfDay(countryCode, 'breakfast');
+    const lunch = await mealService.getMealOfDay(countryCode, 'lunch');
+    const dinner = await mealService.getMealOfDay(countryCode, 'dinner');
+    
+    res.json({
+      breakfast,
+      lunch,
+      dinner,
+      region: region || 'auto',
+      country: countryCode,
+    });
   } catch (error: any) {
-    console.error('Error fetching meal of the day:', error);
-    res.status(500).json({ error: 'Failed to fetch meal of the day' });
+    console.error('Error fetching meal plan:', error);
+    res.status(500).json({ error: 'Failed to fetch meal plan' });
   }
 });
 
@@ -103,12 +130,26 @@ router.get('/streak', authMiddleware, async (req: Request, res: Response) => {
 
 /**
  * GET /api/meals/stats
- * Get meal stats (admin only)
+ * Get user's meal stats
  */
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const stats = await mealService.getStats();
-    res.json(stats);
+    const userId = (req as any).user.userId;
+    const streak = await mealService.getUserStreak(userId);
+    
+    // Calculate total XP from meals
+    const prisma = new (require('@prisma/client').PrismaClient)();
+    const logs = await prisma.mealLog.findMany({
+      where: { user_id: userId },
+      select: { xp_earned: true },
+    });
+    const total_xp_earned = logs.reduce((sum: number, log: any) => sum + log.xp_earned, 0);
+    
+    res.json({
+      current_streak: streak.current_streak || 0,
+      total_meals: streak.total_meals || 0,
+      total_xp_earned,
+    });
   } catch (error: any) {
     console.error('Error fetching meal stats:', error);
     res.status(500).json({ error: 'Failed to fetch meal stats' });

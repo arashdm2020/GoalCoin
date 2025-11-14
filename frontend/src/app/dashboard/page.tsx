@@ -229,7 +229,7 @@ export default function DashboardPage() {
                         Profile Settings
                       </button>
                       <button
-                        onClick={() => router.push('/link-wallet')}
+                        onClick={() => router.push('/profile#wallet')}
                         className="w-full text-left px-3 py-2 text-sm hover:bg-gray-800 rounded-lg transition-colors"
                       >
                         Wallet Settings
@@ -262,8 +262,8 @@ export default function DashboardPage() {
               <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-4">
                 <div className="flex items-center space-x-4">
                   <div>
-                    <p className="text-xs text-gray-400">Wallet Balance</p>
-                    <p className="text-lg font-bold text-green-400">{user.goal_points} GOAL</p>
+                    <p className="text-xs text-gray-400">GC Balance</p>
+                    <p className="text-lg font-bold text-green-400">{user.goal_points} GC</p>
                   </div>
                   <div className="h-8 w-px bg-gray-600"></div>
                   <div>

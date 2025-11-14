@@ -231,11 +231,16 @@ const getUserProgress = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get activity counts
-    const [warmupCount, workoutCount, mealCount] = await Promise.all([
+    // Get activity counts and workout history
+    const [warmupCount, workoutCount, mealCount, workouts] = await Promise.all([
       prisma.warmupLog.count({ where: { user_id: userId } }),
       prisma.workoutLog.count({ where: { user_id: userId } }),
       prisma.mealLog.count({ where: { user_id: userId } }),
+      prisma.workoutLog.findMany({
+        where: { user_id: userId },
+        orderBy: { logged_at: 'desc' },
+        take: 100,
+      }),
     ]);
 
     res.json({
@@ -245,6 +250,7 @@ const getUserProgress = async (req: Request, res: Response) => {
         workouts: workoutCount,
         meals: mealCount,
       },
+      workouts,
     });
   } catch (error) {
     console.error('Error fetching user progress:', error);

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Toast from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 export default function SubmitPage() {
   const [weekNo, setWeekNo] = useState('');
@@ -10,6 +12,7 @@ export default function SubmitPage() {
   const [watermarkCode, setWatermarkCode] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -34,18 +37,18 @@ export default function SubmitPage() {
 
     // Validation
     if (!weekNo) {
-      alert('Please enter the week number');
+      showToast('Please enter the week number', 'warning');
       return;
     }
 
     if (!file && !fileUrl) {
-      alert('Please upload a file or provide a URL');
+      showToast('Please upload a file or provide a URL', 'warning');
       return;
     }
 
     const weekNumber = parseInt(weekNo);
     if (isNaN(weekNumber) || weekNumber < 1 || weekNumber > 13) {
-      alert('Please enter a valid week number (1-13)');
+      showToast('Please enter a valid week number (1-13)', 'warning');
       return;
     }
 
@@ -56,9 +59,21 @@ export default function SubmitPage() {
       const token = localStorage.getItem('auth_token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-      // For MVP, we'll use a placeholder URL
+      // For MVP, require URL input if file is selected
       // In production, upload to S3/IPFS first
-      const submissionFileUrl = fileUrl || `https://storage.goalcoin.com/${watermarkCode}-${file?.name}`;
+      let submissionFileUrl = fileUrl;
+      
+      if (file && !fileUrl) {
+        showToast('For MVP: Please upload your file to a hosting service (e.g., Imgur, Google Drive) and paste the URL below. Direct file upload coming soon!', 'info');
+        setLoading(false);
+        return;
+      }
+      
+      if (!submissionFileUrl) {
+        showToast('Please provide a file URL', 'warning');
+        setLoading(false);
+        return;
+      }
 
       const response = await fetch(`${backendUrl}/api/submissions`, {
         method: 'POST',
@@ -78,13 +93,13 @@ export default function SubmitPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`✅ Submission created! Watermark: ${watermarkCode}\n\nYour submission will be reviewed by 5 reviewers.`);
-        router.push('/dashboard');
+        showToast(`✅ Submission created! Watermark: ${watermarkCode}. Your submission will be reviewed by 5 reviewers.`, 'success');
+        setTimeout(() => router.push('/dashboard'), 2000);
       } else {
         throw new Error(data.error);
       }
     } catch (error: any) {
-      alert(error.message || 'Failed to submit');
+      showToast(error.message || 'Failed to submit', 'error');
     } finally {
       setLoading(false);
     }
@@ -223,6 +238,13 @@ export default function SubmitPage() {
           </div>
         </div>
       </main>
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }
