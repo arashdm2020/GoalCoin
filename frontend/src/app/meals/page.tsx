@@ -55,10 +55,11 @@ export default function MealsPage() {
   const fetchMealData = async () => {
     try {
       const token = localStorage.getItem('auth_token');
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'https://goalcoin.onrender.com';
       
       // Fetch today's meal plan
       const planRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/meals/today${selectedRegion !== 'auto' ? `?region=${selectedRegion}` : ''}`,
+        `${backendUrl}/api/meals/today${selectedRegion !== 'auto' ? `?region=${selectedRegion}` : ''}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -67,7 +68,7 @@ export default function MealsPage() {
       setMealPlan(planData);
 
       // Fetch stats
-      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/meals/stats`, {
+      const statsRes = await fetch(`${backendUrl}/api/meals/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const statsData = await statsRes.json();
@@ -84,7 +85,8 @@ export default function MealsPage() {
     setLogging(mealType);
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/meals/complete`, {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'https://goalcoin.onrender.com';
+      const res = await fetch(`${backendUrl}/api/meals/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
