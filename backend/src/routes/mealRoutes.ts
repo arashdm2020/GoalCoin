@@ -61,6 +61,15 @@ router.get('/today', authMiddleware, async (req: Request, res: Response) => {
     const lunch = await mealService.getMealOfDay(countryCode, 'lunch');
     const dinner = await mealService.getMealOfDay(countryCode, 'dinner');
     
+    // Validate that all meals were found
+    if (!breakfast || !lunch || !dinner) {
+      console.error('Missing meal data:', { breakfast: !!breakfast, lunch: !!lunch, dinner: !!dinner });
+      return res.status(500).json({ 
+        error: 'Failed to generate complete meal plan',
+        details: 'Some meals are missing from the catalog'
+      });
+    }
+    
     res.json({
       breakfast,
       lunch,

@@ -64,8 +64,20 @@ export default function MealsPage() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      
+      if (!planRes.ok) {
+        throw new Error('Failed to fetch meal plan');
+      }
+      
       const planData = await planRes.json();
-      setMealPlan(planData);
+      
+      // Validate meal plan data
+      if (planData && planData.breakfast && planData.lunch && planData.dinner) {
+        setMealPlan(planData);
+      } else {
+        console.error('Invalid meal plan data:', planData);
+        setMealPlan(null);
+      }
 
       // Fetch stats
       const statsRes = await fetch(`${backendUrl}/api/meals/stats`, {
@@ -173,7 +185,7 @@ export default function MealsPage() {
         )}
 
         {/* Meal Plan */}
-        {mealPlan && (
+        {mealPlan && mealPlan.breakfast && mealPlan.lunch && mealPlan.dinner ? (
           <div className="space-y-6">
             <div className="text-sm text-gray-400 mb-4">
               Region: {mealPlan.region} | Country: {mealPlan.country}
@@ -202,6 +214,12 @@ export default function MealsPage() {
               logging={logging === 'dinner'}
               onLog={() => logMeal(mealPlan.dinner.id, 'dinner', mealPlan.dinner.calories || 0)}
             />
+          </div>
+        ) : (
+          <div className="bg-gray-800 rounded-lg p-8 text-center">
+            <div className="text-6xl mb-4">🍽️</div>
+            <h3 className="text-xl font-bold text-gray-300 mb-2">No Meal Plan Available</h3>
+            <p className="text-gray-400">Please try selecting a different region or refresh the page.</p>
           </div>
         )}
       </div>
