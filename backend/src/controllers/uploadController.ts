@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import path from 'path';
-import fs from 'fs';
+import cloudinary from '../config/cloudinary';
+import { Readable } from 'stream';
 
 export const uploadController = {
   async uploadFile(req: Request, res: Response): Promise<void> {
@@ -10,40 +10,44 @@ export const uploadController = {
         return;
       }
 
-      // Create uploads directory if it doesn't exist
-      const uploadsDir = path.join(__dirname, '../../uploads');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
+      // Convert buffer to stream for Cloudinary
+      const stream = Readable.from(req.file.buffer);
 
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomStr = Math.random().toString(36).substring(2, 8);
-      const ext = path.extname(req.file.originalname);
-      const filename = `${timestamp}-${randomStr}${ext}`;
-      const filepath = path.join(uploadsDir, filename);
+      // Determine resource type based on mimetype
+      const resourceType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
 
-      // Save file to disk
-      fs.writeFileSync(filepath, req.file.buffer);
+      // Upload to Cloudinary
+      const uploadPromise = new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'goalcoin/submissions',
+            resource_type: resourceType,
+            transformation: resourceType === 'image' 
+              ? [{ quality: 'auto', fetch_format: 'auto' }]
+              : [{ quality: 'auto' }],
+          },
+          (error, result) => {
+            if (error) {
+              console.error('Cloudinary upload error:', error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
 
-      // Generate public URL - auto-detect from request or use env variable
-      let baseUrl = process.env.BACKEND_BASE_URL;
-      
-      if (!baseUrl) {
-        // Auto-detect from request headers
-        const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
-        const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3001';
-        baseUrl = `${protocol}://${host}`;
-      }
-      
-      const fileUrl = `${baseUrl}/uploads/${filename}`;
+        stream.pipe(uploadStream);
+      });
+
+      const result: any = await uploadPromise;
 
       res.status(200).json({
         success: true,
-        url: fileUrl,
-        filename: filename,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
+        url: result.secure_url,
+        public_id: result.public_id,
+        resource_type: result.resource_type,
+        format: result.format,
+        size: result.bytes,
       });
     } catch (error: any) {
       console.error('Upload error:', error);
