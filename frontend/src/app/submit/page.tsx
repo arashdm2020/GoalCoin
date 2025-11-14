@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/useToast';
 
 export default function SubmitPage() {
   const [weekNo, setWeekNo] = useState('');
-  const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState('');
   const [watermarkCode, setWatermarkCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,11 +25,6 @@ export default function SubmitPage() {
     setWatermarkCode(code);
   }, [router]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +35,8 @@ export default function SubmitPage() {
       return;
     }
 
-    if (!file && !fileUrl) {
-      showToast('Please upload a file or provide a URL', 'warning');
+    if (!fileUrl) {
+      showToast('Please provide the file URL', 'warning');
       return;
     }
 
@@ -59,17 +53,7 @@ export default function SubmitPage() {
       const token = localStorage.getItem('auth_token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-      // For MVP, require URL input if file is selected
-      // In production, upload to S3/IPFS first
-      let submissionFileUrl = fileUrl;
-      
-      if (file && !fileUrl) {
-        showToast('For MVP: Please upload your file to a hosting service (e.g., Imgur, Google Drive) and paste the URL below. Direct file upload coming soon!', 'info');
-        setLoading(false);
-        return;
-      }
-      
-      if (!submissionFileUrl) {
+      if (!fileUrl) {
         showToast('Please provide a file URL', 'warning');
         setLoading(false);
         return;
@@ -85,7 +69,7 @@ export default function SubmitPage() {
           user_id: user.id,
           challenge_id: 'main-challenge', // Default challenge
           week_no: parseInt(weekNo),
-          file_url: submissionFileUrl,
+          file_url: fileUrl,
           watermark_code: watermarkCode,
         }),
       });
@@ -157,49 +141,34 @@ export default function SubmitPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Upload Photo/Video
-                </label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    accept="image/*,video/*"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
-                  />
-                  {file && (
-                    <div className="mt-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="text-sm text-green-300">Selected: {file.name}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-600"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-gray-900 text-gray-400">Or provide a URL</span>
+              <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-3">
+                  <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-blue-300 mb-2">How to Submit (MVP)</p>
+                    <ol className="text-sm text-blue-200 space-y-1 list-decimal list-inside">
+                      <li>Upload your photo/video to Imgur, Google Drive, or Dropbox</li>
+                      <li>Make sure the file is publicly accessible</li>
+                      <li>Copy the direct link to your file</li>
+                      <li>Paste the link below</li>
+                    </ol>
+                  </div>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  File URL (if already uploaded)
+                  File URL <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="url"
                   value={fileUrl}
                   onChange={(e) => setFileUrl(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/your-file.jpg"
+                  placeholder="https://i.imgur.com/example.jpg or https://drive.google.com/..."
+                  required
                 />
               </div>
 
@@ -222,7 +191,7 @@ export default function SubmitPage() {
 
               <button
                 type="submit"
-                disabled={loading || (!file && !fileUrl) || !weekNo}
+                disabled={loading || !fileUrl || !weekNo}
                 className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
