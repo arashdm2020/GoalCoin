@@ -402,11 +402,11 @@ export default function SubmissionsPage() {
                       </div>
                     </td>
                     <td className="p-2">
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-col sm:flex-row flex-wrap gap-1 min-w-[120px]">
                         {/* View button - always enabled */}
                         <button 
                           onClick={() => handleViewEvidence(submission)} 
-                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white"
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white whitespace-nowrap"
                         >
                           View
                         </button>
@@ -415,7 +415,7 @@ export default function SubmissionsPage() {
                         <button 
                           onClick={() => handleForceAction(submission, 'Approve')} 
                           disabled={submission.status !== 'PENDING'}
-                          className={`px-2 py-1 rounded text-xs text-white ${
+                          className={`px-2 py-1 rounded text-xs text-white whitespace-nowrap ${
                             submission.status === 'PENDING' 
                               ? 'bg-green-600 hover:bg-green-700 cursor-pointer' 
                               : 'bg-gray-600 cursor-not-allowed opacity-50'
@@ -428,7 +428,7 @@ export default function SubmissionsPage() {
                         <button 
                           onClick={() => handleForceAction(submission, 'Reject')} 
                           disabled={submission.status !== 'PENDING'}
-                          className={`px-2 py-1 rounded text-xs text-white ${
+                          className={`px-2 py-1 rounded text-xs text-white whitespace-nowrap ${
                             submission.status === 'PENDING' 
                               ? 'bg-red-600 hover:bg-red-700 cursor-pointer' 
                               : 'bg-gray-600 cursor-not-allowed opacity-50'
@@ -441,7 +441,7 @@ export default function SubmissionsPage() {
                         <button 
                           onClick={() => handleAssign(submission)} 
                           disabled={submission.status !== 'PENDING'}
-                          className={`px-2 py-1 rounded text-xs text-white ${
+                          className={`px-2 py-1 rounded text-xs text-white whitespace-nowrap ${
                             submission.status === 'PENDING' 
                               ? 'bg-yellow-600 hover:bg-yellow-700 cursor-pointer' 
                               : 'bg-gray-600 cursor-not-allowed opacity-50'
