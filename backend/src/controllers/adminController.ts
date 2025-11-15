@@ -1029,10 +1029,14 @@ export const adminController = {
         return;
       }
 
-      const activeReviewers = await prisma.reviewer.findMany({
-        where: { status: 'ACTIVE' },
-        include: { user: { select: { wallet: true } } },
-      });
+      // Use raw query to avoid type mismatch with ReviewerStatus enum
+      const activeReviewers: any[] = await prisma.$queryRaw`
+        SELECT r.*, 
+               json_build_object('wallet', u.wallet, 'handle', u.handle) as user
+        FROM reviewers r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.status::text = 'ACTIVE'
+      `;
 
       if (activeReviewers.length < 5) {
         res.status(400).json({ error: 'Not enough active reviewers' });
@@ -1073,7 +1077,14 @@ export const adminController = {
       res.status(201).json({ success: true, data: assignments });
     } catch (error) {
       console.error('Failed to assign reviewers:', error);
-      res.status(500).json({ error: 'Failed to assign reviewers' });
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      res.status(500).json({ 
+        error: 'Failed to assign reviewers',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
+      });
     }
   },
 
