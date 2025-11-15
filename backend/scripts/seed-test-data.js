@@ -192,17 +192,18 @@ async function seedTestData() {
     console.log('📤 Creating submissions...');
     const submissions = [];
     for (let i = 0; i < 300; i++) {
+      const avatarIds = [14, 38, 68, 100];
+      const randomAvatarId = avatarIds[Math.floor(Math.random() * avatarIds.length)];
+      
       const submission = await prisma.submission.create({
         data: {
           user_id: users[Math.floor(Math.random() * users.length)].id,
-          type: SUBMISSION_TYPES[Math.floor(Math.random() * SUBMISSION_TYPES.length)],
+          challenge_id: challenges[Math.floor(Math.random() * challenges.length)].id,
+          week_no: Math.floor(Math.random() * 12) + 1,
+          file_url: `https://avatar.iran.liara.run/public/${randomAvatarId}`,
+          watermark_code: `WM${String(i + 1).padStart(6, '0')}`,
           status: SUBMISSION_STATUSES[Math.floor(Math.random() * SUBMISSION_STATUSES.length)],
-          file_url: `https://example.com/files/${faker.datatype.uuid()}.mp4`,
-          thumbnail: `https://example.com/thumbnails/${faker.datatype.uuid()}.jpg`,
-          description: faker.lorem.paragraph(),
-          country_code: getRandomCountry(),
-          created_at: faker.date.past({ months: 2 }),
-          updated_at: new Date()
+          created_at: faker.date.past({ months: 2 })
         }
       });
       submissions.push(submission);
