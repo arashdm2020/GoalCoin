@@ -336,7 +336,7 @@ export default function UserStatsPage() {
             </div>
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 text-center">
               <p className="text-sm text-gray-400 mb-2">Burn Multiplier</p>
-              <p className="text-4xl font-bold text-orange-500">{stats.user.burn_multiplier.toFixed(2)}x</p>
+              <p className="text-4xl font-bold text-orange-500">{(stats.user.burn_multiplier || 1).toFixed(2)}x</p>
               <p className="text-xs text-gray-500 mt-2">Tier bonus</p>
             </div>
           </div>
