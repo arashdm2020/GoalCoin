@@ -49,6 +49,34 @@ console.log('⚠️ BullMQ workers and Redis disabled - limit exceeded');
 console.log('✅ Server started without Redis/workers (UAT mode)');
 const prisma = new PrismaClient();
 
+// Initialize main challenge on startup
+async function initializeMainChallenge() {
+  try {
+    const existing = await prisma.challenge.findUnique({
+      where: { id: 'main-challenge' },
+    });
+
+    if (!existing) {
+      console.log('🔧 Creating main challenge...');
+      const challenge = await prisma.challenge.create({
+        data: {
+          id: 'main-challenge',
+          title: '13-Week Transformation Challenge',
+          start_date: new Date('2025-01-01'),
+          end_date: new Date('2025-12-31'),
+          rules: 'Complete 13 weeks of fitness and nutrition goals',
+          active: true,
+        },
+      });
+      console.log('✅ Main challenge created:', challenge.id);
+    } else {
+      console.log('✅ Main challenge already exists:', existing.id);
+    }
+  } catch (error) {
+    console.error('❌ Failed to initialize main challenge:', error);
+  }
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -249,37 +277,48 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Start server based on environment
-if (process.env.NODE_ENV === 'production') {
-  app.listen(PORT, () => {
-    console.log(`HTTP Server running on port ${PORT}`);
-  });
-} else {
-  // In development, start an HTTPS server for a local setup.
-  const projectRoot = path.join(__dirname, '../..');
-  const sslPath = path.join(projectRoot, 'ssl');
-  const frontendSslPath = path.join(projectRoot, 'frontend/ssl');
+async function startServer() {
+  // Initialize main challenge before starting server
+  await initializeMainChallenge();
 
-  let keyPath = path.join(sslPath, 'localhost+2-key.pem');
-  let certPath = path.join(sslPath, 'localhost+2.pem');
-
-  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-    keyPath = path.join(frontendSslPath, 'localhost-key.pem');
-    certPath = path.join(frontendSslPath, 'localhost-cert.pem');
-  }
-
-  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-    const httpsOptions = {
-      key: fs.readFileSync(keyPath),
-      cert: fs.readFileSync(certPath),
-    };
-
-    https.createServer(httpsOptions, app).listen(PORT, () => {
-      console.log(`HTTPS Server running on https://localhost:${PORT}`);
+  if (process.env.NODE_ENV === 'production') {
+    app.listen(PORT, () => {
+      console.log(`HTTP Server running on port ${PORT}`);
     });
   } else {
-    console.warn('SSL certificates not found. Starting HTTP server for development.');
-    app.listen(PORT, () => {
-      console.log(`HTTP Server running on http://localhost:${PORT}`);
-    });
+    // In development, start an HTTPS server for a local setup.
+    const projectRoot = path.join(__dirname, '../..');
+    const sslPath = path.join(projectRoot, 'ssl');
+    const frontendSslPath = path.join(projectRoot, 'frontend/ssl');
+
+    let keyPath = path.join(sslPath, 'localhost+2-key.pem');
+    let certPath = path.join(sslPath, 'localhost+2.pem');
+
+    if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+      keyPath = path.join(frontendSslPath, 'localhost-key.pem');
+      certPath = path.join(frontendSslPath, 'localhost-cert.pem');
+    }
+
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+      const httpsOptions = {
+        key: fs.readFileSync(keyPath),
+        cert: fs.readFileSync(certPath),
+      };
+
+      https.createServer(httpsOptions, app).listen(PORT, () => {
+        console.log(`HTTPS Server running on https://localhost:${PORT}`);
+      });
+    } else {
+      console.warn('SSL certificates not found. Starting HTTP server for development.');
+      app.listen(PORT, () => {
+        console.log(`HTTP Server running on http://localhost:${PORT}`);
+      });
+    }
   }
 }
+
+// Start the server
+startServer().catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
