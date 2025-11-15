@@ -832,7 +832,7 @@ export const adminController = {
         include: {
           reviews: true,
           assignments: true,
-          user: { select: { wallet: true, handle: true, country_code: true } },
+          user: { select: { id: true, wallet: true, handle: true, country_code: true } },
         },
         orderBy: { created_at: 'desc' },
         skip,
