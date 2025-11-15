@@ -131,8 +131,8 @@ export default function CommissionsPage() {
     switch (activeTab) {
       case 'Reviewer Payouts':
         return (
-          <div>
-            <table className="w-full text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[700px]">
               <thead className="bg-gray-800">
                 <tr>
                   <th className="p-2 text-sm">Reviewer Wallet</th>
@@ -193,11 +193,11 @@ export default function CommissionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-3xl font-bold text-white text-glow mb-8">Commissions Management</h1>
+    <div className="min-h-screen bg-black text-white p-4 md:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-4 md:mb-8">Commissions Management</h1>
 
       {/* Summary Tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
         <div className="bg-gray-900 p-6 rounded-lg">
           <h3 className="text-gray-400 text-sm">Total Unpaid</h3>
           <p className="text-2xl font-bold text-yellow-400">${summary.total}</p>
@@ -213,20 +213,23 @@ export default function CommissionsPage() {
       </div>
 
       {/* Tabs and Filters */}
-      <div className="flex justify-between items-center mb-6 bg-gray-900 p-4 rounded-lg">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 bg-gray-900 p-4 rounded-lg">
+        {/* Tabs - Scrollable on mobile */}
+        <div className="flex items-center space-x-2 overflow-x-auto pb-2 lg:pb-0">
           {TABS.map(tab => (
             <button 
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold ${activeTab === tab ? 'bg-yellow-500 text-black' : 'bg-gray-800 hover:bg-gray-700'}`}>
+              className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap ${activeTab === tab ? 'bg-yellow-500 text-black' : 'bg-gray-800 hover:bg-gray-700'}`}>
               {tab}
             </button>
           ))}
         </div>
-        <div className="flex items-center space-x-4">
+        
+        {/* Filters - Stack on mobile */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
           <select 
-            className="px-4 py-2 bg-gray-800 rounded-lg" 
+            className="px-4 py-2 bg-gray-800 rounded-lg text-sm" 
             value={filters.status}
             onChange={e => setFilters({...filters, status: e.target.value})}
           >
@@ -236,12 +239,12 @@ export default function CommissionsPage() {
           </select>
           <input 
             type="date" 
-            className="px-4 py-2 bg-gray-800 rounded-lg" 
+            className="px-4 py-2 bg-gray-800 rounded-lg text-sm" 
             value={filters.date}
             onChange={e => setFilters({...filters, date: e.target.value})}
           />
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg">Add Manual</button>
-          <button className="px-4 py-2 bg-blue-600 rounded-lg">Export CSV</button>
+          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg text-sm whitespace-nowrap">Add Manual</button>
+          <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm whitespace-nowrap">Export CSV</button>
         </div>
       </div>
 
