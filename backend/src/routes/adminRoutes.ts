@@ -24,6 +24,7 @@ router.get('/reviewers/:reviewerId/audit', basicAuthMiddleware, adminController.
 router.get('/countries', basicAuthMiddleware, adminController.getAvailableCountries);
 
 // Submission management
+router.get('/submissions/status', basicAuthMiddleware, adminController.getSubmissionStatusCounts);
 router.get('/submissions', basicAuthMiddleware, adminController.listSubmissions);
 router.post('/submissions/assign', basicAuthMiddleware, adminController.assignSubmissionReviewers);
 router.post('/submissions/close', basicAuthMiddleware, adminController.closeSubmission);

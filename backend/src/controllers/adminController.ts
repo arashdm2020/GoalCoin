@@ -184,6 +184,8 @@ export const adminController = {
       }
       // Accuracy and date filtering will be more complex and added later
 
+      console.log('Fetching reviewers with filter:', { status, country, page, limit });
+
       const reviewers = await prisma.reviewer.findMany({
         where,
         include: {
@@ -191,6 +193,8 @@ export const adminController = {
         },
         orderBy: { created_at: 'desc' },
       });
+
+      console.log(`Found ${reviewers.length} reviewers`);
 
       // Filter by country if specified
       let filteredReviewers = reviewers;
@@ -201,6 +205,8 @@ export const adminController = {
       const reviewerWallets = filteredReviewers
         .map(r => r.user.wallet)
         .filter((w): w is string => w !== null && w !== undefined);
+
+      console.log(`Processing ${reviewerWallets.length} reviewer wallets`);
 
       // Only fetch reviews if there are reviewer wallets
       const reviews = reviewerWallets.length > 0 ? await prisma.review.findMany({
@@ -216,6 +222,8 @@ export const adminController = {
           },
         },
       }) : [];
+
+      console.log(`Found ${reviews.length} reviews`);
 
       const reviewsByWallet = reviews.reduce((acc, review) => {
         const wallet = review.reviewer_wallet;
@@ -820,7 +828,45 @@ export const adminController = {
       });
     } catch (error) {
       console.error('Failed to fetch submissions:', error);
-      res.status(500).json({ error: 'Failed to fetch submissions' });
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      res.status(500).json({ 
+        error: 'Failed to fetch submissions',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
+      });
+    }
+  },
+
+  async getSubmissionStatusCounts(req: Request, res: Response): Promise<void> {
+    try {
+      const [pending, approved, rejected, total] = await Promise.all([
+        prisma.submission.count({ where: { status: 'PENDING' } }),
+        prisma.submission.count({ where: { status: 'APPROVED' } }),
+        prisma.submission.count({ where: { status: 'REJECTED' } }),
+        prisma.submission.count(),
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          pending,
+          approved,
+          rejected,
+          total,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch submission status counts:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      res.status(500).json({ 
+        error: 'Failed to fetch submission status counts',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
+      });
     }
   },
 
