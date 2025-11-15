@@ -149,7 +149,7 @@ export default function LeaderboardPage() {
       <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-4 md:mb-8">Leaderboard Management</h1>
 
       {/* Tabs and Filters */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 bg-gray-900 p-4 rounded-lg">
+      <div className="flex flex-col gap-4 mb-6 bg-gray-900 p-4 rounded-lg">
         {/* Tabs - Scrollable on mobile */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-2 lg:pb-0">
           {TABS.map(tab => (
@@ -162,9 +162,9 @@ export default function LeaderboardPage() {
           ))}
         </div>
         
-        {/* Filters - Stack on mobile */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
-          <select className="px-4 py-2 bg-gray-800 rounded-lg text-sm" onChange={e => setFilters({...filters, country: e.target.value})}>
+        {/* Filters Row */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <select className="px-4 py-2 bg-gray-800 rounded-lg text-sm flex-1" onChange={e => setFilters({...filters, country: e.target.value})}>
             <option value="All">All Countries</option>
             {availableCountries.map(country => (
               <option key={country.code} value={country.code}>
@@ -172,11 +172,15 @@ export default function LeaderboardPage() {
               </option>
             ))}
           </select>
-          <select className="px-4 py-2 bg-gray-800 rounded-lg text-sm" onChange={e => setFilters({...filters, sport: e.target.value})}>
+          <select className="px-4 py-2 bg-gray-800 rounded-lg text-sm flex-1" onChange={e => setFilters({...filters, sport: e.target.value})}>
             <option value="All">All Sports</option>
             {/* TODO: Populate with actual sports */}
           </select>
-          <input type="date" className="px-4 py-2 bg-gray-800 rounded-lg text-sm" onChange={e => setFilters({...filters, dateRange: e.target.value})}/>
+          <input type="date" className="px-4 py-2 bg-gray-800 rounded-lg text-sm flex-1" onChange={e => setFilters({...filters, dateRange: e.target.value})}/>
+        </div>
+        
+        {/* Action Buttons Row */}
+        <div className="flex flex-col sm:flex-row gap-2">
           <button onClick={handleRecompute} className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500 text-sm whitespace-nowrap">Recompute</button>
           <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 text-sm whitespace-nowrap">Export CSV</button>
         </div>

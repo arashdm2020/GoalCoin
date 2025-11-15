@@ -213,7 +213,7 @@ export default function CommissionsPage() {
       </div>
 
       {/* Tabs and Filters */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 bg-gray-900 p-4 rounded-lg">
+      <div className="flex flex-col gap-4 mb-6 bg-gray-900 p-4 rounded-lg">
         {/* Tabs - Scrollable on mobile */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-2 lg:pb-0">
           {TABS.map(tab => (
@@ -226,10 +226,10 @@ export default function CommissionsPage() {
           ))}
         </div>
         
-        {/* Filters - Stack on mobile */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
+        {/* Filters Row */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <select 
-            className="px-4 py-2 bg-gray-800 rounded-lg text-sm" 
+            className="px-4 py-2 bg-gray-800 rounded-lg text-sm flex-1" 
             value={filters.status}
             onChange={e => setFilters({...filters, status: e.target.value})}
           >
@@ -239,12 +239,16 @@ export default function CommissionsPage() {
           </select>
           <input 
             type="date" 
-            className="px-4 py-2 bg-gray-800 rounded-lg text-sm" 
+            className="px-4 py-2 bg-gray-800 rounded-lg text-sm flex-1" 
             value={filters.date}
             onChange={e => setFilters({...filters, date: e.target.value})}
           />
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg text-sm whitespace-nowrap">Add Manual</button>
-          <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm whitespace-nowrap">Export CSV</button>
+        </div>
+        
+        {/* Action Buttons Row */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg text-sm whitespace-nowrap hover:bg-green-700">Add Manual</button>
+          <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm whitespace-nowrap hover:bg-blue-700">Export CSV</button>
         </div>
       </div>
 
