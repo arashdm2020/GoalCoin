@@ -492,37 +492,37 @@ export default function ReviewersPage() {
                       </span>
                     </td>
                     <td className="p-2">
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-col sm:flex-row flex-wrap gap-1 min-w-[140px]">
                         {reviewer.status === 'ACTIVE' ? (
                           <button 
                             onClick={() => handleStatusChange(reviewer.id, 'SUSPENDED')} 
-                            className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs text-white"
+                            className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs text-white whitespace-nowrap"
                           >
                             Suspend
                           </button>
                         ) : (
                           <button 
                             onClick={() => handleStatusChange(reviewer.id, 'ACTIVE')} 
-                            className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white"
+                            className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white whitespace-nowrap"
                           >
                             Activate
                           </button>
                         )}
                         <button 
                           onClick={() => handleResetStrikes(reviewer.id)} 
-                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white"
+                          className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white whitespace-nowrap"
                         >
                           Reset
                         </button>
                         <button 
                           onClick={() => handleRemove(reviewer.id)} 
-                          className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs text-white"
+                          className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs text-white whitespace-nowrap"
                         >
                           Remove
                         </button>
                         <button 
                           onClick={() => handleViewAudit(reviewer)} 
-                          className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs text-white"
+                          className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs text-white whitespace-nowrap"
                         >
                           Audit
                         </button>
