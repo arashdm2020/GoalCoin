@@ -364,7 +364,14 @@ export default function SubmissionsPage() {
                   <tr key={submission.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                     <td className="p-2"><input type="checkbox" checked={selected.includes(submission.id)} onChange={() => handleSelect(submission.id)} /></td>
                     <td className="p-2">
-                      <img src={submission.thumbnail || '/placeholder.png'} alt="thumbnail" className="w-10 h-10 object-cover rounded-lg" />
+                      <img 
+                        src={submission.file_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40"%3E%3Crect width="40" height="40" fill="%23374151"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239CA3AF" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E'} 
+                        alt="thumbnail" 
+                        className="w-10 h-10 object-cover rounded-lg" 
+                        onError={(e) => {
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40"%3E%3Crect width="40" height="40" fill="%23374151"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239CA3AF" font-size="12"%3ENo Image%3C/text%3E%3C/svg%3E';
+                        }}
+                      />
                     </td>
                     <td className="p-2 text-sm">
                       <button 
@@ -396,27 +403,49 @@ export default function SubmissionsPage() {
                     </td>
                     <td className="p-2">
                       <div className="flex flex-wrap gap-1">
+                        {/* View button - always enabled */}
                         <button 
                           onClick={() => handleViewEvidence(submission)} 
                           className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white"
                         >
                           View
                         </button>
+                        
+                        {/* Approve button - only enabled for PENDING submissions */}
                         <button 
                           onClick={() => handleForceAction(submission, 'Approve')} 
-                          className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white"
+                          disabled={submission.status !== 'PENDING'}
+                          className={`px-2 py-1 rounded text-xs text-white ${
+                            submission.status === 'PENDING' 
+                              ? 'bg-green-600 hover:bg-green-700 cursor-pointer' 
+                              : 'bg-gray-600 cursor-not-allowed opacity-50'
+                          }`}
                         >
                           Approve
                         </button>
+                        
+                        {/* Reject button - only enabled for PENDING submissions */}
                         <button 
                           onClick={() => handleForceAction(submission, 'Reject')} 
-                          className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs text-white"
+                          disabled={submission.status !== 'PENDING'}
+                          className={`px-2 py-1 rounded text-xs text-white ${
+                            submission.status === 'PENDING' 
+                              ? 'bg-red-600 hover:bg-red-700 cursor-pointer' 
+                              : 'bg-gray-600 cursor-not-allowed opacity-50'
+                          }`}
                         >
                           Reject
                         </button>
+                        
+                        {/* Assign button - only enabled for PENDING submissions */}
                         <button 
                           onClick={() => handleAssign(submission)} 
-                          className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs text-white"
+                          disabled={submission.status !== 'PENDING'}
+                          className={`px-2 py-1 rounded text-xs text-white ${
+                            submission.status === 'PENDING' 
+                              ? 'bg-yellow-600 hover:bg-yellow-700 cursor-pointer' 
+                              : 'bg-gray-600 cursor-not-allowed opacity-50'
+                          }`}
                         >
                           Assign
                         </button>
