@@ -128,13 +128,12 @@ const logWarmup = async (req: Request, res: Response) => {
 
     console.log('[WARMUP] Log created:', log.id);
 
-    // Update user XP
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        xp_points: { increment: XP_REWARDS.WARMUP },
-      },
-    });
+    // Update user XP - using raw query to avoid Prisma Client schema issues
+    await prisma.$executeRaw`
+      UPDATE users 
+      SET xp_points = xp_points + ${XP_REWARDS.WARMUP}
+      WHERE id = ${userId}
+    `;
 
     // Update streak
     await updateUserStreak(userId);
@@ -171,13 +170,12 @@ const logWorkout = async (req: Request, res: Response) => {
 
     console.log('[WORKOUT-LOG] Created log:', log.id);
 
-    // Update user XP
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        xp_points: { increment: XP_REWARDS.WORKOUT },
-      },
-    });
+    // Update user XP - using raw query to avoid Prisma Client schema issues
+    await prisma.$executeRaw`
+      UPDATE users 
+      SET xp_points = xp_points + ${XP_REWARDS.WORKOUT}
+      WHERE id = ${userId}
+    `;
 
     // Update streak
     await updateUserStreak(userId);
@@ -227,13 +225,12 @@ const logMeal = async (req: Request, res: Response) => {
       },
     });
 
-    // Update user XP
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        xp_points: { increment: XP_REWARDS.MEAL },
-      },
-    });
+    // Update user XP - using raw query to avoid Prisma Client schema issues
+    await prisma.$executeRaw`
+      UPDATE users 
+      SET xp_points = xp_points + ${XP_REWARDS.MEAL}
+      WHERE id = ${userId}
+    `;
 
     // Update streak
     await updateUserStreak(userId);
