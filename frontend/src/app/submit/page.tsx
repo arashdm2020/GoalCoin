@@ -113,7 +113,7 @@ export default function SubmitPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_wallet: user.wallet || user.id,
+          user_id: user.id,
           challenge_id: 'main-challenge', // Default challenge
           week_no: parseInt(weekNo),
           file_url: fileUrl,

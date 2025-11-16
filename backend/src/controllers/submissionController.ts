@@ -5,10 +5,12 @@ const prisma = new PrismaClient();
 
 export const submissionController = {
   async createSubmission(req: Request, res: Response): Promise<void> {
-    const { user_wallet, challenge_id, week_no, file_url, watermark_code } = req.body;
+    const { user_id, challenge_id, week_no, file_url, watermark_code } = req.body;
 
-    if (!user_wallet || !challenge_id || !week_no || !watermark_code) {
-      res.status(400).json({ error: 'user_wallet, challenge_id, week_no, and watermark_code are required' });
+    console.log('[SUBMISSION] Create request:', { user_id, challenge_id, week_no, has_file_url: !!file_url, watermark_code });
+
+    if (!user_id || !challenge_id || !week_no || !watermark_code) {
+      res.status(400).json({ error: 'user_id, challenge_id, week_no, and watermark_code are required' });
       return;
     }
 
@@ -18,15 +20,22 @@ export const submissionController = {
     }
 
     try {
-      // Find user by wallet
-      console.log('Looking for user with wallet:', user_wallet);
-      const user = await prisma.user.findUnique({ where: { wallet: user_wallet } });
+      // Find user by ID (from JWT token)
+      console.log('[SUBMISSION] Looking for user with ID:', user_id);
+      const user = await prisma.user.findUnique({ 
+        where: { id: user_id },
+        select: {
+          id: true,
+          email: true,
+          handle: true,
+        }
+      });
       if (!user) {
-        console.error('User not found with wallet:', user_wallet);
-        res.status(404).json({ error: 'User not found', wallet: user_wallet });
+        console.error('[SUBMISSION] User not found with ID:', user_id);
+        res.status(404).json({ error: 'User not found', user_id });
         return;
       }
-      console.log('User found:', user.id);
+      console.log('[SUBMISSION] User found:', user.id);
 
       // Verify challenge exists
       console.log('Checking challenge:', challenge_id);
