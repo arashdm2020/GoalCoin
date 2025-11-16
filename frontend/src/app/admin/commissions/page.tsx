@@ -84,7 +84,23 @@ export default function CommissionsPage() {
         .filter((item: any) => !item.payout_id)
         .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
       const pendingCount = fetchedData.filter((item: any) => !item.payout_id).length;
-      setSummary({ total: totalUnpaid.toFixed(2), pending: pendingCount, this_week: 'N/A' });
+      
+      // Calculate paid this week (last 7 days)
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const paidThisWeek = fetchedData
+        .filter((item: any) => {
+          if (!item.payout_id) return false;
+          const earnedDate = new Date(item.earned_at);
+          return earnedDate >= oneWeekAgo;
+        })
+        .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
+      
+      setSummary({ 
+        total: totalUnpaid.toFixed(2), 
+        pending: pendingCount, 
+        this_week: paidThisWeek > 0 ? paidThisWeek.toFixed(2) : '0.00' 
+      });
     } catch (error) {
       console.error(`Failed to fetch ${activeTab}:`, error);
       setData([]);
