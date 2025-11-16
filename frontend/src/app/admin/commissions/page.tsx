@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AddCommissionModal from '../../../components/AddCommissionModal';
 import Pagination from '@/components/admin/Pagination';
 import { useToast } from '../../../hooks/useToastNotification';
+import ConfirmDialog from '../../../components/ConfirmDialog';
 
 const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
 
@@ -19,6 +20,17 @@ export default function CommissionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const fetchData = useCallback(async () => {
     let url = '';
@@ -179,12 +191,15 @@ export default function CommissionsPage() {
   };
 
   const handleMarkAsPaid = async (commissionId: string, reviewerWallet: string) => {
-    // Use a simple inline confirmation instead of browser confirm
-    const userConfirmed = window.confirm('Are you sure you want to mark this commission as paid?');
-    if (!userConfirmed) {
-      return;
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Mark Commission as Paid',
+      message: 'Are you sure you want to mark this commission as paid?',
+      onConfirm: () => executeMarkAsPaid(commissionId, reviewerWallet),
+    });
+  };
 
+  const executeMarkAsPaid = async (commissionId: string, reviewerWallet: string) => {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
@@ -357,6 +372,15 @@ export default function CommissionsPage() {
       </div>
 
       <AddCommissionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddCommission} />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        type="warning"
+      />
 
       <div className="bg-gray-900 rounded-lg overflow-hidden">
         {renderContent()}
