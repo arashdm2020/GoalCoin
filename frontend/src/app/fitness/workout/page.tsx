@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '../../../hooks/useToastNotification';
 
 export default function WorkoutPage() {
   const [workoutType, setWorkoutType] = useState('');
@@ -11,7 +10,7 @@ export default function WorkoutPage() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast, showToast, hideToast } = useToast();
+  const { showSuccess, showError, ToastComponent } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -29,7 +28,7 @@ export default function WorkoutPage() {
       const token = localStorage.getItem('auth_token');
       
       if (!token) {
-        showToast('Please login first', 'error');
+        showError('Please login first');
         router.push('/auth');
         return;
       }
@@ -56,7 +55,7 @@ export default function WorkoutPage() {
       }
 
       if (!userId) {
-        showToast('User ID not found. Please login again.', 'error');
+        showError('User ID not found. Please login again.');
         router.push('/auth');
         return;
       }
@@ -78,13 +77,13 @@ export default function WorkoutPage() {
       const data = await response.json();
 
       if (response.ok) {
-        showToast(`💪 Workout logged! +${data.xp_earned} XP earned!`, 'success');
+        showSuccess(`Workout logged! +${data.xp_earned} XP earned!`);
         setTimeout(() => router.push('/dashboard'), 1500);
       } else {
         throw new Error(data.error);
       }
     } catch (error: any) {
-      showToast(error.message || 'Failed to log workout', 'error');
+      showError(error.message || 'Failed to log workout');
     } finally {
       setLoading(false);
     }
@@ -179,13 +178,7 @@ export default function WorkoutPage() {
           </div>
         </div>
       </main>
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
+      {ToastComponent}
     </div>
   );
 }

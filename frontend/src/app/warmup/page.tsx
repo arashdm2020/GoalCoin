@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '../../hooks/useToastNotification';
 
 interface WarmupMove {
   id: string;
@@ -33,7 +32,7 @@ export default function WarmupPage() {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [selectedRoutine, setSelectedRoutine] = useState<string | null>(null);
-  const { toast, showToast, hideToast } = useToast();
+  const { showSuccess, showError, ToastComponent } = useToast();
 
   useEffect(() => {
     fetchWarmupData();
@@ -112,7 +111,7 @@ export default function WarmupPage() {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      showToast(`✅ Warm-up completed! +${xpEarned} XP earned`, 'success');
+      showSuccess(`Warm-up completed! +${xpEarned} XP earned`);
       
       // Update stats
       if (stats) {
@@ -125,7 +124,7 @@ export default function WarmupPage() {
       }
     } catch (error) {
       console.error('Error completing warmup:', error);
-      showToast('Failed to complete warm-up', 'error');
+      showError('Failed to complete warm-up');
     } finally {
       setCompleting(false);
       setSelectedRoutine(null);
@@ -243,13 +242,7 @@ export default function WarmupPage() {
         </div>
         </div>
       </main>
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
+      {ToastComponent}
     </div>
   );
 }
