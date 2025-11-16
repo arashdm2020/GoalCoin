@@ -52,8 +52,8 @@ const AddReviewerModal = ({ isOpen, onClose, onAddReviewer }: AddReviewerModalPr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-gray-900 p-8 rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+      <div className="bg-gray-900 p-8 rounded-lg w-full max-w-md relative z-50">
         <h2 className="text-2xl font-bold mb-4">Add New Reviewer</h2>
         <p className="text-gray-400 mb-6">Enter the wallet address of the new reviewer.</p>
         

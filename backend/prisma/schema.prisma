@@ -20,6 +20,8 @@ model User {
   handle            String?       @unique
   country_code      String?
   tier              UserTier      @default(FAN)
+  fan_tier          String?       @default("MINTED")
+  tier_updated_at   DateTime?
   founder_nft       Boolean       @default(false)
   
   // XP and Streak System

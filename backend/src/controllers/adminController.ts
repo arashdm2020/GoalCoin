@@ -1364,12 +1364,12 @@ export const adminController = {
               fan_tier: true,
               goal_points: true,
               xp_points: true,
-              streak_days: true,
+              current_streak: true,
               burn_multiplier: true,
             },
             orderBy: { goal_points: 'desc' },
           });
-          headers = ['rank', 'wallet', 'handle', 'country_code', 'tier', 'fan_tier', 'goal_points', 'xp_points', 'streak_days', 'burn_multiplier'];
+          headers = ['rank', 'wallet', 'handle', 'country_code', 'tier', 'fan_tier', 'goal_points', 'xp_points', 'current_streak', 'burn_multiplier'];
           break;
         default:
           res.status(400).json({ error: 'Invalid export type' });
