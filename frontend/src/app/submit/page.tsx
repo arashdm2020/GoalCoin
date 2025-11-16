@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '../../hooks/useToastNotification';
 
 export default function SubmitPage() {
   const [weekNo, setWeekNo] = useState('');
@@ -13,7 +12,7 @@ export default function SubmitPage() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
-  const { toast, showToast, hideToast } = useToast();
+  const { showSuccess, showError, showWarning, ToastComponent } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -58,10 +57,10 @@ export default function SubmitPage() {
 
       const uploadData = await uploadRes.json();
       setFileUrl(uploadData.url);
-      showToast('✅ File uploaded successfully!', 'success');
+      showSuccess('File uploaded successfully!');
     } catch (error: any) {
       console.error('Upload error:', error);
-      showToast(error.message || 'Failed to upload file', 'error');
+      showError(error.message || 'Failed to upload file');
       setFile(null);
     } finally {
       setUploading(false);
@@ -74,23 +73,23 @@ export default function SubmitPage() {
 
     // Validation
     if (!weekNo) {
-      showToast('Please enter the week number', 'warning');
+      showWarning('Please enter the week number');
       return;
     }
 
     if (!file && !fileUrl) {
-      showToast('Please upload a file', 'warning');
+      showWarning('Please upload a file');
       return;
     }
 
     if (!fileUrl) {
-      showToast('Please wait for file upload to complete', 'warning');
+      showWarning('Please wait for file upload to complete');
       return;
     }
 
     const weekNumber = parseInt(weekNo);
     if (isNaN(weekNumber) || weekNumber < 1 || weekNumber > 13) {
-      showToast('Please enter a valid week number (1-13)', 'warning');
+      showWarning('Please enter a valid week number (1-13)');
       return;
     }
 
@@ -102,7 +101,7 @@ export default function SubmitPage() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
 
       if (!fileUrl) {
-        showToast('Please provide a file URL', 'warning');
+        showWarning('Please provide a file URL');
         setLoading(false);
         return;
       }
@@ -125,13 +124,13 @@ export default function SubmitPage() {
       const data = await response.json();
 
       if (response.ok) {
-        showToast(`✅ Submission created! Watermark: ${watermarkCode}. Your submission will be reviewed by 5 reviewers.`, 'success');
+        showSuccess(`Submission created! Watermark: ${watermarkCode}. Your submission will be reviewed by 5 reviewers.`);
         setTimeout(() => router.push('/dashboard'), 2000);
       } else {
         throw new Error(data.error);
       }
     } catch (error: any) {
-      showToast(error.message || 'Failed to submit', 'error');
+      showError(error.message || 'Failed to submit');
     } finally {
       setLoading(false);
     }
@@ -261,13 +260,7 @@ export default function SubmitPage() {
           </div>
         </div>
       </main>
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
+      {ToastComponent}
     </div>
   );
 }
