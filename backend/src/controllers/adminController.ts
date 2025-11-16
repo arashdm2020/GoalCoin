@@ -561,17 +561,23 @@ export const adminController = {
   async bulkUpdateSubmissionStatus(req: Request, res: Response): Promise<void> {
     const { submissionIds, status } = req.body;
 
+    console.log('[BULK-STATUS] Request:', { submissionIds, status, count: submissionIds?.length });
+
     if (!submissionIds || !Array.isArray(submissionIds) || submissionIds.length === 0 || !status) {
+      console.log('[BULK-STATUS] Validation failed: missing data');
       res.status(400).json({ error: 'An array of submission IDs and a status are required' });
       return;
     }
 
     if (!['APPROVED', 'REJECTED'].includes(status)) {
+      console.log('[BULK-STATUS] Invalid status:', status);
       res.status(400).json({ error: 'Invalid status provided' });
       return;
     }
 
     try {
+      console.log('[BULK-STATUS] Updating submissions:', submissionIds);
+      
       const result = await prisma.submission.updateMany({
         where: {
           id: { in: submissionIds },
@@ -582,19 +588,35 @@ export const adminController = {
         },
       });
 
-      await prisma.adminLog.create({
-        data: {
-          admin_user: 'admin', // TODO: Get from JWT
-          action: `BULK_${status}`,
-          target_id: `${result.count} submissions`,
-          reason: `Bulk operation via admin panel`,
-        },
-      });
+      console.log('[BULK-STATUS] Updated count:', result.count);
+
+      // Try to create admin log, but don't fail if it errors
+      try {
+        await prisma.adminLog.create({
+          data: {
+            admin_user: 'admin', // TODO: Get from JWT
+            action: `BULK_${status}`,
+            target_id: `${result.count} submissions`,
+            reason: `Bulk operation via admin panel`,
+          },
+        });
+      } catch (logError) {
+        console.error('[BULK-STATUS] Failed to create admin log:', logError);
+        // Continue anyway
+      }
 
       res.status(200).json({ success: true, count: result.count });
-    } catch (error) {
-      console.error(`Failed to bulk update status to ${status}:`, error);
-      res.status(500).json({ error: 'Failed to bulk update submissions' });
+    } catch (error: any) {
+      console.error(`[BULK-STATUS] Failed to bulk update status to ${status}:`, error);
+      console.error('[BULK-STATUS] Error details:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+      });
+      res.status(500).json({ 
+        error: 'Failed to bulk update submissions',
+        details: error.message 
+      });
     }
   },
 
