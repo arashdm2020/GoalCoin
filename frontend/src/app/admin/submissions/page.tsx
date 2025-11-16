@@ -240,13 +240,13 @@ export default function SubmissionsPage() {
         return;
       }
       
-      const response = await fetch(`${getBackendUrl()}/api/admin/submissions/status`, {
-        method: 'PUT',
+      // Use bulk-status endpoint which creates notifications
+      const response = await fetch(`${getBackendUrl()}/api/admin/submissions/bulk-status`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
         body: JSON.stringify({
-          submissionId: selectedSubmission.id,
+          submissionIds: [selectedSubmission.id],
           status: modalAction === 'Approve' ? 'APPROVED' : 'REJECTED',
-          reason,
         }),
       });
 
