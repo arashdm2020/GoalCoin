@@ -6,7 +6,7 @@ import AddReviewerModal from '../../../components/AddReviewerModal';
 import Tooltip from '../../../components/Tooltip';
 import AuditDrawer from '../../../components/AuditDrawer';
 import Pagination from '@/components/admin/Pagination';
-import { useToast } from '../../../hooks/useToast';
+import { useToast } from '../../../hooks/useToastNotification';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 

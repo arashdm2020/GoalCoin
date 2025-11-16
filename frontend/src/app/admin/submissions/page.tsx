@@ -7,7 +7,7 @@ import EvidenceViewer from '../../../components/EvidenceViewer';
 import ReasonModal from '../../../components/ReasonModal';
 import AssignReviewerModal from '../../../components/AssignReviewerModal';
 import Pagination from '@/components/admin/Pagination';
-import { useToast } from '../../../hooks/useToast';
+import { useToast } from '../../../hooks/useToastNotification';
 
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';

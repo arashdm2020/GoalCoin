@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import AddCommissionModal from '../../../components/AddCommissionModal';
 import Pagination from '@/components/admin/Pagination';
-import { useToast } from '../../../hooks/useToast';
+import { useToast } from '../../../hooks/useToastNotification';
 
 const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
 

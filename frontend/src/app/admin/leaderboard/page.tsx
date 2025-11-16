@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCountryName } from '@/utils/countries';
 import Pagination from '@/components/admin/Pagination';
-import { useToast } from '../../../hooks/useToast';
+import { useToast } from '../../../hooks/useToastNotification';
 
 const TABS = ['Global', 'Country', 'Sport', 'Fans', 'Players', 'Reviewers'];
 
