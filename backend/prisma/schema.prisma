@@ -248,6 +248,7 @@ model WorkoutLog {
   user_id     String
   workout_type String  // e.g., "cardio", "strength", "flexibility"
   duration_min Int
+  notes       String?  // Optional notes about the workout
   xp_earned   Int      @default(20)
   completed_at DateTime @default(now())
 

@@ -149,9 +149,12 @@ const logWarmup = async (req: Request, res: Response) => {
 // Log workout completion
 const logWorkout = async (req: Request, res: Response) => {
   try {
-    const { userId, workoutType, durationMin } = req.body;
+    const { userId, workoutType, durationMin, notes } = req.body;
+
+    console.log('[WORKOUT-LOG] Request:', { userId, workoutType, durationMin, notes });
 
     if (!userId || !workoutType || !durationMin) {
+      console.log('[WORKOUT-LOG] Validation failed: missing required fields');
       return res.status(400).json({ error: 'userId, workoutType, and durationMin are required' });
     }
 
@@ -161,9 +164,12 @@ const logWorkout = async (req: Request, res: Response) => {
         user_id: userId,
         workout_type: workoutType,
         duration_min: durationMin,
+        notes: notes || null,
         xp_earned: XP_REWARDS.WORKOUT,
       },
     });
+
+    console.log('[WORKOUT-LOG] Created log:', log.id);
 
     // Update user XP
     await prisma.user.update({
