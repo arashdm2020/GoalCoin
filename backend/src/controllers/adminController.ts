@@ -1337,11 +1337,33 @@ export const adminController = {
 
       switch (type) {
         case 'reviewers':
-          data = await prisma.reviewer.findMany({ include: { user: true } });
+          data = await prisma.reviewer.findMany({ 
+            include: { 
+              user: {
+                select: {
+                  id: true,
+                  wallet: true,
+                  handle: true,
+                  country_code: true,
+                }
+              }
+            }
+          });
           headers = ['id', 'user_id', 'wallet', 'status', 'strikes', 'created_at'];
           break;
         case 'submissions':
-          data = await prisma.submission.findMany({ include: { user: true } });
+          data = await prisma.submission.findMany({ 
+            include: { 
+              user: {
+                select: {
+                  id: true,
+                  wallet: true,
+                  handle: true,
+                  country_code: true,
+                }
+              }
+            }
+          });
           headers = ['id', 'user_id', 'wallet', 'status', 'created_at', 'closed_at'];
           break;
         case 'commissions':
