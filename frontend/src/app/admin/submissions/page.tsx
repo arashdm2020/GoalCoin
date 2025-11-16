@@ -229,10 +229,13 @@ export default function SubmissionsPage() {
 
       const result = await response.json();
       if (result.success) {
-        alert(`Submission ${modalAction.toLowerCase()}d successfully`);
+        const newStatus = modalAction === 'Approve' ? 'Approved' : 'Rejected';
+        alert(`Submission ${modalAction.toLowerCase()}d successfully! Now showing ${newStatus} submissions.`);
         setIsReasonModalOpen(false);
         setSelectedSubmission(null);
-        fetchSubmissions(); // Refetch submissions to update the list
+        // Update filter to show the new status
+        setFilters({ ...filters, status: newStatus });
+        setCurrentPage(1); // Reset to first page
       } else {
         alert('Failed to update submission status: ' + (result.error || 'Unknown error'));
         console.error('Failed to update submission status:', result.error);

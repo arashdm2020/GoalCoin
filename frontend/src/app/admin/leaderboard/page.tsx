@@ -29,12 +29,24 @@ const LeaderboardRow = ({ user, rank, router }: { user: any; rank: number; route
         </button>
       </td>
       <td className="p-2 text-sm">
-        <div className="flex items-center gap-1">
-          <span>{user.country_code || 'N/A'}</span>
-          {user.country_code && (
-            <span className="text-gray-400 text-xs">
-              ({getCountryName(user.country_code)})
-            </span>
+        <div className="flex items-center gap-2">
+          {user.country_code ? (
+            <>
+              <img 
+                src={`https://flagsapi.com/${user.country_code}/flat/32.png`}
+                alt={user.country_code}
+                className="w-6 h-4 object-cover rounded"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <span>{user.country_code}</span>
+              <span className="text-gray-400 text-xs">
+                ({getCountryName(user.country_code)})
+              </span>
+            </>
+          ) : (
+            <span>N/A</span>
           )}
         </div>
       </td>
@@ -55,6 +67,7 @@ export default function LeaderboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
+  const [isRecomputing, setIsRecomputing] = useState(false);
 
   const fetchCountries = useCallback(async () => {
     try {
@@ -128,19 +141,35 @@ export default function LeaderboardPage() {
   };
 
   const handleRecompute = async () => {
+    if (isRecomputing) return;
+    
+    setIsRecomputing(true);
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
-      if (!authHeader) return;
-      const response = await fetch(`${getBackendUrl()}/api/admin/leaderboard/recalculate`, { method: 'POST', headers: { 'Authorization': authHeader } });
+      if (!authHeader) {
+        alert('Authentication required');
+        setIsRecomputing(false);
+        return;
+      }
+      
+      const response = await fetch(`${getBackendUrl()}/api/admin/leaderboard/recalculate`, { 
+        method: 'POST', 
+        headers: { 'Authorization': authHeader } 
+      });
+      
       const result = await response.json();
       if (result.success) {
-        alert('Leaderboard recalculation triggered! Data will refresh shortly.');
-        setTimeout(fetchData, 3000); // Refresh data after a delay
+        alert('✅ Leaderboard recalculation triggered! Refreshing data...');
+        await fetchData(); // Refresh data immediately
+        alert('✅ Leaderboard updated successfully!');
       } else {
-        alert(`Error: ${result.error}`);
+        alert(`❌ Error: ${result.error || 'Failed to recompute'}`);
       }
     } catch (error) {
       console.error('Failed to recompute leaderboard:', error);
+      alert('❌ Failed to recompute leaderboard. Please try again.');
+    } finally {
+      setIsRecomputing(false);
     }
   };
 
@@ -181,8 +210,14 @@ export default function LeaderboardPage() {
         
         {/* Action Buttons Row */}
         <div className="flex flex-col sm:flex-row gap-2">
-          <button onClick={handleRecompute} className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500 text-sm whitespace-nowrap">Recompute</button>
-          <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 text-sm whitespace-nowrap">Export CSV</button>
+          <button 
+            onClick={handleRecompute} 
+            disabled={isRecomputing}
+            className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500 text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isRecomputing ? '⏳ Recomputing...' : '🔄 Recompute'}
+          </button>
+          <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 text-sm whitespace-nowrap">📊 Export CSV</button>
         </div>
       </div>
 

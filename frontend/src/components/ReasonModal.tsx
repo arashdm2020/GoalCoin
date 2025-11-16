@@ -22,11 +22,11 @@ const ReasonModal = ({ isOpen, onClose, onSubmit, action }: ReasonModalProps) =>
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-gray-900 p-8 rounded-lg w-full max-w-md">
+      <div className="bg-gray-900 p-8 rounded-lg w-full max-w-md mx-4">
         <h2 className={`text-2xl font-bold mb-4 ${action === 'Approve' ? 'text-green-400' : 'text-red-400'}`}>
-          Force {action}
+          {action} Submission
         </h2>
-        <p className="text-gray-400 mb-6">Please provide a reason for this action.</p>
+        <p className="text-gray-400 mb-6">Please provide a reason for this action (optional).</p>
         
         <textarea
           value={reason}

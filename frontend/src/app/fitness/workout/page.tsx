@@ -27,7 +27,39 @@ export default function WorkoutPage() {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
       const token = localStorage.getItem('auth_token');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      if (!token) {
+        showToast('Please login first', 'error');
+        router.push('/auth');
+        return;
+      }
+
+      // Fetch user ID from /api/auth/me if not in localStorage
+      let userId = null;
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        userId = user.id;
+      }
+      
+      // If userId still not available, fetch from backend
+      if (!userId) {
+        const meResponse = await fetch(`${backendUrl}/api/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (meResponse.ok) {
+          const meData = await meResponse.json();
+          userId = meData.user?.id;
+          // Update localStorage
+          localStorage.setItem('user', JSON.stringify(meData.user));
+        }
+      }
+
+      if (!userId) {
+        showToast('User ID not found. Please login again.', 'error');
+        router.push('/auth');
+        return;
+      }
 
       const response = await fetch(`${backendUrl}/api/fitness/workout/log`, {
         method: 'POST',
@@ -36,7 +68,7 @@ export default function WorkoutPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: user.id,
+          userId: userId,
           workoutType: workoutType,
           durationMin: parseInt(duration),
           notes,
