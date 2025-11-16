@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import AddCommissionModal from '../../../components/AddCommissionModal';
 import Pagination from '@/components/admin/Pagination';
+import { useToast } from '../../../hooks/useToast';
 
 const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function CommissionsPage() {
+  const { showSuccess, showError, ToastComponent } = useToast();
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [data, setData] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -127,7 +129,7 @@ export default function CommissionsPage() {
         fetchData(); // Refetch data
       } else {
         console.error('Failed to add commission:', result.error);
-        alert(`Error: ${result.error}`);
+        showError(`Error: ${result.error}`);
       }
     } catch (error) {
       console.error('Error adding commission:', error);
@@ -147,7 +149,7 @@ export default function CommissionsPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('❌ Not authenticated');
+        showError('Not authenticated');
         return;
       }
 
@@ -169,10 +171,10 @@ export default function CommissionsPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      alert('✅ CSV exported successfully!');
+      showSuccess('CSV exported successfully');
     } catch (error) {
       console.error('Failed to export CSV:', error);
-      alert('❌ Failed to export CSV. Please try again.');
+      showError('Failed to export CSV. Please try again');
     }
   };
 
@@ -184,7 +186,7 @@ export default function CommissionsPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
 
@@ -205,14 +207,14 @@ export default function CommissionsPage() {
 
       const result = await response.json();
       if (result.success) {
-        alert('✅ Commission marked as paid successfully!');
+        showSuccess('Commission marked as paid successfully');
         fetchData(); // Refresh the list
       } else {
-        alert('❌ Failed to mark commission as paid: ' + (result.error || 'Unknown error'));
+        showError('Failed to mark commission as paid: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error marking commission as paid:', error);
-      alert('❌ Failed to mark commission as paid. Please try again.');
+      showError('Failed to mark commission as paid. Please try again');
     }
   };
 
@@ -357,6 +359,8 @@ export default function CommissionsPage() {
       <div className="bg-gray-900 rounded-lg overflow-hidden">
         {renderContent()}
       </div>
+
+      {ToastComponent}
     </div>
   );
 }
