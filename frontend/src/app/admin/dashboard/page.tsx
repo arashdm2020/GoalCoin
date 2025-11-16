@@ -513,7 +513,19 @@ export default function DashboardPage() {
               <tbody>
                 {analyticsData?.country_distribution?.slice(0, 5).map((country, index) => (
                   <tr key={index} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                    <td className="py-3 px-4 text-white">{country.country_code}</td>
+                    <td className="py-3 px-4 text-white">
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={`https://flagsapi.com/${country.country_code}/flat/32.png`}
+                          alt={country.country_code}
+                          className="w-6 h-4 object-cover rounded"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <span>{country.country_code}</span>
+                      </div>
+                    </td>
                     <td className="py-3 px-4 text-yellow-400 font-semibold">{country.user_count}</td>
                     <td className="py-3 px-4 text-gray-300">{country.percentage}%</td>
                   </tr>

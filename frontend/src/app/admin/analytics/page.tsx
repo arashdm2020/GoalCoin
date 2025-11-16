@@ -251,7 +251,19 @@ export default function AnalyticsDashboard() {
               <tbody>
                 {data.country_distribution.slice(0, 10).map((country, index) => (
                   <tr key={country.country_code} className="border-t border-gray-800">
-                    <td className="px-6 py-3 font-semibold">{country.country_code}</td>
+                    <td className="px-6 py-3 font-semibold">
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={`https://flagsapi.com/${country.country_code}/flat/32.png`}
+                          alt={country.country_code}
+                          className="w-6 h-4 object-cover rounded"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <span>{country.country_code}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-3">{country.user_count}</td>
                     <td className="px-6 py-3">{country.percentage}%</td>
                     <td className="px-6 py-3">

@@ -164,7 +164,21 @@ export default function UserDetailPage() {
               )}
               <div>
                 <span className="text-gray-300">Country:</span>
-                <span className="text-white ml-2 font-medium">{user.country_code || 'N/A'}</span>
+                {user.country_code ? (
+                  <span className="text-white ml-2 font-medium inline-flex items-center gap-2">
+                    <img 
+                      src={`https://flagsapi.com/${user.country_code}/flat/32.png`}
+                      alt={user.country_code}
+                      className="w-6 h-4 object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    {user.country_code}
+                  </span>
+                ) : (
+                  <span className="text-white ml-2 font-medium">N/A</span>
+                )}
               </div>
               <div>
                 <span className="text-gray-300">Email Verified:</span>

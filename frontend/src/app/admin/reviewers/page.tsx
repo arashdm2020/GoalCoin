@@ -471,12 +471,24 @@ export default function ReviewersPage() {
                       </div>
                     </td>
                     <td className="p-2 text-sm">
-                      <div className="flex items-center gap-1">
-                        <span>{reviewer.user?.country_code || 'N/A'}</span>
-                        {reviewer.user?.country_code && (
-                          <span className="text-gray-400 text-xs">
-                            ({getCountryName(reviewer.user.country_code)})
-                          </span>
+                      <div className="flex items-center gap-2">
+                        {reviewer.user?.country_code ? (
+                          <>
+                            <img 
+                              src={`https://flagsapi.com/${reviewer.user.country_code}/flat/32.png`}
+                              alt={reviewer.user.country_code}
+                              className="w-6 h-4 object-cover rounded"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                            <span>{reviewer.user.country_code}</span>
+                            <span className="text-gray-400 text-xs">
+                              ({getCountryName(reviewer.user.country_code)})
+                            </span>
+                          </>
+                        ) : (
+                          <span>N/A</span>
                         )}
                       </div>
                     </td>

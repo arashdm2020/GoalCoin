@@ -395,12 +395,24 @@ export default function SubmissionsPage() {
                     </td>
                     <td className="p-2 text-sm">{new Date(submission.created_at).toLocaleDateString()}</td>
                     <td className="p-2 text-sm">
-                      <div className="flex items-center gap-1">
-                        <span>{submission.user?.country_code || 'N/A'}</span>
-                        {submission.user?.country_code && (
-                          <span className="text-gray-400 text-xs">
-                            ({getCountryName(submission.user.country_code)})
-                          </span>
+                      <div className="flex items-center gap-2">
+                        {submission.user?.country_code ? (
+                          <>
+                            <img 
+                              src={`https://flagsapi.com/${submission.user.country_code}/flat/32.png`}
+                              alt={submission.user.country_code}
+                              className="w-6 h-4 object-cover rounded"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                            <span>{submission.user.country_code}</span>
+                            <span className="text-gray-400 text-xs">
+                              ({getCountryName(submission.user.country_code)})
+                            </span>
+                          </>
+                        ) : (
+                          <span>N/A</span>
                         )}
                       </div>
                     </td>
