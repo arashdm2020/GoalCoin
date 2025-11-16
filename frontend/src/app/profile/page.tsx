@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '../../hooks/useToastNotification';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 interface User {
   id: string;
@@ -30,6 +31,12 @@ export default function ProfilePage() {
   });
   const router = useRouter();
   const { showSuccess, showError, ToastComponent } = useToast();
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -302,10 +309,15 @@ export default function ProfilePage() {
                         </button>
                         <button
                           onClick={() => {
-                            if (confirm('Are you sure you want to disconnect your wallet?')) {
-                              // TODO: Implement disconnect logic
-                              showSuccess('Wallet disconnected');
-                            }
+                            setConfirmDialog({
+                              isOpen: true,
+                              title: 'Disconnect Wallet',
+                              message: 'Are you sure you want to disconnect your wallet?',
+                              onConfirm: () => {
+                                // TODO: Implement disconnect logic
+                                showSuccess('Wallet disconnected');
+                              },
+                            });
                           }}
                           className="flex-1 px-3 py-2 text-sm bg-red-900/50 hover:bg-red-900 text-red-200 rounded transition-colors"
                         >
@@ -358,6 +370,16 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        type="danger"
+      />
+
       {ToastComponent}
     </div>
   );
