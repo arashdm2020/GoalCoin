@@ -140,6 +140,64 @@ export default function SettingsPage() {
         placeholder: 'Enter site name'
       },
       {
+        key: 'platform_email',
+        name: 'Platform Email',
+        description: 'Main contact email for the platform',
+        type: 'text',
+        value: 'support@goalcoin.com',
+        placeholder: 'support@example.com'
+      },
+      {
+        key: 'contact_email',
+        name: 'Contact Email',
+        description: 'Public contact email displayed to users',
+        type: 'text',
+        value: 'contact@goalcoin.com',
+        placeholder: 'contact@example.com'
+      },
+      {
+        key: 'xp_per_workout',
+        name: 'XP Per Workout',
+        description: 'XP points earned per workout completion',
+        type: 'number',
+        value: 20,
+        min: 1,
+        max: 100
+      },
+      {
+        key: 'xp_per_meal',
+        name: 'XP Per Meal Log',
+        description: 'XP points earned per meal logged',
+        type: 'number',
+        value: 10,
+        min: 1,
+        max: 100
+      },
+      {
+        key: 'goal_points_per_submission',
+        name: 'Goal Points Per Submission',
+        description: 'Goal Points earned per approved submission',
+        type: 'number',
+        value: 100,
+        min: 1,
+        max: 1000
+      },
+      {
+        key: 'challenge_enrollment_open',
+        name: 'Challenge Enrollment Open',
+        description: 'Allow new users to enroll in the 90-day challenge',
+        type: 'boolean',
+        value: true
+      },
+      {
+        key: 'challenge_price_display',
+        name: 'Challenge Price (Display Only)',
+        description: 'Price shown to users (visual only, not processed)',
+        type: 'text',
+        value: '$99',
+        placeholder: '$99'
+      },
+      {
         key: 'maintenance_mode',
         name: 'Maintenance Mode',
         description: 'Enable maintenance mode to prevent user access',

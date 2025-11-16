@@ -138,7 +138,7 @@ export default function ReviewersPage() {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
         alert('Authentication required');
-        return;
+        throw new Error('Authentication required');
       }
       
       const response = await fetch(`${getBackendUrl()}/api/admin/reviewers`, {
@@ -152,14 +152,15 @@ export default function ReviewersPage() {
       
       const result = await response.json();
       if (result.success) {
-        alert('Reviewer added successfully');
-        fetchReviewers(); // Refresh the list
+        alert('✅ Reviewer added successfully! Refreshing list...');
         setIsModalOpen(false);
+        await fetchReviewers(); // Refresh the list and wait for it
+        alert('✅ Reviewer list updated!');
       } else {
-        alert('Failed to add reviewer: ' + (result.error || 'Unknown error'));
+        alert('❌ Failed to add reviewer: ' + (result.error || 'Unknown error'));
         throw new Error(result.error || 'Failed to add reviewer');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add reviewer:', error);
       throw error; // Re-throw so modal can handle it
     }
