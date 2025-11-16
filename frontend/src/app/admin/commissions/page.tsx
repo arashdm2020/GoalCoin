@@ -5,6 +5,7 @@ import AddCommissionModal from '../../../components/AddCommissionModal';
 import Pagination from '@/components/admin/Pagination';
 import { useToast } from '../../../hooks/useToastNotification';
 import ConfirmDialog from '../../../components/ConfirmDialog';
+import InputDialog from '../../../components/InputDialog';
 
 const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
 
@@ -29,6 +30,21 @@ export default function CommissionsPage() {
     isOpen: false,
     title: '',
     message: '',
+    onConfirm: () => {},
+  });
+  const [inputDialog, setInputDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    placeholder: string;
+    onConfirm: (value: string) => void;
+    commissionId?: string;
+    reviewerWallet?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    placeholder: '',
     onConfirm: () => {},
   });
 
@@ -195,11 +211,22 @@ export default function CommissionsPage() {
       isOpen: true,
       title: 'Mark Commission as Paid',
       message: 'Are you sure you want to mark this commission as paid?',
-      onConfirm: () => executeMarkAsPaid(commissionId, reviewerWallet),
+      onConfirm: () => {
+        // After confirmation, show input dialog for transaction hash
+        setInputDialog({
+          isOpen: true,
+          title: 'Transaction Hash',
+          message: 'Enter transaction hash (optional):',
+          placeholder: 'e.g., 0x1234...abcd',
+          onConfirm: (txHash) => executeMarkAsPaid(commissionId, reviewerWallet, txHash),
+          commissionId,
+          reviewerWallet,
+        });
+      },
     });
   };
 
-  const executeMarkAsPaid = async (commissionId: string, reviewerWallet: string) => {
+  const executeMarkAsPaid = async (commissionId: string, reviewerWallet: string, txHash: string) => {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
@@ -207,7 +234,7 @@ export default function CommissionsPage() {
         return;
       }
 
-      const txHash = window.prompt('Enter transaction hash (optional):') || 'manual-payment';
+      const finalTxHash = txHash.trim() || 'manual-payment';
 
       const response = await fetch(`${getBackendUrl()}/api/admin/commissions/mark-paid`, {
         method: 'POST',
@@ -218,7 +245,7 @@ export default function CommissionsPage() {
         body: JSON.stringify({
           commission_ids: [commissionId],
           reviewer_wallet: reviewerWallet,
-          tx_hash: txHash,
+          tx_hash: finalTxHash,
         }),
       });
 
@@ -380,6 +407,15 @@ export default function CommissionsPage() {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
         type="warning"
+      />
+
+      <InputDialog
+        isOpen={inputDialog.isOpen}
+        title={inputDialog.title}
+        message={inputDialog.message}
+        placeholder={inputDialog.placeholder}
+        onConfirm={inputDialog.onConfirm}
+        onCancel={() => setInputDialog({ ...inputDialog, isOpen: false })}
       />
 
       <div className="bg-gray-900 rounded-lg overflow-hidden">
