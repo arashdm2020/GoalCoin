@@ -8,6 +8,7 @@ import ReasonModal from '../../../components/ReasonModal';
 import AssignReviewerModal from '../../../components/AssignReviewerModal';
 import Pagination from '@/components/admin/Pagination';
 import { useToast } from '../../../hooks/useToastNotification';
+import ConfirmDialog from '../../../components/ConfirmDialog';
 
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
@@ -100,6 +101,19 @@ export default function SubmissionsPage() {
     fetchReviewers();
   }, []);
   const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'warning',
+  });
 
   const handleSyncLeaderboard = async () => {
     try {
@@ -127,10 +141,16 @@ export default function SubmissionsPage() {
       return;
     }
 
-    const userConfirmed = window.confirm(`Are you sure you want to ${action.toLowerCase()} ${selected.length} submission(s)?`);
-    if (!userConfirmed) {
-      return;
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: `Bulk ${action}`,
+      message: `Are you sure you want to ${action.toLowerCase()} ${selected.length} submission(s)?`,
+      onConfirm: () => executeBulkAction(action),
+      type: action === 'Reject' ? 'danger' : 'warning',
+    });
+  };
+
+  const executeBulkAction = async (action: 'Approve' | 'Reject') => {
 
     const newStatus = action === 'Approve' ? 'APPROVED' : 'REJECTED';
 
@@ -491,6 +511,15 @@ export default function SubmissionsPage() {
           />
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        type={confirmDialog.type}
+      />
 
       {ToastComponent}
     </div>
