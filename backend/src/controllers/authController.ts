@@ -18,7 +18,9 @@ export const authController = {
    */
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, handle, wallet, country_code } = req.body;
+      const { email, password, handle, wallet, country_code, referral_code } = req.body;
+
+      console.log('[REGISTER] New registration:', { email, has_referral: !!referral_code });
 
       if (!email || !password) {
         res.status(400).json({ error: 'Email and password are required' });
@@ -79,6 +81,36 @@ export const authController = {
           micro_goal_points: 0,
         },
       });
+
+      // Handle referral if provided
+      if (referral_code) {
+        try {
+          console.log('[REFERRAL] Processing referral code:', referral_code);
+          
+          // Find referrer by handle
+          const referrer = await prisma.user.findFirst({
+            where: { handle: referral_code },
+            select: { id: true, handle: true },
+          });
+
+          if (referrer) {
+            // Create referral record
+            await prisma.referral.create({
+              data: {
+                referrer_id: referrer.id,
+                referred_id: user.id,
+                status: 'pending', // Will be activated when user completes first action
+              },
+            });
+            console.log('[REFERRAL] Referral created:', { referrer: referrer.handle, referred: user.id });
+          } else {
+            console.log('[REFERRAL] Referrer not found:', referral_code);
+          }
+        } catch (refError) {
+          console.error('[REFERRAL] Error creating referral:', refError);
+          // Don't fail registration if referral fails
+        }
+      }
 
       // Generate verification token
       const verificationToken = crypto.randomBytes(32).toString('hex');

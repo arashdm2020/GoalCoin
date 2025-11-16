@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,7 +9,20 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Capture referral code from URL
+    const ref = searchParams.get('ref');
+    if (ref) {
+      setReferralCode(ref);
+      // Store in localStorage for later use
+      localStorage.setItem('referral_code', ref);
+      console.log('[REFERRAL] Captured referral code:', ref);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +33,12 @@ export default function AuthPage() {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
-      const body = { email, password };
+      // Include referral code in registration
+      const body: any = { email, password };
+      if (!isLogin && referralCode) {
+        body.referral_code = referralCode;
+        console.log('[REFERRAL] Including referral code in registration:', referralCode);
+      }
 
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
