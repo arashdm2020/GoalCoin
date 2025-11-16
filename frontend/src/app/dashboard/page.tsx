@@ -162,27 +162,79 @@ export default function DashboardPage() {
 
                 {/* Notifications Dropdown */}
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
-                    <div className="p-4 border-b border-gray-700">
-                      <h3 className="font-semibold">Notifications</h3>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {notifications.map((notification) => (
-                        <div key={notification.id} className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 ${!notification.read ? 'bg-blue-900/20' : ''}`}>
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-sm">{notification.title}</h4>
-                              <p className="text-gray-400 text-xs mt-1">{notification.message}</p>
-                              <span className="text-gray-500 text-xs">{notification.time}</span>
-                            </div>
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
-                            )}
-                          </div>
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowNotifications(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-96 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-[80vh] flex flex-col">
+                      <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
+                        <div>
+                          <h3 className="font-semibold text-white">Notifications</h3>
+                          {unreadCount > 0 && (
+                            <p className="text-xs text-gray-400">{unreadCount} unread</p>
+                          )}
                         </div>
-                      ))}
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={() => {
+                              setNotifications(notifications.map(n => ({ ...n, read: true })));
+                            }}
+                            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+                      <div className="overflow-y-auto flex-1 custom-scrollbar">
+                        {notifications.length === 0 ? (
+                          <div className="p-8 text-center text-gray-400">
+                            <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <p className="text-sm">No notifications yet</p>
+                          </div>
+                        ) : (
+                          notifications.map((notification) => (
+                            <div 
+                              key={notification.id} 
+                              className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-900/20 border-l-2 border-l-blue-500' : ''}`}
+                              onClick={() => {
+                                setNotifications(notifications.map(n => 
+                                  n.id === notification.id ? { ...n, read: true } : n
+                                ));
+                              }}
+                            >
+                              <div className="flex justify-between items-start gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-sm text-white truncate">{notification.title}</h4>
+                                  <p className="text-gray-400 text-xs mt-1 line-clamp-2">{notification.message}</p>
+                                  <span className="text-gray-500 text-xs mt-1 inline-block">{notification.time}</span>
+                                </div>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 flex-shrink-0"></div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      {notifications.length > 0 && (
+                        <div className="p-3 border-t border-gray-700 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              setShowNotifications(false);
+                              router.push('/notifications');
+                            }}
+                            className="w-full text-center text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            View all notifications
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
 
