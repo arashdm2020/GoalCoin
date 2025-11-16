@@ -6,10 +6,12 @@ import AddReviewerModal from '../../../components/AddReviewerModal';
 import Tooltip from '../../../components/Tooltip';
 import AuditDrawer from '../../../components/AuditDrawer';
 import Pagination from '@/components/admin/Pagination';
+import { useToast } from '../../../hooks/useToast';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function ReviewersPage() {
+  const { showSuccess, showError, ToastComponent } = useToast();
   const [reviewers, setReviewers] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -137,7 +139,7 @@ export default function ReviewersPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         throw new Error('Authentication required');
       }
       
@@ -152,12 +154,11 @@ export default function ReviewersPage() {
       
       const result = await response.json();
       if (result.success) {
-        alert('✅ Reviewer added successfully! Refreshing list...');
+        showSuccess('Reviewer added successfully');
         setIsModalOpen(false);
         await fetchReviewers(); // Refresh the list and wait for it
-        alert('✅ Reviewer list updated!');
       } else {
-        alert('❌ Failed to add reviewer: ' + (result.error || 'Unknown error'));
+        showError('Failed to add reviewer: ' + (result.error || 'Unknown error'));
         throw new Error(result.error || 'Failed to add reviewer');
       }
     } catch (error: any) {
@@ -170,7 +171,7 @@ export default function ReviewersPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
       
@@ -185,14 +186,14 @@ export default function ReviewersPage() {
       
       const result = await response.json();
       if (result.success) {
-        alert(`Reviewer ${status.toLowerCase()} successfully`);
+        showSuccess(`Reviewer ${status.toLowerCase()} successfully`);
         fetchReviewers(); // Refresh the list
       } else {
-        alert('Failed to update reviewer status: ' + (result.error || 'Unknown error'));
+        showError('Failed to update reviewer status: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Failed to update reviewer status:', error);
-      alert('Failed to update reviewer status. Please try again.');
+      showError('Failed to update reviewer status. Please try again');
     }
   };
 
@@ -204,7 +205,7 @@ export default function ReviewersPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
       
@@ -219,14 +220,14 @@ export default function ReviewersPage() {
       
       const result = await response.json();
       if (result.success) {
-        alert('Reviewer strikes reset successfully');
+        showSuccess('Reviewer strikes reset successfully');
         fetchReviewers(); // Refresh the list
       } else {
-        alert('Failed to reset strikes: ' + (result.error || 'Unknown error'));
+        showError('Failed to reset strikes: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Failed to reset strikes:', error);
-      alert('Failed to reset strikes. Please try again.');
+      showError('Failed to reset strikes. Please try again');
     }
   };
 
@@ -250,14 +251,14 @@ export default function ReviewersPage() {
       
       const result = await response.json();
       if (result.success) {
-        alert('Reviewer removed successfully');
+        showSuccess('Reviewer removed successfully');
         fetchReviewers(); // Refresh the list
       } else {
-        alert('Failed to remove reviewer: ' + (result.error || 'Unknown error'));
+        showError('Failed to remove reviewer: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Failed to remove reviewer:', error);
-      alert('Failed to remove reviewer. Please try again.');
+      showError('Failed to remove reviewer. Please try again');
     }
   };
 
@@ -268,7 +269,7 @@ export default function ReviewersPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         setAuditVotes([]);
         return;
       }
@@ -283,12 +284,12 @@ export default function ReviewersPage() {
       } else {
         console.error('Failed to fetch audit data:', result.error);
         setAuditVotes([]);
-        alert('Failed to load audit data: ' + (result.error || 'Unknown error'));
+        showError('Failed to load audit data: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Failed to fetch audit data:', error);
       setAuditVotes([]);
-      alert('Failed to load audit data. Please try again.');
+      showError('Failed to load audit data. Please try again');
     }
   };
 
@@ -296,7 +297,7 @@ export default function ReviewersPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
       
@@ -315,11 +316,11 @@ export default function ReviewersPage() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } else {
-        alert('Failed to export CSV. Please try again.');
+        showError('Failed to export CSV. Please try again');
       }
     } catch (error) {
       console.error('Failed to export CSV:', error);
-      alert('Failed to export CSV. Please try again.');
+      showError('Failed to export CSV. Please try again');
     }
   };
 
@@ -560,6 +561,8 @@ export default function ReviewersPage() {
           />
         )}
       </div>
+
+      {ToastComponent}
     </div>
   );
 }

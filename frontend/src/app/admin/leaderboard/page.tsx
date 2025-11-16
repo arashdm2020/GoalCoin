@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCountryName } from '@/utils/countries';
 import Pagination from '@/components/admin/Pagination';
+import { useToast } from '../../../hooks/useToast';
 
 const TABS = ['Global', 'Country', 'Sport', 'Fans', 'Players', 'Reviewers'];
 
@@ -59,6 +60,7 @@ const LeaderboardRow = ({ user, rank, router }: { user: any; rank: number; route
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function LeaderboardPage() {
+  const { showSuccess, showError, ToastComponent } = useToast();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
@@ -147,7 +149,7 @@ export default function LeaderboardPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         setIsRecomputing(false);
         return;
       }
@@ -159,15 +161,14 @@ export default function LeaderboardPage() {
       
       const result = await response.json();
       if (result.success) {
-        alert('✅ Leaderboard recalculation triggered! Refreshing data...');
+        showSuccess('Leaderboard recalculation triggered');
         await fetchData(); // Refresh data immediately
-        alert('✅ Leaderboard updated successfully!');
       } else {
-        alert(`❌ Error: ${result.error || 'Failed to recompute'}`);
+        showError(`Error: ${result.error || 'Failed to recompute'}`);
       }
     } catch (error) {
       console.error('Failed to recompute leaderboard:', error);
-      alert('❌ Failed to recompute leaderboard. Please try again.');
+      showError('Failed to recompute leaderboard. Please try again');
     } finally {
       setIsRecomputing(false);
     }
@@ -177,7 +178,7 @@ export default function LeaderboardPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
 
@@ -209,10 +210,10 @@ export default function LeaderboardPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      alert('✅ CSV exported successfully!');
+      showSuccess('CSV exported successfully');
     } catch (error) {
       console.error('Failed to export CSV:', error);
-      alert('❌ Failed to export CSV. Please try again.');
+      showError('Failed to export CSV. Please try again');
     }
   };
 
@@ -306,6 +307,8 @@ export default function LeaderboardPage() {
           />
         )}
       </div>
+
+      {ToastComponent}
     </div>
   );
 }

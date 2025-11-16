@@ -24,10 +24,21 @@ export function useToast() {
     setToast(prev => ({ ...prev, isVisible: false }));
   }, []);
 
-  const showSuccess = useCallback((message: string) => showToast(message, 'success'), [showToast]);
-  const showError = useCallback((message: string) => showToast(message, 'error'), [showToast]);
-  const showWarning = useCallback((message: string) => showToast(message, 'warning'), [showToast]);
-  const showInfo = useCallback((message: string) => showToast(message, 'info'), [showToast]);
+  const showSuccess = useCallback((message: string) => {
+    setToast({ message, type: 'success', isVisible: true });
+  }, []);
+
+  const showError = useCallback((message: string) => {
+    setToast({ message, type: 'error', isVisible: true });
+  }, []);
+
+  const showWarning = useCallback((message: string) => {
+    setToast({ message, type: 'warning', isVisible: true });
+  }, []);
+
+  const showInfo = useCallback((message: string) => {
+    setToast({ message, type: 'info', isVisible: true });
+  }, []);
 
   const ToastComponent = toast.isVisible ? (
     <Toast

@@ -7,11 +7,13 @@ import EvidenceViewer from '../../../components/EvidenceViewer';
 import ReasonModal from '../../../components/ReasonModal';
 import AssignReviewerModal from '../../../components/AssignReviewerModal';
 import Pagination from '@/components/admin/Pagination';
+import { useToast } from '../../../hooks/useToast';
 
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
 export default function SubmissionsPage() {
+  const { showSuccess, showError, ToastComponent } = useToast();
   const router = useRouter();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [availableCountries, setAvailableCountries] = useState<any[]>([]);
@@ -110,7 +112,7 @@ export default function SubmissionsPage() {
       const result = await response.json();
       if (result.success) {
         // Optionally, show a success message
-        alert('Leaderboard recalculation triggered!');
+        showSuccess('Leaderboard recalculation triggered');
       } else {
         console.error('Failed to sync leaderboard:', result.error);
       }
@@ -121,7 +123,7 @@ export default function SubmissionsPage() {
 
   const handleBulkAction = async (action: 'Approve' | 'Reject') => {
     if (selected.length === 0) {
-      alert('Please select at least one submission');
+      showError('Please select at least one submission');
       return;
     }
 
@@ -134,7 +136,7 @@ export default function SubmissionsPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
       
@@ -146,17 +148,17 @@ export default function SubmissionsPage() {
 
       const result = await response.json();
       if (result.success) {
-        alert(`${selected.length} submission(s) ${action.toLowerCase()}d successfully`);
+        showSuccess(`${selected.length} submission(s) ${action.toLowerCase()}d successfully`);
         setSelected([]);
         setIsBulkActionsOpen(false);
         fetchSubmissions(); // Refetch submissions to update the list
       } else {
-        alert('Failed to perform bulk action: ' + (result.error || 'Unknown error'));
+        showError('Failed to approve submission: ' + (result.error || 'Unknown error'));
         console.error('Failed to perform bulk action:', result.error);
       }
     } catch (error) {
       console.error('Error in handleBulkAction:', error);
-      alert('Failed to perform bulk action. Please try again.');
+      showError('Failed to approve submission. Please try again');
     }
   };
 
@@ -172,7 +174,7 @@ export default function SubmissionsPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
       
@@ -187,17 +189,17 @@ export default function SubmissionsPage() {
 
       const result = await response.json();
       if (result.success) {
-        alert(`Reviewers assigned successfully to submission`);
+        showSuccess('Submission assigned successfully to reviewer');
         setIsAssignModalOpen(false);
         setSelectedSubmission(null);
         fetchSubmissions(); // Refresh to show updated assignments
       } else {
-        alert('Failed to assign reviewers: ' + (result.error || 'Unknown error'));
+        showError('Failed to assign reviewers: ' + (result.error || 'Unknown error'));
         console.error('Failed to assign reviewers:', result.error);
       }
     } catch (error) {
       console.error('Error in handleAssignSubmit:', error);
-      alert('Failed to assign reviewers. Please try again.');
+      showError('Failed to assign reviewers. Please try again');
     }
   };
 
@@ -213,7 +215,7 @@ export default function SubmissionsPage() {
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
       if (!authHeader) {
-        alert('Authentication required');
+        showError('Authentication required');
         return;
       }
       
@@ -230,25 +232,25 @@ export default function SubmissionsPage() {
       const result = await response.json();
       if (result.success) {
         const newStatus = modalAction === 'Approve' ? 'Approved' : 'Rejected';
-        alert(`Submission ${modalAction.toLowerCase()}d successfully! Now showing ${newStatus} submissions.`);
+        showSuccess(`Submission ${modalAction.toLowerCase()}d successfully`);
         setIsReasonModalOpen(false);
         setSelectedSubmission(null);
         // Update filter to show the new status
         setFilters({ ...filters, status: newStatus });
         setCurrentPage(1); // Reset to first page
       } else {
-        alert('Failed to update submission status: ' + (result.error || 'Unknown error'));
+        showError('Failed to update submission status: ' + (result.error || 'Unknown error'));
         console.error('Failed to update submission status:', result.error);
       }
     } catch (error) {
       console.error('Error in handleReasonSubmit:', error);
-      alert('Failed to update submission status. Please try again.');
+      showError('Failed to update submission status. Please try again');
     }
   };
 
   const handleViewEvidence = (submission: any) => {
     if (!submission.file_url) {
-      alert('No evidence file available for this submission');
+      showError('No evidence file available for this submission');
       return;
     }
     setSelectedMedia(submission.file_url);
@@ -488,6 +490,8 @@ export default function SubmissionsPage() {
           />
         )}
       </div>
+
+      {ToastComponent}
     </div>
   );
 }
