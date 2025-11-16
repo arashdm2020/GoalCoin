@@ -20,7 +20,7 @@ model User {
   handle            String?       @unique
   country_code      String?
   tier              UserTier      @default(FAN)
-  fan_tier          String?       @default("MINTED")
+  fan_tier          String?
   tier_updated_at   DateTime?
   founder_nft       Boolean       @default(false)
   
