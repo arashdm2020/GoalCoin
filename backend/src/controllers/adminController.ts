@@ -802,13 +802,21 @@ export const adminController = {
 
   async getAdminSecurityLogs(req: Request, res: Response): Promise<void> {
     try {
+      console.log('[ADMIN-LOGS] Fetching security logs...');
       const logs = await prisma.adminLog.findMany({
         orderBy: { created_at: 'desc' },
         take: 50,
       });
+      console.log('[ADMIN-LOGS] Found logs:', logs.length);
       res.status(200).json({ success: true, data: logs });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to get admin logs' });
+    } catch (error: any) {
+      console.error('[ADMIN-LOGS] Error fetching logs:', error);
+      console.error('[ADMIN-LOGS] Error details:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+      });
+      res.status(500).json({ error: 'Failed to get admin logs', details: error.message });
     }
   },
 
