@@ -50,22 +50,23 @@ export default function CommissionsPage() {
 
   const fetchData = useCallback(async () => {
     let url = '';
+    let shouldFetchSummary = false;
+    
     if (activeTab === 'Reviewer Payouts') {
       const statusParam = filters.status === 'All' ? '' : 
                          filters.status === 'PENDING' ? 'unpaid' : 
                          filters.status === 'PAID' ? 'paid' : '';
       url = `/api/admin/commissions?status=${statusParam}&date=${filters.date}&page=${currentPage}&limit=${itemsPerPage}`;
+      shouldFetchSummary = true;
     } else if (activeTab === 'System Logs') {
       url = `/api/admin/settings/security-logs`;
     } else if (activeTab === 'Fan Rewards') {
       // Placeholder for Fan Rewards - will be implemented later
       setData([]);
-      setSummary({ total: '0.00', pending: 0, this_week: '0.00' });
       setTotalItems(0);
       return;
     } else {
       setData([]);
-      setSummary({ total: '0.00', pending: 0, this_week: '0.00' });
       setTotalItems(0);
       return;
     }
@@ -116,16 +117,62 @@ export default function CommissionsPage() {
       setData(fetchedData);
       setTotalItems(totalCount);
       
-      // Calculate summary
-      const totalUnpaid = fetchedData
+      // Calculate summary ONLY for Reviewer Payouts tab
+      if (shouldFetchSummary) {
+        const totalUnpaid = fetchedData
+          .filter((item: any) => !item.payout_id)
+          .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
+        const pendingCount = fetchedData.filter((item: any) => !item.payout_id).length;
+        
+        // Calculate paid this week (last 7 days)
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const paidThisWeek = fetchedData
+          .filter((item: any) => {
+            if (!item.payout_id) return false;
+            const earnedDate = new Date(item.earned_at);
+            return earnedDate >= oneWeekAgo;
+          })
+          .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
+        
+        setSummary({ 
+          total: totalUnpaid.toFixed(2), 
+          pending: pendingCount, 
+          this_week: paidThisWeek > 0 ? paidThisWeek.toFixed(2) : '0.00' 
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to fetch ${activeTab}:`, error);
+      setData([]);
+      setTotalItems(0);
+    }
+  }, [activeTab, filters, currentPage, itemsPerPage]);
+
+  // Fetch summary separately (always from Reviewer Payouts, regardless of active tab)
+  const fetchSummary = useCallback(async () => {
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) return;
+      
+      // Fetch ALL commissions (no pagination) to calculate accurate summary
+      const response = await fetch(`${getBackendUrl()}/api/admin/commissions?status=&date=&page=1&limit=10000`, {
+        headers: { 'Authorization': authHeader }
+      });
+      
+      if (!response.ok) return;
+      
+      const result = await response.json();
+      const allCommissions = result.data || result || [];
+      
+      const totalUnpaid = allCommissions
         .filter((item: any) => !item.payout_id)
         .reduce((sum: number, item: any) => sum + (item.amount_usdt || 0), 0);
-      const pendingCount = fetchedData.filter((item: any) => !item.payout_id).length;
+      const pendingCount = allCommissions.filter((item: any) => !item.payout_id).length;
       
       // Calculate paid this week (last 7 days)
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const paidThisWeek = fetchedData
+      const paidThisWeek = allCommissions
         .filter((item: any) => {
           if (!item.payout_id) return false;
           const earnedDate = new Date(item.earned_at);
@@ -139,15 +186,17 @@ export default function CommissionsPage() {
         this_week: paidThisWeek > 0 ? paidThisWeek.toFixed(2) : '0.00' 
       });
     } catch (error) {
-      console.error(`Failed to fetch ${activeTab}:`, error);
-      setData([]);
-      setTotalItems(0);
+      console.error('Failed to fetch summary:', error);
     }
-  }, [activeTab, filters, currentPage, itemsPerPage]);
+  }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const handleAddCommission = async (commissionData: { reviewer_wallet: string; submission_id: string; amount_usdt: number; reason: string; }) => {
     try {
@@ -162,6 +211,8 @@ export default function CommissionsPage() {
       if (result.success) {
         setIsModalOpen(false);
         fetchData(); // Refetch data
+        fetchSummary(); // Refresh the summary
+        showSuccess('Commission added successfully');
       } else {
         console.error('Failed to add commission:', result.error);
         showError(`Error: ${result.error}`);
@@ -260,6 +311,7 @@ export default function CommissionsPage() {
       if (result.success) {
         showSuccess('Commission marked as paid successfully');
         fetchData(); // Refresh the list
+        fetchSummary(); // Refresh the summary
       } else {
         showError('Failed to mark commission as paid: ' + (result.error || 'Unknown error'));
       }
