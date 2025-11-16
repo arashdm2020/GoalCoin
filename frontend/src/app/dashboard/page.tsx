@@ -35,34 +35,6 @@ export default function DashboardPage() {
   const [showProfile, setShowProfile] = useState(false);
   const router = useRouter();
 
-  // Mock notifications
-  const mockNotifications: Notification[] = [
-    {
-      id: '1',
-      type: 'achievement',
-      title: 'Streak Milestone!',
-      message: 'You\'ve reached a 7-day streak! Keep it up!',
-      time: '2 hours ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'reminder',
-      title: 'Daily Check-in',
-      message: 'Don\'t forget to log your workout today',
-      time: '5 hours ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'system',
-      title: 'Weekly Submission Due',
-      message: 'Submit your weekly progress by Sunday',
-      time: '1 day ago',
-      read: true
-    }
-  ];
-
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem('auth_token');
@@ -90,7 +62,9 @@ export default function DashboardPage() {
         }
         
         setUser(data.user);
-        setNotifications(mockNotifications);
+        
+        // Fetch real notifications
+        fetchNotifications(token, backendUrl);
       } catch (error) {
         localStorage.removeItem('auth_token');
         router.push('/auth');
@@ -101,6 +75,22 @@ export default function DashboardPage() {
 
     fetchUser();
   }, [router]);
+
+  const fetchNotifications = async (token: string, backendUrl: string) => {
+    try {
+      const response = await fetch(`${backendUrl}/api/notifications?limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setNotifications([]);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
