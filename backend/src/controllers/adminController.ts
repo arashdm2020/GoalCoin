@@ -1348,16 +1348,40 @@ export const adminController = {
           data = await prisma.commission.findMany();
           headers = ['id', 'reviewer_wallet', 'submission_id', 'amount_usdt', 'earned_at', 'payout_id'];
           break;
+        case 'leaderboard':
+        case 'leaderboard-country':
+        case 'leaderboard-sport':
+        case 'leaderboard-fans':
+        case 'leaderboard-players':
+        case 'leaderboard-reviewers':
+          data = await prisma.user.findMany({
+            select: {
+              id: true,
+              wallet: true,
+              handle: true,
+              country_code: true,
+              tier: true,
+              fan_tier: true,
+              goal_points: true,
+              xp_points: true,
+              streak_days: true,
+              burn_multiplier: true,
+            },
+            orderBy: { goal_points: 'desc' },
+          });
+          headers = ['rank', 'wallet', 'handle', 'country_code', 'tier', 'fan_tier', 'goal_points', 'xp_points', 'streak_days', 'burn_multiplier'];
+          break;
         default:
           res.status(400).json({ error: 'Invalid export type' });
           return;
       }
 
       const csv = [headers.join(',')];
-      data.forEach(row => {
+      data.forEach((row, index) => {
         const values = headers.map(header => {
-          if (header === 'wallet') return row.user?.wallet || '';
-          return row[header];
+          if (header === 'wallet') return row.user?.wallet || row.wallet || '';
+          if (header === 'rank') return index + 1; // Add rank for leaderboard
+          return row[header] !== undefined ? row[header] : '';
         });
         csv.push(values.join(','));
       });
