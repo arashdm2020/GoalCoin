@@ -14,23 +14,35 @@ export const notificationController = {
       const limit = parseInt(req.query.limit as string) || 50;
       const unreadOnly = req.query.unread === 'true';
 
+      console.log('[NOTIFICATIONS] Fetching for user:', userId, 'unreadOnly:', unreadOnly, 'limit:', limit);
+
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
       }
 
-      const notifications = await prisma.notification.findMany({
-        where: {
-          user_id: userId,
-          ...(unreadOnly ? { read: false } : {}),
-        },
-        orderBy: { created_at: 'desc' },
-        take: limit,
-      });
+      // Use raw SQL to avoid Prisma schema issues
+      let query = `
+        SELECT id, user_id, type, title, message, read, metadata, created_at
+        FROM notifications
+        WHERE user_id = $1
+      `;
+      const params: any[] = [userId];
+
+      if (unreadOnly) {
+        query += ` AND read = false`;
+      }
+
+      query += ` ORDER BY created_at DESC LIMIT $2`;
+      params.push(limit);
+
+      const notifications = await prisma.$queryRawUnsafe(query, ...params);
+
+      console.log('[NOTIFICATIONS] Found:', (notifications as any[]).length, 'notifications');
 
       res.json({ success: true, notifications });
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('[NOTIFICATIONS] Error fetching notifications:', error);
       res.status(500).json({ error: 'Failed to fetch notifications' });
     }
   },
@@ -48,16 +60,17 @@ export const notificationController = {
         return;
       }
 
-      const count = await prisma.notification.count({
-        where: {
-          user_id: userId,
-          read: false,
-        },
-      });
+      // Use raw SQL to avoid Prisma schema issues
+      const result = await prisma.$queryRawUnsafe(
+        `SELECT COUNT(*)::int as count FROM notifications WHERE user_id = $1 AND read = false`,
+        userId
+      ) as any[];
+
+      const count = result[0]?.count || 0;
 
       res.json({ success: true, count });
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      console.error('[NOTIFICATIONS] Error fetching unread count:', error);
       res.status(500).json({ error: 'Failed to fetch unread count' });
     }
   },
@@ -76,24 +89,21 @@ export const notificationController = {
         return;
       }
 
-      // Verify notification belongs to user
-      const notification = await prisma.notification.findFirst({
-        where: { id, user_id: userId },
-      });
+      // Use raw SQL to avoid Prisma schema issues
+      const result = await prisma.$executeRawUnsafe(
+        `UPDATE notifications SET read = true WHERE id = $1 AND user_id = $2`,
+        id,
+        userId
+      );
 
-      if (!notification) {
+      if (result === 0) {
         res.status(404).json({ error: 'Notification not found' });
         return;
       }
 
-      await prisma.notification.update({
-        where: { id },
-        data: { read: true },
-      });
-
       res.json({ success: true, message: 'Notification marked as read' });
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('[NOTIFICATIONS] Error marking notification as read:', error);
       res.status(500).json({ error: 'Failed to mark notification as read' });
     }
   },
@@ -111,18 +121,16 @@ export const notificationController = {
         return;
       }
 
-      await prisma.notification.updateMany({
-        where: {
-          user_id: userId,
-          read: false,
-        },
-        data: { read: true },
-      });
+      // Use raw SQL to avoid Prisma schema issues
+      await prisma.$executeRawUnsafe(
+        `UPDATE notifications SET read = true WHERE user_id = $1 AND read = false`,
+        userId
+      );
 
       res.json({ success: true, message: 'All notifications marked as read' });
     } catch (error) {
-      console.error('Error marking all as read:', error);
-      res.status(500).json({ error: 'Failed to mark all as read' });
+      console.error('[NOTIFICATIONS] Error marking all notifications as read:', error);
+      res.status(500).json({ error: 'Failed to mark all notifications as read' });
     }
   },
 
@@ -137,17 +145,22 @@ export const notificationController = {
     metadata?: any;
   }): Promise<void> {
     try {
-      await prisma.notification.create({
-        data: {
-          user_id: data.user_id,
-          type: data.type,
-          title: data.title,
-          message: data.message,
-          metadata: data.metadata || {},
-        },
-      });
+      const notificationId = `not_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Use raw SQL to avoid Prisma schema issues
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO notifications (id, user_id, type, title, message, read, metadata, created_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+        notificationId,
+        data.user_id,
+        data.type,
+        data.title,
+        data.message,
+        false,
+        JSON.stringify(data.metadata || {})
+      );
     } catch (error) {
-      console.error('Error creating notification:', error);
+      console.error('[NOTIFICATIONS] Error creating notification:', error);
     }
   },
 };
