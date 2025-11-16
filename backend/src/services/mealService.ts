@@ -98,11 +98,11 @@ export const mealService = {
         },
       });
 
-      // Update user's last activity
-      await prisma.user.update({
-        where: { id: userId },
-        data: { last_activity_date: new Date() },
-      });
+      // Update user's last activity - using unsafe raw query to bypass schema validation
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET last_activity_date = CURRENT_TIMESTAMP WHERE id = $1`,
+        userId
+      );
 
       return {
         success: true,
