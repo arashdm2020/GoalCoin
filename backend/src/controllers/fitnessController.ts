@@ -84,8 +84,35 @@ const logWarmup = async (req: Request, res: Response) => {
   try {
     const { userId, sessionId } = req.body;
 
+    console.log('[WARMUP] Log request:', { userId, sessionId });
+
     if (!userId || !sessionId) {
       return res.status(400).json({ error: 'userId and sessionId are required' });
+    }
+
+    // Check if user already completed warmup today (XP farming prevention)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const existingLog = await prisma.warmupLog.findFirst({
+      where: {
+        user_id: userId,
+        completed_at: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+    });
+
+    if (existingLog) {
+      console.log('[WARMUP] Already completed today:', existingLog.id);
+      return res.status(400).json({ 
+        error: 'Warmup already completed today',
+        message: 'You can only complete one warmup session per day',
+        completed_at: existingLog.completed_at,
+      });
     }
 
     // Create warmup log
@@ -98,6 +125,8 @@ const logWarmup = async (req: Request, res: Response) => {
         xp_earned: XP_REWARDS.WARMUP,
       },
     });
+
+    console.log('[WARMUP] Log created:', log.id);
 
     // Update user XP
     await prisma.user.update({
