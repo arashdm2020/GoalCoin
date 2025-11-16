@@ -163,6 +163,57 @@ export const notificationController = {
       console.error('[NOTIFICATIONS] Error creating notification:', error);
     }
   },
+
+  /**
+   * POST /api/notifications/test-create
+   * Test endpoint to create a notification for debugging
+   */
+  async testCreateNotification(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId || (req as any).user?.id;
+
+      if (!userId) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
+      console.log('[NOTIFICATIONS] Test creating notification for user:', userId);
+
+      const notificationId = `not_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO notifications (id, user_id, type, title, message, read, metadata, created_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+        notificationId,
+        userId,
+        'TEST',
+        '🧪 Test Notification',
+        'This is a test notification to verify the system is working.',
+        false,
+        JSON.stringify({ test: true, timestamp: new Date().toISOString() })
+      );
+
+      console.log('[NOTIFICATIONS] ✅ Test notification created:', notificationId);
+
+      res.json({ 
+        success: true, 
+        message: 'Test notification created',
+        notificationId,
+        userId
+      });
+    } catch (error) {
+      console.error('[NOTIFICATIONS] ❌ Error creating test notification:', error);
+      console.error('[NOTIFICATIONS] Error details:', {
+        message: (error as any).message,
+        code: (error as any).code,
+        detail: (error as any).detail
+      });
+      res.status(500).json({ 
+        error: 'Failed to create test notification',
+        details: (error as any).message
+      });
+    }
+  },
 };
 
 export default notificationController;

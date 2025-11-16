@@ -31,4 +31,10 @@ router.post('/:id/read', notificationController.markAsRead);
  */
 router.post('/read-all', notificationController.markAllAsRead);
 
+/**
+ * POST /api/notifications/test-create
+ * Test endpoint to create a notification for current user
+ */
+router.post('/test-create', notificationController.testCreateNotification);
+
 export default router;
