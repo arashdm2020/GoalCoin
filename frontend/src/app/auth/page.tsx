@@ -58,14 +58,22 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-[#FFD700] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white flex items-center justify-center px-4 py-8">
       <div className="max-w-md w-full">
+        {/* Logo and Branding */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">GoalCoin</h1>
-          <p className="text-gray-400">Coin of the People</p>
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center font-bold text-black text-3xl shadow-2xl">
+              G
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+            GoalCoin
+          </h1>
+          <p className="text-gray-400 text-sm">90-Day Fitness Challenge</p>
         </div>
 
-        <div className="bg-gray-900 rounded-lg border border-[#FFD700]/20 p-8">
+        <div className="bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 p-6 shadow-2xl">
           {/* Tab Switcher */}
           <div className="flex mb-6 bg-gray-800 rounded-lg p-1">
             <button
