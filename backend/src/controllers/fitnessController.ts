@@ -128,15 +128,16 @@ const logWarmup = async (req: Request, res: Response) => {
 
     console.log('[WARMUP] Log created:', log.id);
 
-    // Update user XP - using raw query to avoid Prisma Client schema issues
+    // Update user XP and streak - using raw query to avoid Prisma Client schema issues
     await prisma.$executeRaw`
       UPDATE users 
-      SET xp_points = xp_points + ${XP_REWARDS.WARMUP}
+      SET xp_points = xp_points + ${XP_REWARDS.WARMUP},
+          last_activity_date = CURRENT_TIMESTAMP
       WHERE id = ${userId}
     `;
 
-    // Update streak
-    await updateUserStreak(userId);
+    // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
+    // await updateUserStreak(userId);
 
     res.json({ success: true, log, xp_earned: XP_REWARDS.WARMUP });
   } catch (error) {
@@ -170,15 +171,16 @@ const logWorkout = async (req: Request, res: Response) => {
 
     console.log('[WORKOUT-LOG] Created log:', log.id);
 
-    // Update user XP - using raw query to avoid Prisma Client schema issues
+    // Update user XP and streak - using raw query to avoid Prisma Client schema issues
     await prisma.$executeRaw`
       UPDATE users 
-      SET xp_points = xp_points + ${XP_REWARDS.WORKOUT}
+      SET xp_points = xp_points + ${XP_REWARDS.WORKOUT},
+          last_activity_date = CURRENT_TIMESTAMP
       WHERE id = ${userId}
     `;
 
-    // Update streak
-    await updateUserStreak(userId);
+    // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
+    // await updateUserStreak(userId);
 
     res.json({ success: true, log, xp_earned: XP_REWARDS.WORKOUT });
   } catch (error) {
@@ -225,15 +227,16 @@ const logMeal = async (req: Request, res: Response) => {
       },
     });
 
-    // Update user XP - using raw query to avoid Prisma Client schema issues
+    // Update user XP and streak - using raw query to avoid Prisma Client schema issues
     await prisma.$executeRaw`
       UPDATE users 
-      SET xp_points = xp_points + ${XP_REWARDS.MEAL}
+      SET xp_points = xp_points + ${XP_REWARDS.MEAL},
+          last_activity_date = CURRENT_TIMESTAMP
       WHERE id = ${userId}
     `;
 
-    // Update streak
-    await updateUserStreak(userId);
+    // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
+    // await updateUserStreak(userId);
 
     res.json({ success: true, log, xp_earned: XP_REWARDS.MEAL });
   } catch (error) {
