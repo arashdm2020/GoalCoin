@@ -578,6 +578,12 @@ export const adminController = {
     try {
       console.log('[BULK-STATUS] Updating submissions:', submissionIds);
       
+      // Get submissions with user info before updating
+      const submissions = await prisma.submission.findMany({
+        where: { id: { in: submissionIds } },
+        select: { id: true, user_id: true, week_no: true },
+      });
+      
       const result = await prisma.submission.updateMany({
         where: {
           id: { in: submissionIds },
@@ -589,6 +595,32 @@ export const adminController = {
       });
 
       console.log('[BULK-STATUS] Updated count:', result.count);
+
+      // Create notifications for each user (using raw SQL to avoid Prisma schema issues)
+      for (const submission of submissions) {
+        try {
+          const notificationId = `not_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const title = status === 'APPROVED' ? '✅ Submission Approved!' : '❌ Submission Rejected';
+          const message = status === 'APPROVED' 
+            ? `Your Week ${submission.week_no} submission has been approved!`
+            : `Your Week ${submission.week_no} submission was rejected. Please review and resubmit.`;
+          
+          await prisma.$executeRawUnsafe(
+            `INSERT INTO notifications (id, user_id, type, title, message, read, metadata, created_at) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+            notificationId,
+            submission.user_id,
+            `SUBMISSION_${status}`,
+            title,
+            message,
+            false,
+            JSON.stringify({ submission_id: submission.id, week_no: submission.week_no })
+          );
+        } catch (notifError) {
+          console.error('[BULK-STATUS] Failed to create notification:', notifError);
+          // Continue anyway
+        }
+      }
 
       // Try to create admin log, but don't fail if it errors
       try {
