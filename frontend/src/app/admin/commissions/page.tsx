@@ -367,24 +367,24 @@ export default function CommissionsPage() {
                   data.map((log: any) => (
                     <tr key={log.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                       <td className="p-2 text-sm">
-                        {new Date(log.created_at).toLocaleString()}
+                        {log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A'}
                       </td>
                       <td className="p-2 text-sm font-semibold text-blue-400">
-                        {log.admin_user}
+                        {log.admin_user || 'Unknown'}
                       </td>
                       <td className="p-2">
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          log.action.includes('APPROVE') ? 'bg-green-600' :
-                          log.action.includes('REJECT') ? 'bg-red-600' :
-                          log.action.includes('BULK') ? 'bg-purple-600' :
-                          log.action.includes('ASSIGN') ? 'bg-blue-600' :
+                          log.action?.includes('APPROVE') ? 'bg-green-600' :
+                          log.action?.includes('REJECT') ? 'bg-red-600' :
+                          log.action?.includes('BULK') ? 'bg-purple-600' :
+                          log.action?.includes('ASSIGN') ? 'bg-blue-600' :
                           'bg-gray-600'
                         }`}>
-                          {log.action}
+                          {log.action || 'N/A'}
                         </span>
                       </td>
                       <td className="p-2 text-sm font-mono text-gray-400">
-                        {log.target_id}
+                        {log.target_id || 'N/A'}
                       </td>
                       <td className="p-2 text-sm text-gray-300">
                         {log.reason || 'N/A'}
