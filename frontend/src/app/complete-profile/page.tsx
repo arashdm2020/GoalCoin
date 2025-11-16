@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '../../hooks/useToastNotification';
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -14,7 +13,7 @@ export default function CompleteProfilePage() {
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  const { toast, showToast, hideToast } = useToast();
+  const { showSuccess, showError, ToastComponent } = useToast();
   // Form data
   const [handle, setHandle] = useState('');
   const [countryCode, setCountryCode] = useState('');
@@ -121,7 +120,7 @@ export default function CompleteProfilePage() {
         setError('');
         
         // Show success message with network info
-        showToast('✅ Wallet connected to Polygon Network! You can now use USDT on Polygon for payments.', 'success');
+        showSuccess('Wallet connected to Polygon Network! You can now use USDT on Polygon for payments.');
       }
     } catch (err: any) {
       console.error('Wallet connection error:', err);
@@ -391,13 +390,7 @@ export default function CompleteProfilePage() {
           </button>
         </div>
       </div>
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
+      {ToastComponent}
     </div>
   );
 }
