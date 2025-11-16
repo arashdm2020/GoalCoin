@@ -122,9 +122,21 @@ export const authController = {
         return;
       }
 
-      // Find user by email
+      // Find user by email with explicit select
       const user = await prisma.user.findUnique({
         where: { email },
+        select: {
+          id: true,
+          email: true,
+          password_hash: true,
+          wallet: true,
+          handle: true,
+          tier: true,
+          xp_points: true,
+          goal_points: true,
+          current_streak: true,
+          country_code: true,
+        },
       });
 
       if (!user || !user.password_hash) {
@@ -172,31 +184,52 @@ export const authController = {
    */
   async login(req: Request, res: Response): Promise<void> {
     try {
+      console.log('[LOGIN] Starting login attempt for:', req.body.email);
       const { email, password } = req.body;
 
       if (!email || !password) {
+        console.log('[LOGIN] Missing email or password');
         res.status(400).json({ error: 'Email and password are required' });
         return;
       }
 
-      // Find user
+      // Find user with explicit select to avoid fan_tier ENUM issues
+      console.log('[LOGIN] Querying database for user:', email);
       const user = await prisma.user.findUnique({
         where: { email },
+        select: {
+          id: true,
+          email: true,
+          password_hash: true,
+          wallet: true,
+          handle: true,
+          tier: true,
+          xp_points: true,
+          goal_points: true,
+          current_streak: true,
+          longest_streak: true,
+          country_code: true,
+          email_verified: true,
+        },
       });
 
       if (!user || !user.password_hash) {
+        console.log('[LOGIN] User not found or no password hash');
         res.status(401).json({ error: 'Invalid credentials' });
         return;
       }
 
+      console.log('[LOGIN] User found, verifying password');
       // Verify password
       const isValid = await bcrypt.compare(password, user.password_hash);
 
       if (!isValid) {
+        console.log('[LOGIN] Invalid password');
         res.status(401).json({ error: 'Invalid credentials' });
         return;
       }
 
+      console.log('[LOGIN] Password valid, generating JWT');
       // Generate JWT
       const token = jwt.sign(
         { userId: user.id, email: user.email },
@@ -204,6 +237,7 @@ export const authController = {
         { expiresIn: '7d' }
       );
 
+      console.log('[LOGIN] Login successful for user:', user.id);
       res.status(200).json({
         success: true,
         token,
@@ -215,10 +249,13 @@ export const authController = {
           tier: user.tier,
           xp_points: user.xp_points,
           current_streak: user.current_streak,
+          country_code: user.country_code,
+          email_verified: user.email_verified,
         },
       });
     } catch (error) {
-      console.error('Error in login:', error);
+      console.error('[LOGIN] Error in login:', error);
+      console.error('[LOGIN] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       res.status(500).json({ error: 'Internal server error' });
     }
   },
