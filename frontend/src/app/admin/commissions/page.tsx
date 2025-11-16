@@ -351,20 +351,28 @@ export default function CommissionsPage() {
                   data.map(item => (
                     <tr key={item.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                       <td className="p-2 text-sm font-mono">
-                        <a href={`https://etherscan.io/address/${item.reviewer_wallet}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">
-                          {item.reviewer_wallet.substring(0, 6)}...{item.reviewer_wallet.substring(item.reviewer_wallet.length - 4)}
-                        </a>
+                        {item.reviewer_wallet ? (
+                          <a href={`https://etherscan.io/address/${item.reviewer_wallet}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">
+                            {item.reviewer_wallet.substring(0, 6)}...{item.reviewer_wallet.substring(item.reviewer_wallet.length - 4)}
+                          </a>
+                        ) : 'N/A'}
                       </td>
-                      <td className="p-2 text-sm font-mono">{item.submission_id.substring(0, 10)}...</td>
-                      <td className="p-2 text-sm font-bold text-green-400">${item.amount_usdt.toFixed(2)}</td>
-                      <td className="p-2 text-sm">{new Date(item.earned_at).toLocaleDateString()}</td>
+                      <td className="p-2 text-sm font-mono">
+                        {item.submission_id ? `${item.submission_id.substring(0, 10)}...` : 'N/A'}
+                      </td>
+                      <td className="p-2 text-sm font-bold text-green-400">
+                        ${item.amount_usdt ? item.amount_usdt.toFixed(2) : '0.00'}
+                      </td>
+                      <td className="p-2 text-sm">
+                        {item.earned_at ? new Date(item.earned_at).toLocaleDateString() : 'N/A'}
+                      </td>
                       <td className="p-2">
                         <span className={`px-2 py-1 rounded-full text-xs ${item.payout_id ? 'bg-green-600' : 'bg-yellow-600'}`}>
                           {item.payout_id ? 'PAID' : 'PENDING'}
                         </span>
                       </td>
                       <td className="p-2">
-                        {!item.payout_id && (
+                        {!item.payout_id && item.reviewer_wallet && (
                           <button
                             onClick={() => handleMarkAsPaid(item.id, item.reviewer_wallet)}
                             className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white whitespace-nowrap"
