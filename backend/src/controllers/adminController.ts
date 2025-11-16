@@ -1361,7 +1361,6 @@ export const adminController = {
               handle: true,
               country_code: true,
               tier: true,
-              fan_tier: true,
               goal_points: true,
               xp_points: true,
               current_streak: true,
@@ -1369,7 +1368,7 @@ export const adminController = {
             },
             orderBy: { goal_points: 'desc' },
           });
-          headers = ['rank', 'wallet', 'handle', 'country_code', 'tier', 'fan_tier', 'goal_points', 'xp_points', 'current_streak', 'burn_multiplier'];
+          headers = ['rank', 'wallet', 'handle', 'country_code', 'tier', 'goal_points', 'xp_points', 'current_streak', 'burn_multiplier'];
           break;
         default:
           res.status(400).json({ error: 'Invalid export type' });
@@ -1403,7 +1402,28 @@ export const adminController = {
 
       const user = await prisma.user.findUnique({
         where: { id },
-        include: {
+        select: {
+          id: true,
+          wallet: true,
+          email: true,
+          email_verified: true,
+          handle: true,
+          country_code: true,
+          tier: true,
+          founder_nft: true,
+          xp_points: true,
+          goal_points: true,
+          current_streak: true,
+          longest_streak: true,
+          last_activity_date: true,
+          burn_multiplier: true,
+          is_holder: true,
+          micro_goal_points: true,
+          grace_days_remaining: true,
+          grace_days_used_this_month: true,
+          streak_freeze_tokens: true,
+          streak_frozen_until: true,
+          created_at: true,
           submissions: {
             select: {
               id: true,
