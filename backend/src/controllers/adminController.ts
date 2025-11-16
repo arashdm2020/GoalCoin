@@ -870,7 +870,16 @@ export const adminController = {
       const where: any = {};
 
       if (status && status !== 'All') {
-        where.status = status;
+        // Convert frontend status format to Prisma enum format
+        const statusMap: Record<string, string> = {
+          'Approved': 'APPROVED',
+          'Rejected': 'REJECTED',
+          'Pending': 'PENDING',
+          'APPROVED': 'APPROVED',
+          'REJECTED': 'REJECTED',
+          'PENDING': 'PENDING'
+        };
+        where.status = statusMap[status as string] || status;
       }
       if (country && country !== 'All') {
         where.user = { country_code: country as string };
