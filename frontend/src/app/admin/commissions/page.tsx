@@ -55,8 +55,15 @@ export default function CommissionsPage() {
                          filters.status === 'PENDING' ? 'unpaid' : 
                          filters.status === 'PAID' ? 'paid' : '';
       url = `/api/admin/commissions?status=${statusParam}&date=${filters.date}&page=${currentPage}&limit=${itemsPerPage}`;
+    } else if (activeTab === 'System Logs') {
+      url = `/api/admin/settings/security-logs`;
+    } else if (activeTab === 'Fan Rewards') {
+      // Placeholder for Fan Rewards - will be implemented later
+      setData([]);
+      setSummary({ total: '0.00', pending: 0, this_week: '0.00' });
+      setTotalItems(0);
+      return;
     } else {
-      // Placeholder for other tabs
       setData([]);
       setSummary({ total: '0.00', pending: 0, this_week: '0.00' });
       setTotalItems(0);
@@ -331,6 +338,79 @@ export default function CommissionsPage() {
                 totalItems={totalItems}
               />
             )}
+          </div>
+        );
+      case 'System Logs':
+        return (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[700px]">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="p-2 text-sm">Timestamp</th>
+                  <th className="p-2 text-sm">Admin User</th>
+                  <th className="p-2 text-sm">Action</th>
+                  <th className="p-2 text-sm">Target ID</th>
+                  <th className="p-2 text-sm">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-gray-500">
+                      <div className="flex flex-col items-center space-y-2">
+                        <p className="text-lg">No system logs found</p>
+                        <p className="text-sm">Admin actions will appear here</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  data.map((log: any) => (
+                    <tr key={log.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                      <td className="p-2 text-sm">
+                        {new Date(log.created_at).toLocaleString()}
+                      </td>
+                      <td className="p-2 text-sm font-semibold text-blue-400">
+                        {log.admin_user}
+                      </td>
+                      <td className="p-2">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          log.action.includes('APPROVE') ? 'bg-green-600' :
+                          log.action.includes('REJECT') ? 'bg-red-600' :
+                          log.action.includes('BULK') ? 'bg-purple-600' :
+                          log.action.includes('ASSIGN') ? 'bg-blue-600' :
+                          'bg-gray-600'
+                        }`}>
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="p-2 text-sm font-mono text-gray-400">
+                        {log.target_id}
+                      </td>
+                      <td className="p-2 text-sm text-gray-300">
+                        {log.reason || 'N/A'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+      case 'Fan Rewards':
+        return (
+          <div className="text-center py-16">
+            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 max-w-md mx-auto">
+              <svg className="w-16 h-16 mx-auto mb-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-xl font-bold text-white mb-2">Fan Rewards Coming Soon</h3>
+              <p className="text-gray-400 mb-4">This feature will track and manage rewards for fan tier users</p>
+              <div className="text-sm text-gray-500">
+                <p>• Track fan engagement rewards</p>
+                <p>• Manage bonus distributions</p>
+                <p>• View reward history</p>
+              </div>
+            </div>
           </div>
         );
       default:
