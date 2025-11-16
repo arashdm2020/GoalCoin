@@ -1343,7 +1343,20 @@ export const adminController = {
         return newPayout;
       });
 
-      // TODO: Add audit logging when audit table is ready
+      // Create admin log
+      try {
+        await prisma.adminLog.create({
+          data: {
+            admin_user: 'admin',
+            action: 'MARK_COMMISSIONS_PAID',
+            target_id: `Payout ${payout.id}`,
+            reason: `Marked ${commission_ids.length} commission(s) as paid. Total: $${totalAmount.toFixed(2)}. TX: ${tx_hash}`,
+          },
+        });
+      } catch (logError) {
+        console.error('Failed to create admin log:', logError);
+      }
+
       console.log('Commissions marked as paid:', { payoutId: payout.id, commissionIds: commission_ids, amount: totalAmount });
 
       res.status(200).json({ 
