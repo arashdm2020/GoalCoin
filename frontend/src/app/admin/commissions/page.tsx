@@ -127,6 +127,46 @@ export default function CommissionsPage() {
     setCurrentPage(1);
   };
 
+  const handleMarkAsPaid = async (commissionId: string, reviewerWallet: string) => {
+    if (!confirm('Are you sure you want to mark this commission as paid?')) {
+      return;
+    }
+
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) {
+        alert('Authentication required');
+        return;
+      }
+
+      const txHash = prompt('Enter transaction hash (optional):') || 'manual-payment';
+
+      const response = await fetch(`${getBackendUrl()}/api/admin/commissions/mark-paid`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': authHeader 
+        },
+        body: JSON.stringify({
+          commission_ids: [commissionId],
+          reviewer_wallet: reviewerWallet,
+          tx_hash: txHash,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('✅ Commission marked as paid successfully!');
+        fetchData(); // Refresh the list
+      } else {
+        alert('❌ Failed to mark commission as paid: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error marking commission as paid:', error);
+      alert('❌ Failed to mark commission as paid. Please try again.');
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'Reviewer Payouts':
@@ -140,12 +180,13 @@ export default function CommissionsPage() {
                   <th className="p-2 text-sm">Amount (USDT)</th>
                   <th className="p-2 text-sm">Earned At</th>
                   <th className="p-2 text-sm">Status</th>
+                  <th className="p-2 text-sm">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {data.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">
+                    <td colSpan={6} className="p-8 text-center text-gray-500">
                       <div className="flex flex-col items-center space-y-2">
                         <p className="text-lg">No commissions found</p>
                         <p className="text-sm">No commissions match your current filters</p>
@@ -167,6 +208,16 @@ export default function CommissionsPage() {
                         <span className={`px-2 py-1 rounded-full text-xs ${item.payout_id ? 'bg-green-600' : 'bg-yellow-600'}`}>
                           {item.payout_id ? 'PAID' : 'PENDING'}
                         </span>
+                      </td>
+                      <td className="p-2">
+                        {!item.payout_id && (
+                          <button
+                            onClick={() => handleMarkAsPaid(item.id, item.reviewer_wallet)}
+                            className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white whitespace-nowrap"
+                          >
+                            Mark as Paid
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
