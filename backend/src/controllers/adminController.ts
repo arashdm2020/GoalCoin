@@ -597,6 +597,7 @@ export const adminController = {
       console.log('[BULK-STATUS] Updated count:', result.count);
 
       // Create notifications for each user (using raw SQL to avoid Prisma schema issues)
+      console.log('[BULK-STATUS] Creating notifications for', submissions.length, 'submissions');
       for (const submission of submissions) {
         try {
           const notificationId = `not_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -604,6 +605,8 @@ export const adminController = {
           const message = status === 'APPROVED' 
             ? `Your Week ${submission.week_no} submission has been approved!`
             : `Your Week ${submission.week_no} submission was rejected. Please review and resubmit.`;
+          
+          console.log('[BULK-STATUS] Creating notification for user:', submission.user_id, 'submission:', submission.id);
           
           await prisma.$executeRawUnsafe(
             `INSERT INTO notifications (id, user_id, type, title, message, read, metadata, created_at) 
@@ -616,8 +619,15 @@ export const adminController = {
             false,
             JSON.stringify({ submission_id: submission.id, week_no: submission.week_no })
           );
+          
+          console.log('[BULK-STATUS] ✅ Notification created successfully:', notificationId);
         } catch (notifError) {
-          console.error('[BULK-STATUS] Failed to create notification:', notifError);
+          console.error('[BULK-STATUS] ❌ Failed to create notification:', notifError);
+          console.error('[BULK-STATUS] Error details:', {
+            message: (notifError as any).message,
+            code: (notifError as any).code,
+            detail: (notifError as any).detail
+          });
           // Continue anyway
         }
       }
