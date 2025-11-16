@@ -6,6 +6,7 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
+// Schema updated with fan_tier field
 import { webhooksRoutes } from './routes/webhooksRoutes';
 import { paymentRoutes } from './routes/paymentRoutes';
 import { adminRoutes } from './routes/adminRoutes';
