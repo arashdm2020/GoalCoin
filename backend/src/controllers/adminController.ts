@@ -610,7 +610,7 @@ export const adminController = {
           
           await prisma.$executeRawUnsafe(
             `INSERT INTO notifications (id, user_id, type, title, message, read, metadata, created_at) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, CURRENT_TIMESTAMP)`,
             notificationId,
             submission.user_id,
             `SUBMISSION_${status}`,

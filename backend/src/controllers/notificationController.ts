@@ -150,7 +150,7 @@ export const notificationController = {
       // Use raw SQL to avoid Prisma schema issues
       await prisma.$executeRawUnsafe(
         `INSERT INTO notifications (id, user_id, type, title, message, read, metadata, created_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, CURRENT_TIMESTAMP)`,
         notificationId,
         data.user_id,
         data.type,
@@ -183,7 +183,7 @@ export const notificationController = {
       
       await prisma.$executeRawUnsafe(
         `INSERT INTO notifications (id, user_id, type, title, message, read, metadata, created_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, CURRENT_TIMESTAMP)`,
         notificationId,
         userId,
         'TEST',
