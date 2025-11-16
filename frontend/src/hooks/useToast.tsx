@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, ReactElement } from 'react';
 import Toast, { ToastType } from '../components/Toast';
 
 interface ToastState {
@@ -55,5 +55,5 @@ export function useToast() {
     showWarning,
     showInfo,
     ToastComponent,
-  };
+  } as const;
 }
