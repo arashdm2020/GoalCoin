@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '../../../hooks/useToastNotification';
 
 interface WarmupSession {
   id: string;
@@ -18,6 +19,7 @@ export default function WarmupPage() {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const router = useRouter();
+  const { showSuccess, showError, ToastComponent } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -66,12 +68,12 @@ export default function WarmupPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`🎉 Warmup completed! +${data.xp_earned} XP earned!`);
+        showSuccess(`🎉 Warmup completed! +${data.xp_earned} XP earned!`);
         router.push('/dashboard');
       }
     } catch (error) {
       console.error('Error logging warmup:', error);
-      alert('Failed to log warmup');
+      showError('Failed to log warmup');
     } finally {
       setCompleting(false);
     }
@@ -156,6 +158,7 @@ export default function WarmupPage() {
           </div>
         )}
       </main>
+      {ToastComponent}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '../../../hooks/useToastNotification';
 
 interface DietPlan {
   id: string;
@@ -17,6 +18,7 @@ export default function DietPage() {
   const [loading, setLoading] = useState(true);
   const [logging, setLogging] = useState(false);
   const router = useRouter();
+  const { showSuccess, showError, ToastComponent } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -69,12 +71,12 @@ export default function DietPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`🥗 Meal logged! +${data.xp_earned} XP earned!`);
+        showSuccess(`🥗 Meal logged! +${data.xp_earned} XP earned!`);
         router.push('/dashboard');
       }
     } catch (error) {
       console.error('Error logging meal:', error);
-      alert('Failed to log meal');
+      showError('Failed to log meal');
     } finally {
       setLogging(false);
     }
@@ -163,6 +165,7 @@ export default function DietPage() {
           </div>
         )}
       </main>
+      {ToastComponent}
     </div>
   );
 }

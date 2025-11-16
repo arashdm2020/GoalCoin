@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '../../hooks/useToastNotification';
 import { ConnectWalletButton } from '@/components/ConnectWalletButton';
 
 const TIERS = [
@@ -32,6 +33,7 @@ export default function CheckoutPage() {
   const [user, setUser] = useState<any>(null);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const router = useRouter();
+  const { showError, ToastComponent } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -100,7 +102,7 @@ export default function CheckoutPage() {
         window.location.href = data.checkout_url;
       }
     } catch (error: any) {
-      alert(error.message);
+      showError(error.message || 'Failed to create checkout session');
       setLoading(false);
       setSelectedTier(null);
     }
@@ -272,6 +274,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
+      {ToastComponent}
     </div>
   );
 }
