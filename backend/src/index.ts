@@ -41,6 +41,7 @@ import { emailTestRoutes } from './routes/emailTestRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import setupRoutes from './routes/setupRoutes';
 import fixUrlsRoutes from './routes/fixUrls';
+import notificationRoutes from './routes/notificationRoutes';
 import { apiLimiter, authLimiter, xpLimiter, adminLimiter } from './middleware/rateLimiter';
 import cron from 'node-cron';
 import { CronService } from './services/cronService';
@@ -255,6 +256,7 @@ app.use('/api/rate-limits', adminLimiter, rateLimitRoutes);
 app.use('/api/email-test', adminLimiter, emailTestRoutes);
 app.use('/api/migration', adminLimiter, migrationRoutes);
 app.use('/api/fix', adminLimiter, fixUrlsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
