@@ -13,16 +13,12 @@ export const shopifyController = {
    */
   async redeemOrderCode(req: Request, res: Response): Promise<void> {
     try {
-      const { orderCode, wallet } = req.body;
+      const { orderCode, user_id } = req.body;
 
-      if (!orderCode || !wallet) {
-        res.status(400).json({ error: 'Order code and wallet address are required' });
-        return;
-      }
+      console.log('[SHOPIFY] Redeem request:', { orderCode, user_id });
 
-      // Validate wallet format
-      if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
-        res.status(400).json({ error: 'Invalid wallet address' });
+      if (!orderCode || !user_id) {
+        res.status(400).json({ error: 'Order code and user_id are required' });
         return;
       }
 
@@ -32,31 +28,38 @@ export const shopifyController = {
       });
 
       if (existingRedemption) {
+        console.log('[SHOPIFY] Order code already redeemed:', orderCode);
         res.status(400).json({ error: 'Order code already redeemed' });
         return;
       }
 
+      // Find user
+      const user = await prisma.user.findUnique({
+        where: { id: user_id },
+        select: {
+          id: true,
+          email: true,
+          wallet: true,
+          handle: true,
+          tier: true,
+        },
+      });
+
+      if (!user) {
+        console.log('[SHOPIFY] User not found:', user_id);
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      console.log('[SHOPIFY] User found:', user.id);
+
       // TODO: Verify order code with Shopify API
       // For MVP, we'll accept any format and mark as redeemed
 
-      // Find or create user
-      const user = await prisma.user.upsert({
-        where: { wallet: wallet.toLowerCase() },
-        update: {
-          last_activity_date: new Date(),
-        },
-        create: {
-          wallet: wallet.toLowerCase(),
-          tier: 'FAN', // Default tier, can be upgraded based on order
-          xp_points: 0,
-          goal_points: 0,
-          current_streak: 0,
-          longest_streak: 0,
-          burn_multiplier: 1.0,
-          is_holder: false,
-          micro_goal_points: 0,
-          last_activity_date: new Date(),
-        },
+      // Update user's last activity
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { last_activity_date: new Date() },
       });
 
       // Create redemption record
