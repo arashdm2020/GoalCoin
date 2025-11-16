@@ -20,11 +20,12 @@ interface User {
 
 interface Notification {
   id: string;
-  type: 'achievement' | 'reminder' | 'system';
+  type: string;
   title: string;
   message: string;
-  time: string;
   read: boolean;
+  metadata?: any;
+  created_at: string;
 }
 
 export default function DashboardPage() {
@@ -78,16 +79,23 @@ export default function DashboardPage() {
 
   const fetchNotifications = async (token: string, backendUrl: string) => {
     try {
+      console.log('[DASHBOARD] Fetching notifications from:', `${backendUrl}/api/notifications?limit=10`);
       const response = await fetch(`${backendUrl}/api/notifications?limit=10`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      console.log('[DASHBOARD] Notifications response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('[DASHBOARD] Notifications data:', data);
+        console.log('[DASHBOARD] Notifications count:', data.notifications?.length || 0);
         setNotifications(data.notifications || []);
+      } else {
+        console.error('[DASHBOARD] Failed to fetch notifications:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('[DASHBOARD] Error fetching notifications:', error);
       setNotifications([]);
     }
   };
@@ -200,7 +208,9 @@ export default function DashboardPage() {
                                 <div className="flex-1 min-w-0">
                                   <h4 className="font-medium text-sm text-white truncate">{notification.title}</h4>
                                   <p className="text-gray-400 text-xs mt-1 line-clamp-2">{notification.message}</p>
-                                  <span className="text-gray-500 text-xs mt-1 inline-block">{notification.time}</span>
+                                  <span className="text-gray-500 text-xs mt-1 inline-block">
+                                    {notification.created_at ? new Date(notification.created_at).toLocaleString() : 'Just now'}
+                                  </span>
                                 </div>
                                 {!notification.read && (
                                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 flex-shrink-0"></div>
