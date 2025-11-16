@@ -36,15 +36,17 @@ export default function MealsPage() {
   const [stats, setStats] = useState<MealStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [logging, setLogging] = useState<string | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState<string>('auto');
+  const [selectedRegion, setSelectedRegion] = useState<string>('global');
   const { showSuccess, showError, ToastComponent } = useToast();
 
   const regions = [
-    { value: 'auto', label: 'Auto (Based on location)' },
+    { value: 'global', label: 'Global (Default)' },
     { value: 'middle_east', label: 'Middle East' },
     { value: 'north_america', label: 'North America' },
     { value: 'europe', label: 'Europe' },
     { value: 'asia', label: 'Asia' },
+    { value: 'africa', label: 'Africa' },
+    { value: 'south_america', label: 'South America' },
   ];
 
   useEffect(() => {

@@ -111,14 +111,17 @@ export default function UserStatsPage() {
         user.wallet === profileData.user.wallet || user.handle === profileData.user.handle
       ) + 1 || 0;
 
+      // Determine tier based on XP if fan_tier is not set
+      const userTier = profileData.user.fan_tier || determineTierFromXP(profileData.user.xp_points || 0);
+      
       const realStats: UserStats = {
         user: profileData.user,
         tier_progress: {
-          currentTier: profileData.user.fan_tier || 'MINTED',
-          nextTier: getNextTier(profileData.user.fan_tier),
+          currentTier: userTier,
+          nextTier: getNextTier(userTier),
           xpPoints: profileData.user.xp_points || 0,
-          progress: calculateProgress(profileData.user.xp_points, profileData.user.fan_tier),
-          xpNeeded: calculateXPNeeded(profileData.user.xp_points, profileData.user.fan_tier),
+          progress: calculateProgress(profileData.user.xp_points || 0, userTier),
+          xpNeeded: calculateXPNeeded(profileData.user.xp_points || 0, userTier),
         },
         rankings: {
           global_rank: globalRank || 999,
@@ -139,6 +142,14 @@ export default function UserStatsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const determineTierFromXP = (xp: number): string => {
+    if (xp >= 50000) return 'APEX';
+    if (xp >= 15000) return 'ASCENDANT';
+    if (xp >= 5000) return 'VERIFIED';
+    if (xp >= 1000) return 'STAKED';
+    return 'MINTED';
   };
 
   const getNextTier = (currentTier: string): string | null => {
