@@ -143,6 +143,39 @@ export default function CommissionsPage() {
     setCurrentPage(1);
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) {
+        alert('❌ Not authenticated');
+        return;
+      }
+
+      const response = await fetch(`${getBackendUrl()}/api/admin/export-csv?type=commissions`, {
+        headers: { 'Authorization': authHeader }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export CSV');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `commissions-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      alert('✅ CSV exported successfully!');
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      alert('❌ Failed to export CSV. Please try again.');
+    }
+  };
+
   const handleMarkAsPaid = async (commissionId: string, reviewerWallet: string) => {
     if (!confirm('Are you sure you want to mark this commission as paid?')) {
       return;
@@ -315,7 +348,7 @@ export default function CommissionsPage() {
         {/* Action Buttons Row */}
         <div className="flex flex-col sm:flex-row gap-2">
           <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-green-600 rounded-lg text-sm whitespace-nowrap hover:bg-green-700">Add Manual</button>
-          <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm whitespace-nowrap hover:bg-blue-700">Export CSV</button>
+          <button onClick={handleExportCSV} className="px-4 py-2 bg-blue-600 rounded-lg text-sm whitespace-nowrap hover:bg-blue-700">Export CSV</button>
         </div>
       </div>
 
