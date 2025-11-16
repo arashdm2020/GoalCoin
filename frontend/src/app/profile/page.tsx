@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '../../hooks/useToastNotification';
 
 interface User {
   id: string;
@@ -30,7 +29,7 @@ export default function ProfilePage() {
     country_code: ''
   });
   const router = useRouter();
-  const { toast, showToast, hideToast } = useToast();
+  const { showSuccess, showError, ToastComponent } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -86,12 +85,12 @@ export default function ProfilePage() {
         const data = await response.json();
         setUser(data.user);
         setEditing(false);
-        showToast('Profile updated successfully!', 'success');
+        showSuccess('Profile updated successfully!');
       } else {
-        showToast('Failed to update profile', 'error');
+        showError('Failed to update profile');
       }
     } catch (error) {
-      showToast('Error updating profile', 'error');
+      showError('Error updating profile');
     }
   };
 
@@ -330,13 +329,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
+      {ToastComponent}
     </div>
   );
 }

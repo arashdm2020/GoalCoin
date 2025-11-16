@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useSignMessage } from 'wagmi';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '../../hooks/useToastNotification';
 
 export default function LinkWalletPage() {
   const [loading, setLoading] = useState(false);
@@ -13,7 +12,7 @@ export default function LinkWalletPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { signMessage } = useSignMessage();
-  const { toast, showToast, hideToast } = useToast();
+  const { showSuccess, showError, ToastComponent } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -38,7 +37,7 @@ export default function LinkWalletPage() {
 
   const handleSignAndLinkWallet = async () => {
     if (!isConnected || !address) {
-      showToast('Please connect your wallet first', 'warning');
+      showError('Please connect your wallet first');
       return;
     }
 
@@ -100,7 +99,7 @@ export default function LinkWalletPage() {
         const updatedUser = { ...user, wallet: address };
         localStorage.setItem('user', JSON.stringify(updatedUser));
 
-        showToast('✅ Wallet connected and verified successfully!', 'success');
+        showSuccess('Wallet connected and verified successfully!');
         setTimeout(() => router.push('/dashboard'), 1500);
       } else {
         throw new Error(data.error);
@@ -108,9 +107,9 @@ export default function LinkWalletPage() {
     } catch (error: any) {
       setSigned(false);
       if (error.message.includes('User rejected')) {
-        showToast('Wallet signature is required to link your wallet', 'warning');
+        showError('Wallet signature is required to link your wallet');
       } else {
-        showToast(error.message || 'Failed to link wallet', 'error');
+        showError(error.message || 'Failed to link wallet');
       }
     } finally {
       setLoading(false);
@@ -208,13 +207,7 @@ export default function LinkWalletPage() {
           </ul>
         </div>
       </div>
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
+      {ToastComponent}
     </div>
   );
 }

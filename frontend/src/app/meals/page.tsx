@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '@/components/Toast';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '../../hooks/useToastNotification';
 
 interface Meal {
   id: string;
@@ -38,7 +37,7 @@ export default function MealsPage() {
   const [loading, setLoading] = useState(true);
   const [logging, setLogging] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string>('auto');
-  const { toast, showToast, hideToast } = useToast();
+  const { showSuccess, showError, ToastComponent } = useToast();
 
   const regions = [
     { value: 'auto', label: 'Auto (Based on location)' },
@@ -114,14 +113,14 @@ export default function MealsPage() {
       const data = await res.json();
       
       if (res.ok) {
-        showToast(`✅ Meal logged! +${data.xp_awarded || data.xp_earned} XP`, 'success');
+        showSuccess(`Meal logged! +${data.xp_awarded || data.xp_earned} XP`);
         fetchMealData(); // Refresh stats
       } else {
-        showToast(data.error || 'Failed to log meal', 'error');
+        showError(data.error || 'Failed to log meal');
       }
     } catch (error) {
       console.error('Error logging meal:', error);
-      showToast('Failed to log meal', 'error');
+      showError('Failed to log meal');
     } finally {
       setLogging(null);
     }
@@ -223,13 +222,7 @@ export default function MealsPage() {
           </div>
         )}
       </div>
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-      )}
+      {ToastComponent}
     </div>
   );
 }
