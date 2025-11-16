@@ -128,13 +128,12 @@ const logWarmup = async (req: Request, res: Response) => {
 
     console.log('[WARMUP] Log created:', log.id);
 
-    // Update user XP and streak - using raw query to avoid Prisma Client schema issues
-    await prisma.$executeRaw`
-      UPDATE users 
-      SET xp_points = xp_points + ${XP_REWARDS.WARMUP},
-          last_activity_date = CURRENT_TIMESTAMP
-      WHERE id = ${userId}
-    `;
+    // Update user XP and streak - using unsafe raw query to completely bypass Prisma validation
+    await prisma.$executeRawUnsafe(
+      `UPDATE users SET xp_points = xp_points + $1, last_activity_date = CURRENT_TIMESTAMP WHERE id = $2`,
+      XP_REWARDS.WARMUP,
+      userId
+    );
 
     // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
     // await updateUserStreak(userId);
@@ -171,13 +170,12 @@ const logWorkout = async (req: Request, res: Response) => {
 
     console.log('[WORKOUT-LOG] Created log:', log.id);
 
-    // Update user XP and streak - using raw query to avoid Prisma Client schema issues
-    await prisma.$executeRaw`
-      UPDATE users 
-      SET xp_points = xp_points + ${XP_REWARDS.WORKOUT},
-          last_activity_date = CURRENT_TIMESTAMP
-      WHERE id = ${userId}
-    `;
+    // Update user XP and streak - using unsafe raw query to completely bypass Prisma validation
+    await prisma.$executeRawUnsafe(
+      `UPDATE users SET xp_points = xp_points + $1, last_activity_date = CURRENT_TIMESTAMP WHERE id = $2`,
+      XP_REWARDS.WORKOUT,
+      userId
+    );
 
     // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
     // await updateUserStreak(userId);
@@ -227,13 +225,12 @@ const logMeal = async (req: Request, res: Response) => {
       },
     });
 
-    // Update user XP and streak - using raw query to avoid Prisma Client schema issues
-    await prisma.$executeRaw`
-      UPDATE users 
-      SET xp_points = xp_points + ${XP_REWARDS.MEAL},
-          last_activity_date = CURRENT_TIMESTAMP
-      WHERE id = ${userId}
-    `;
+    // Update user XP and streak - using unsafe raw query to completely bypass Prisma validation
+    await prisma.$executeRawUnsafe(
+      `UPDATE users SET xp_points = xp_points + $1, last_activity_date = CURRENT_TIMESTAMP WHERE id = $2`,
+      XP_REWARDS.MEAL,
+      userId
+    );
 
     // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
     // await updateUserStreak(userId);
