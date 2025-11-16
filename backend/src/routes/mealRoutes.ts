@@ -93,8 +93,16 @@ router.get('/today', authMiddleware, async (req: Request, res: Response) => {
  */
 router.post('/complete', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).user?.userId || (req as any).user?.id;
     const { meal_id } = req.body;
+
+    console.log('[MEAL-COMPLETE] User from auth:', (req as any).user);
+    console.log('[MEAL-COMPLETE] Extracted userId:', userId);
+    console.log('[MEAL-COMPLETE] meal_id:', meal_id);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
     if (!meal_id) {
       return res.status(400).json({ error: 'meal_id is required' });
