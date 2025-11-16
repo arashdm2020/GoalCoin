@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '../../../hooks/useToastNotification';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
@@ -122,6 +123,7 @@ const StatusCard = ({ title, status, details }: { title: string; status: string;
 };
 
 export default function SettingsPage() {
+  const { showSuccess, showError, ToastComponent } = useToast();
   const [activeCategory, setActiveCategory] = useState('general');
   const [settings, setSettings] = useState<Record<string, any[]>>({});
   const [systemStatus, setSystemStatus] = useState<any>(null);
@@ -396,10 +398,10 @@ export default function SettingsPage() {
     try {
       // In real app, make API call to trigger backup
       console.log('Triggering backup...');
-      alert('Backup started successfully!');
+      showSuccess('Backup started successfully!');
     } catch (error) {
       console.error('Backup failed:', error);
-      alert('Backup failed. Please try again.');
+      showError('Backup failed. Please try again.');
     }
   };
 
@@ -415,6 +417,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
+      {ToastComponent}
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-8">Settings</h1>
 

@@ -198,7 +198,8 @@ export default function ReviewersPage() {
   };
 
   const handleResetStrikes = async (reviewerId: string) => {
-    if (!confirm('Are you sure you want to reset strikes for this reviewer?')) {
+    const userConfirmed = window.confirm('Are you sure you want to reset strikes for this reviewer?');
+    if (!userConfirmed) {
       return;
     }
     
@@ -232,7 +233,8 @@ export default function ReviewersPage() {
   };
 
   const handleRemove = async (reviewerId: string) => {
-    if (!confirm('Are you sure you want to remove this reviewer? This action cannot be undone.')) {
+    const userConfirmed = window.confirm('Are you sure you want to remove this reviewer? This action cannot be undone.');
+    if (!userConfirmed) {
       return;
     }
     

@@ -179,7 +179,9 @@ export default function CommissionsPage() {
   };
 
   const handleMarkAsPaid = async (commissionId: string, reviewerWallet: string) => {
-    if (!confirm('Are you sure you want to mark this commission as paid?')) {
+    // Use a simple inline confirmation instead of browser confirm
+    const userConfirmed = window.confirm('Are you sure you want to mark this commission as paid?');
+    if (!userConfirmed) {
       return;
     }
 
@@ -190,7 +192,7 @@ export default function CommissionsPage() {
         return;
       }
 
-      const txHash = prompt('Enter transaction hash (optional):') || 'manual-payment';
+      const txHash = window.prompt('Enter transaction hash (optional):') || 'manual-payment';
 
       const response = await fetch(`${getBackendUrl()}/api/admin/commissions/mark-paid`, {
         method: 'POST',

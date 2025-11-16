@@ -127,7 +127,8 @@ export default function SubmissionsPage() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to ${action.toLowerCase()} ${selected.length} submission(s)?`)) {
+    const userConfirmed = window.confirm(`Are you sure you want to ${action.toLowerCase()} ${selected.length} submission(s)?`);
+    if (!userConfirmed) {
       return;
     }
 
