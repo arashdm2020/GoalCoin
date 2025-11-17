@@ -27,9 +27,9 @@ class ChallengeService {
       const currentParticipants = await prisma.payment.count({
         where: {
           status: 'PAID',
-          // Only count valid challenge entries
+          // Only count valid challenge entries (all payment tiers)
           tier: {
-            in: ['BASIC', 'PREMIUM', 'VIP']
+            in: ['TIER_19', 'TIER_35', 'TIER_49']
           }
         }
       });
