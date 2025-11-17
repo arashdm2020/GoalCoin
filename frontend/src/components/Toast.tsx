@@ -65,13 +65,13 @@ export default function Toast({ message, type = 'info', onClose, duration = 3000
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      <div className={`${getBackgroundColor()} text-white px-8 py-4 rounded-lg shadow-2xl flex items-center space-x-3 animate-fade-in pointer-events-auto max-w-md`}>
+    <div className="fixed top-4 right-4 z-[9999] pointer-events-none">
+      <div className={`${getBackgroundColor()} text-white px-6 py-4 rounded-lg shadow-2xl flex items-center space-x-3 animate-in slide-in-from-top-2 duration-300 pointer-events-auto max-w-md min-w-[320px]`}>
         {getIcon()}
-        <span className="flex-1 text-base font-medium">{message}</span>
+        <span className="flex-1 text-sm font-medium">{message}</span>
         <button
           onClick={onClose}
-          className="ml-2 hover:bg-white/20 rounded p-1 transition-colors"
+          className="ml-2 hover:bg-white/20 rounded p-1 transition-colors flex-shrink-0"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
