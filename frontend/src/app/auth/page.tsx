@@ -76,8 +76,8 @@ function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white flex items-center justify-center px-4 py-8">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white flex items-start md:items-center justify-center px-4 py-8 md:py-8 overflow-y-auto">
+      <div className="max-w-md w-full my-auto">
         {/* Logo and Branding */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -91,9 +91,9 @@ function AuthForm() {
           <p className="text-gray-400 text-sm">90-Day Fitness Challenge</p>
         </div>
 
-        <div className="bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 p-6 shadow-2xl">
+        <div className="bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 p-4 md:p-6 shadow-2xl safe-area-inset">
           {/* Tab Switcher */}
-          <div className="flex mb-6 bg-gray-800 rounded-lg p-1">
+          <div className="flex mb-4 md:mb-6 bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
@@ -117,25 +117,29 @@ function AuthForm() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium mb-1.5 md:mb-2">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                className="w-full px-3 md:px-4 py-2.5 md:py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700] text-base"
+                placeholder="your@email.com"
+                autoComplete="email"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
+              <label className="block text-sm font-medium mb-1.5 md:mb-2">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700]"
+                className="w-full px-3 md:px-4 py-2.5 md:py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#FFD700] text-base"
+                placeholder="Min 6 characters"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 required
                 minLength={6}
               />
