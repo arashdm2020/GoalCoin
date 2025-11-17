@@ -5,14 +5,13 @@ import { useToast } from '../../../hooks/useToastNotification';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
-// Settings Categories
+// Settings Categories - Reorganized
 const SETTINGS_CATEGORIES = [
-  { id: 'general', name: 'General' },
-  { id: 'system', name: 'System' },
-  { id: 'security', name: 'Security' },
-  { id: 'notifications', name: 'Notifications' },
-  { id: 'performance', name: 'Performance' },
-  { id: 'maintenance', name: 'Maintenance' }
+  { id: 'platform', name: '🏢 Platform & Business', icon: '🏢' },
+  { id: 'challenge', name: '🎯 Challenge & Rewards', icon: '🎯' },
+  { id: 'ui', name: '🎨 UI & Branding', icon: '🎨' },
+  { id: 'system', name: '⚙️ System & Performance', icon: '⚙️' },
+  { id: 'security', name: '🔒 Security', icon: '🔒' }
 ];
 
 // Setting Component
@@ -124,7 +123,7 @@ const StatusCard = ({ title, status, details }: { title: string; status: string;
 
 export default function SettingsPage() {
   const { showSuccess, showError, ToastComponent } = useToast();
-  const [activeCategory, setActiveCategory] = useState('general');
+  const [activeCategory, setActiveCategory] = useState('platform');
   const [settings, setSettings] = useState<Record<string, any[]>>({});
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [backupRecords, setBackupRecords] = useState<any[]>([]);
@@ -134,7 +133,7 @@ export default function SettingsPage() {
 
   // Mock settings data (in real app, fetch from API)
   const mockSettings = {
-    general: [
+    platform: [
       {
         key: 'site_name',
         name: 'Site Name',
@@ -158,6 +157,35 @@ export default function SettingsPage() {
         type: 'text',
         value: 'contact@goalcoin.com',
         placeholder: 'contact@example.com'
+      },
+    ],
+    challenge: [
+      {
+        key: 'challenge_duration_weeks',
+        name: 'Challenge Duration (Weeks)',
+        description: 'Total weeks for the 90-day challenge',
+        type: 'number',
+        value: 13,
+        min: 1,
+        max: 52
+      },
+      {
+        key: 'challenge_entry_fee',
+        name: 'Challenge Entry Fee ($)',
+        description: 'Entry fee for joining the challenge',
+        type: 'number',
+        value: 19,
+        min: 0,
+        max: 1000
+      },
+      {
+        key: 'minimum_streak',
+        name: 'Minimum Streak Required',
+        description: 'Minimum consecutive days required for rewards',
+        type: 'number',
+        value: 7,
+        min: 1,
+        max: 30
       },
       {
         key: 'xp_per_workout',
@@ -189,7 +217,7 @@ export default function SettingsPage() {
       {
         key: 'xp_per_submission',
         name: 'XP Per Submission',
-        description: 'XP points earned per submission',
+        description: 'XP points earned per weekly submission',
         type: 'number',
         value: 50,
         min: 1,
@@ -215,41 +243,16 @@ export default function SettingsPage() {
       },
       {
         key: 'burn_multiplier',
-        name: 'Burn Multiplier',
-        description: 'Token burn multiplier for rewards',
+        name: 'Token Burn Multiplier',
+        description: 'Multiplier for token burn rewards',
         type: 'number',
         value: 1.0,
         min: 0.1,
         max: 10.0,
         step: 0.1
       },
-      {
-        key: 'challenge_duration_weeks',
-        name: 'Challenge Duration (Weeks)',
-        description: 'Total weeks for the challenge',
-        type: 'number',
-        value: 13,
-        min: 1,
-        max: 52
-      },
-      {
-        key: 'challenge_entry_fee',
-        name: 'Challenge Entry Fee ($)',
-        description: 'Entry fee for joining the challenge',
-        type: 'number',
-        value: 19,
-        min: 0,
-        max: 1000
-      },
-      {
-        key: 'minimum_streak',
-        name: 'Minimum Streak Required',
-        description: 'Minimum consecutive days required',
-        type: 'number',
-        value: 7,
-        min: 1,
-        max: 30
-      },
+    ],
+    ui: [
       {
         key: 'social_twitter',
         name: 'Twitter/X Link',
@@ -273,21 +276,6 @@ export default function SettingsPage() {
         type: 'text',
         value: 'https://t.me/goalcoin',
         placeholder: 'https://t.me/...'
-      },
-      {
-        key: 'challenge_enrollment_open',
-        name: 'Challenge Enrollment Open',
-        description: 'Allow new users to enroll in the 90-day challenge',
-        type: 'boolean',
-        value: true
-      },
-      {
-        key: 'challenge_price_display',
-        name: 'Challenge Price (Display Only)',
-        description: 'Price shown to users (visual only, not processed)',
-        type: 'text',
-        value: '$99',
-        placeholder: '$99'
       },
       {
         key: 'maintenance_mode',
@@ -320,6 +308,14 @@ export default function SettingsPage() {
       }
     ],
     system: [
+      {
+        key: 'maintenance_mode',
+        name: 'Maintenance Mode',
+        description: 'Enable maintenance mode to prevent user access',
+        type: 'boolean',
+        value: false,
+        warning: 'This will block all user access to the platform'
+      },
       {
         key: 'auto_backup',
         name: 'Auto Backup',
@@ -373,64 +369,6 @@ export default function SettingsPage() {
         description: 'Enforce strong password requirements',
         type: 'boolean',
         value: true
-      }
-    ],
-    notifications: [
-      {
-        key: 'email_notifications',
-        name: 'Email Notifications',
-        description: 'Send email notifications for important events',
-        type: 'boolean',
-        value: true
-      },
-      {
-        key: 'notification_frequency',
-        name: 'Notification Frequency',
-        description: 'How often to send digest notifications',
-        type: 'select',
-        value: 'daily',
-        options: [
-          { value: 'realtime', label: 'Real-time' },
-          { value: 'hourly', label: 'Hourly' },
-          { value: 'daily', label: 'Daily' },
-          { value: 'weekly', label: 'Weekly' }
-        ]
-      }
-    ],
-    performance: [
-      {
-        key: 'cache_enabled',
-        name: 'Enable Caching',
-        description: 'Use Redis caching for better performance',
-        type: 'boolean',
-        value: true
-      },
-      {
-        key: 'rate_limit',
-        name: 'API Rate Limit (per minute)',
-        description: 'Maximum API requests per minute per user',
-        type: 'number',
-        value: 100,
-        min: 10,
-        max: 1000
-      }
-    ],
-    maintenance: [
-      {
-        key: 'auto_cleanup',
-        name: 'Auto Cleanup',
-        description: 'Automatically clean old logs and temporary files',
-        type: 'boolean',
-        value: true
-      },
-      {
-        key: 'cleanup_days',
-        name: 'Cleanup After (days)',
-        description: 'Delete logs older than this many days',
-        type: 'number',
-        value: 30,
-        min: 7,
-        max: 365
       }
     ]
   };
