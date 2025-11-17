@@ -140,4 +140,40 @@ export const submissionController = {
       res.status(500).json({ error: 'Failed to fetch submission' });
     }
   },
+
+  async getMySubmissions(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).userId; // From authMiddleware
+      
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      console.log('[SUBMISSION] Fetching submissions for user:', userId);
+
+      const submissions = await prisma.submission.findMany({
+        where: { user_id: userId },
+        orderBy: { week_no: 'asc' },
+        select: {
+          id: true,
+          week_no: true,
+          status: true,
+          file_url: true,
+          watermark_code: true,
+          created_at: true,
+        },
+      });
+
+      console.log('[SUBMISSION] Found submissions:', submissions.length);
+
+      res.status(200).json({
+        success: true,
+        submissions,
+      });
+    } catch (error) {
+      console.error('[SUBMISSION] Failed to fetch my submissions:', error);
+      res.status(500).json({ error: 'Failed to fetch submissions' });
+    }
+  },
 };
