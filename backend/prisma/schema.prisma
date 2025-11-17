@@ -404,6 +404,12 @@ enum UserTier {
   FAN
   FOUNDER
   PLAYER
+  ROOKIE
+  MINTED
+  STAKED
+  VERIFIED
+  ASCENDANT
+  APEX
 }
 
 enum PaymentTier {
