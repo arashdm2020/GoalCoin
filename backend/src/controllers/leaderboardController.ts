@@ -38,13 +38,18 @@ export const leaderboardController = {
       }
 
       // Get users with their submission counts and success rates
+      // Only include users with XP > 0 to avoid showing inactive/seeded users
       const users = await prisma.user.findMany({
-        where: whereClause,
+        where: {
+          ...whereClause,
+          xp_points: { gt: 0 }, // Only active users
+        },
         select: {
           wallet: true,
           handle: true,
           country_code: true,
           tier: true,
+          fan_tier: true,
           xp_points: true,
           current_streak: true,
           created_at: true,
@@ -53,6 +58,9 @@ export const leaderboardController = {
               status: true,
             },
           },
+        },
+        orderBy: {
+          xp_points: 'desc', // Pre-sort by XP for better performance
         },
         take: 100,
       });
@@ -67,7 +75,7 @@ export const leaderboardController = {
           wallet: user.wallet,
           handle: user.handle,
           country_code: user.country_code,
-          tier: user.tier,
+          tier: user.fan_tier || user.tier, // Use fan_tier for display
           xp_points: user.xp_points || 0,
           current_streak: user.current_streak || 0,
           total_submissions: totalSubmissions,
@@ -75,17 +83,6 @@ export const leaderboardController = {
           success_rate: Math.round(successRate * 100) / 100,
           joined_at: user.created_at,
         };
-      }).sort((a, b) => {
-        // Sort by XP points first (primary ranking metric)
-        if (a.xp_points !== b.xp_points) {
-          return b.xp_points - a.xp_points;
-        }
-        // Then by approved submissions
-        if (a.approved_submissions !== b.approved_submissions) {
-          return b.approved_submissions - a.approved_submissions;
-        }
-        // Finally by success rate
-        return b.success_rate - a.success_rate;
       });
 
       res.status(200).json({ 
