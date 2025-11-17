@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '../../hooks/useToastNotification';
 
+interface WeekStatus {
+  week: number;
+  submitted: boolean;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  submittedAt?: string;
+}
+
 export default function SubmitPage() {
   const [weekNo, setWeekNo] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -11,6 +18,7 @@ export default function SubmitPage() {
   const [watermarkCode, setWatermarkCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [weekStatuses, setWeekStatuses] = useState<WeekStatus[]>([]);
   const router = useRouter();
   const { showSuccess, showError, showWarning, ToastComponent } = useToast();
 
@@ -22,9 +30,45 @@ export default function SubmitPage() {
     }
 
     // Generate watermark code
-    const code = `WEEK${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const code = `WEEK_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     setWatermarkCode(code);
+
+    // Fetch user's submission history
+    fetchWeekStatuses();
   }, [router]);
+
+  const fetchWeekStatuses = async () => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`${backendUrl}/api/submissions/my-submissions`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const submissions = data.submissions || [];
+        
+        // Create status for all 13 weeks
+        const statuses: WeekStatus[] = Array.from({ length: 13 }, (_, i) => {
+          const week = i + 1;
+          const submission = submissions.find((s: any) => s.week_no === week);
+          
+          return {
+            week,
+            submitted: !!submission,
+            status: submission?.status,
+            submittedAt: submission?.created_at,
+          };
+        });
+        
+        setWeekStatuses(statuses);
+      }
+    } catch (error) {
+      console.error('Failed to fetch week statuses:', error);
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -174,18 +218,85 @@ export default function SubmitPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Week Selector Grid */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Week Number</label>
-                <input
-                  type="number"
-                  value={weekNo}
-                  onChange={(e) => setWeekNo(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter week number (1-13)"
-                  min="1"
-                  max="13"
-                  required
-                />
+                <label className="block text-sm font-medium text-gray-300 mb-3">Select Week</label>
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {weekStatuses.map((ws) => {
+                    const isSelected = weekNo === ws.week.toString();
+                    const isSubmitted = ws.submitted;
+                    
+                    let bgColor = 'bg-gray-700 hover:bg-gray-600';
+                    let borderColor = 'border-gray-600';
+                    let textColor = 'text-white';
+                    let icon = '';
+                    
+                    if (isSelected) {
+                      bgColor = 'bg-blue-600 hover:bg-blue-700';
+                      borderColor = 'border-blue-500';
+                    } else if (isSubmitted) {
+                      if (ws.status === 'APPROVED') {
+                        bgColor = 'bg-green-600/30 hover:bg-green-600/40';
+                        borderColor = 'border-green-500';
+                        icon = '✓';
+                      } else if (ws.status === 'REJECTED') {
+                        bgColor = 'bg-red-600/30 hover:bg-red-600/40';
+                        borderColor = 'border-red-500';
+                        icon = '✗';
+                      } else {
+                        bgColor = 'bg-yellow-600/30 hover:bg-yellow-600/40';
+                        borderColor = 'border-yellow-500';
+                        icon = '⏳';
+                      }
+                    }
+                    
+                    return (
+                      <button
+                        key={ws.week}
+                        type="button"
+                        onClick={() => setWeekNo(ws.week.toString())}
+                        disabled={isSubmitted}
+                        className={`relative px-3 py-4 rounded-lg border-2 transition-all ${bgColor} ${borderColor} ${textColor} disabled:cursor-not-allowed disabled:opacity-70`}
+                        title={isSubmitted ? `Week ${ws.week}: ${ws.status}` : `Select Week ${ws.week}`}
+                      >
+                        <div className="text-sm font-bold">W{ws.week}</div>
+                        {icon && <div className="text-xs mt-1">{icon}</div>}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 text-xs text-gray-400 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-blue-600 rounded border border-blue-500"></div>
+                    <span>Selected</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-600/30 rounded border border-green-500"></div>
+                    <span>✓ Approved</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-yellow-600/30 rounded border border-yellow-500"></div>
+                    <span>⏳ Pending</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-600/30 rounded border border-red-500"></div>
+                    <span>✗ Rejected</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-gray-700 rounded border border-gray-600"></div>
+                    <span>Not Submitted</span>
+                  </div>
+                </div>
+                
+                {weekNo && (
+                  <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                    <p className="text-sm text-blue-300">
+                      📅 You are submitting for <strong>Week {weekNo}</strong>
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
