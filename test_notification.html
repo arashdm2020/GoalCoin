@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Notification Creation</title>
+</head>
+<body>
+    <h1>Test Notification System</h1>
+    
+    <h2>Step 1: Create Test Notification</h2>
+    <button onclick="createTestNotification()">Create Test Notification</button>
+    <pre id="createResult"></pre>
+    
+    <h2>Step 2: Fetch Notifications</h2>
+    <button onclick="fetchNotifications()">Fetch Notifications</button>
+    <pre id="fetchResult"></pre>
+    
+    <h2>Step 3: Check Database</h2>
+    <button onclick="checkDatabase()">Check Notification Count</button>
+    <pre id="dbResult"></pre>
+
+    <script>
+        const BACKEND_URL = 'https://goalcoin.onrender.com';
+        const token = localStorage.getItem('auth_token') || prompt('Enter your auth token:');
+        
+        async function createTestNotification() {
+            const result = document.getElementById('createResult');
+            result.textContent = 'Creating test notification...';
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/notifications/test-create`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    alert('✅ Test notification created! Now fetch notifications.');
+                } else {
+                    alert('❌ Failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                alert('❌ Error: ' + error.message);
+            }
+        }
+        
+        async function fetchNotifications() {
+            const result = document.getElementById('fetchResult');
+            result.textContent = 'Fetching notifications...';
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/notifications?limit=10`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.notifications && data.notifications.length > 0) {
+                    alert(`✅ Found ${data.notifications.length} notifications!`);
+                } else {
+                    alert('⚠️ No notifications found!');
+                }
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                alert('❌ Error: ' + error.message);
+            }
+        }
+        
+        async function checkDatabase() {
+            const result = document.getElementById('dbResult');
+            result.textContent = 'This requires direct database access.\n\nRun this SQL query:\n\nSELECT COUNT(*) FROM notifications WHERE user_id = \'cmhxgw7yz00009bdd5ssztnzv\';';
+        }
+    </script>
+</body>
+</html>

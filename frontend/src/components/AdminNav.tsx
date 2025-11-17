@@ -7,6 +7,7 @@ const navLinks = [
   { name: 'Dashboard', href: '/admin/dashboard' },
   { name: 'Reviewers', href: '/admin/reviewers' },
   { name: 'Submissions', href: '/admin/submissions' },
+  { name: 'Memberships', href: '/admin/memberships' },
   { name: 'Commissions', href: '/admin/commissions' },
   { name: 'Leaderboard', href: '/admin/leaderboard' },
   { name: 'Settings', href: '/admin/settings' },
