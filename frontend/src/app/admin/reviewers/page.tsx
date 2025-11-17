@@ -7,6 +7,7 @@ import Tooltip from '../../../components/Tooltip';
 import AuditDrawer from '../../../components/AuditDrawer';
 import Pagination from '@/components/admin/Pagination';
 import { useToast } from '../../../hooks/useToastNotification';
+import ConfirmDialog from '../../../components/ConfirmDialog';
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
@@ -22,6 +23,17 @@ export default function ReviewersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const fetchCountries = useCallback(async () => {
     try {
@@ -107,9 +119,21 @@ export default function ReviewersPage() {
   }, [filters, currentPage, itemsPerPage]);
 
   useEffect(() => {
-    fetchCountries();
     fetchReviewers();
-  }, [fetchReviewers, fetchCountries]);
+  }, [fetchReviewers]);
+
+  // Auto-refresh every 30 seconds to update accuracy/strikes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchReviewers();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchReviewers]);
+
+  useEffect(() => {
+    fetchCountries();
+  }, [fetchCountries]);
 
   const handleApiCall = async (url: string, method: string, body: object) => {
     try {
@@ -198,10 +222,15 @@ export default function ReviewersPage() {
   };
 
   const handleResetStrikes = async (reviewerId: string) => {
-    const userConfirmed = window.confirm('Are you sure you want to reset strikes for this reviewer?');
-    if (!userConfirmed) {
-      return;
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Reset Strikes',
+      message: 'Are you sure you want to reset strikes for this reviewer?',
+      onConfirm: () => executeResetStrikes(reviewerId),
+    });
+  };
+
+  const executeResetStrikes = async (reviewerId: string) => {
     
     try {
       const authHeader = localStorage.getItem('admin_auth_header');
@@ -565,6 +594,17 @@ export default function ReviewersPage() {
       </div>
 
       {ToastComponent}
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog({ ...confirmDialog, isOpen: false });
+        }}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+      />
     </div>
   );
 }
