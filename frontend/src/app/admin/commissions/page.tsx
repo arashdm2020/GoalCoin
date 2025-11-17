@@ -7,7 +7,7 @@ import { useToast } from '../../../hooks/useToastNotification';
 import ConfirmDialog from '../../../components/ConfirmDialog';
 import InputDialog from '../../../components/InputDialog';
 
-const TABS = ['Reviewer Payouts', 'Fan Rewards', 'System Logs'];
+const TABS = ['Reviewer Payouts']; // Fan Rewards and System Logs hidden until implemented
 
 const getBackendUrl = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
 
@@ -310,8 +310,11 @@ export default function CommissionsPage() {
       const result = await response.json();
       if (result.success) {
         showSuccess('Commission marked as paid successfully');
-        fetchData(); // Refresh the list
-        fetchSummary(); // Refresh the summary
+        console.log('[COMMISSION] Mark as paid successful, refreshing data...');
+        // Force refresh by resetting page to 1 and refetching
+        setCurrentPage(1);
+        await fetchData();
+        await fetchSummary();
       } else {
         showError('Failed to mark commission as paid: ' + (result.error || 'Unknown error'));
       }
