@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getTierDisplayName, getTierColor, getTierIcon } from '@/utils/tierMapping';
 
 interface UserStats {
   user: {
@@ -187,28 +188,6 @@ export default function UserStatsPage() {
     return Math.max(nextThreshold - xp, 0);
   };
 
-  const getTierIcon = (tier: string): string => {
-    const icons: Record<string, string> = {
-      MINTED: '🌱',
-      STAKED: '💪',
-      VERIFIED: '🏆',
-      ASCENDANT: '⭐',
-      APEX: '👑',
-    };
-    return icons[tier] || '🌱';
-  };
-
-  const getTierColor = (tier: string): string => {
-    const colors: Record<string, string> = {
-      MINTED: 'text-gray-400',
-      STAKED: 'text-green-400',
-      VERIFIED: 'text-blue-400',
-      ASCENDANT: 'text-purple-400',
-      APEX: 'text-yellow-400',
-    };
-    return colors[tier] || 'text-gray-400';
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
@@ -270,7 +249,7 @@ export default function UserStatsPage() {
               </div>
               <div className="flex-1">
                 <h2 className={`text-3xl font-bold ${getTierColor(stats.user.fan_tier)}`}>
-                  {stats.user.fan_tier}
+                  {getTierDisplayName(stats.user.fan_tier)}
                 </h2>
                 <p className="text-gray-400 mt-1">
                   Member since {new Date(stats.user.created_at).toLocaleDateString()}

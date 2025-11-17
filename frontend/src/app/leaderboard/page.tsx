@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getTierDisplayName } from '@/utils/tierMapping';
 
 interface LeaderboardEntry {
   wallet?: string;
@@ -115,8 +116,8 @@ export default function LeaderboardPage() {
   };
 
   const getTierDisplay = (tier: string) => {
-    // Display fan tier name instead of role
-    return tier || 'FAN';
+    // Display new tier names (Minted, Staked, etc.)
+    return getTierDisplayName(tier);
   };
 
   return (
