@@ -143,7 +143,7 @@ export const submissionController = {
 
   async getMySubmissions(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).userId; // From authMiddleware
+      const userId = (req as any).user?.id; // From authMiddleware
       
       if (!userId) {
         res.status(401).json({ error: 'Unauthorized' });
