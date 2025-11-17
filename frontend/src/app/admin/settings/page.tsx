@@ -129,6 +129,8 @@ export default function SettingsPage() {
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [backupRecords, setBackupRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Mock settings data (in real app, fetch from API)
   const mockSettings = {
@@ -470,15 +472,43 @@ export default function SettingsPage() {
         ) || []
       }));
 
-      // In real app, make API call here
-      console.log(`Updating ${key} to ${value}`);
+      // Mark as having changes
+      setHasChanges(true);
       
-      // Show success notification (you can add a toast library)
-      // toast.success('Setting updated successfully');
+      console.log(`Updated ${key} to ${value}`);
     } catch (error) {
       console.error('Failed to update setting:', error);
-      // Revert local state on error
-      // toast.error('Failed to update setting');
+    }
+  };
+
+  const handleSaveAll = async () => {
+    setSaving(true);
+    try {
+      // In real app, make API call to save all settings
+      const authHeader = localStorage.getItem('admin_auth_header');
+      if (!authHeader) {
+        showError('Authentication required');
+        return;
+      }
+
+      // Flatten all settings into a single object
+      const allSettings: Record<string, any> = {};
+      Object.values(settings).flat().forEach(setting => {
+        allSettings[setting.key] = setting.value;
+      });
+
+      console.log('Saving settings:', allSettings);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      showSuccess('Settings saved successfully!');
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      showError('Failed to save settings. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -507,7 +537,29 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
       {ToastComponent}
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold text-white text-glow mb-8">Settings</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white text-glow">Settings</h1>
+          <button
+            onClick={handleSaveAll}
+            disabled={!hasChanges || saving}
+            className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+              hasChanges && !saving
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                💾 Save All Changes
+              </>
+            )}
+          </button>
+        </div>
 
         {/* System Status - Horizontal */}
         <div className="mb-8 bg-gray-900 rounded-lg p-6 border border-gray-800">
