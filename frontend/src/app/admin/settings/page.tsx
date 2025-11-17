@@ -176,6 +176,33 @@ export default function SettingsPage() {
         max: 100
       },
       {
+        key: 'xp_per_warmup',
+        name: 'XP Per Warmup',
+        description: 'XP points earned per warmup completion',
+        type: 'number',
+        value: 5,
+        min: 1,
+        max: 50
+      },
+      {
+        key: 'xp_per_submission',
+        name: 'XP Per Submission',
+        description: 'XP points earned per submission',
+        type: 'number',
+        value: 50,
+        min: 1,
+        max: 200
+      },
+      {
+        key: 'xp_per_referral',
+        name: 'XP Per Referral',
+        description: 'XP points earned per successful referral',
+        type: 'number',
+        value: 100,
+        min: 1,
+        max: 500
+      },
+      {
         key: 'goal_points_per_submission',
         name: 'Goal Points Per Submission',
         description: 'Goal Points earned per approved submission',
@@ -183,6 +210,67 @@ export default function SettingsPage() {
         value: 100,
         min: 1,
         max: 1000
+      },
+      {
+        key: 'burn_multiplier',
+        name: 'Burn Multiplier',
+        description: 'Token burn multiplier for rewards',
+        type: 'number',
+        value: 1.0,
+        min: 0.1,
+        max: 10.0,
+        step: 0.1
+      },
+      {
+        key: 'challenge_duration_weeks',
+        name: 'Challenge Duration (Weeks)',
+        description: 'Total weeks for the challenge',
+        type: 'number',
+        value: 13,
+        min: 1,
+        max: 52
+      },
+      {
+        key: 'challenge_entry_fee',
+        name: 'Challenge Entry Fee ($)',
+        description: 'Entry fee for joining the challenge',
+        type: 'number',
+        value: 19,
+        min: 0,
+        max: 1000
+      },
+      {
+        key: 'minimum_streak',
+        name: 'Minimum Streak Required',
+        description: 'Minimum consecutive days required',
+        type: 'number',
+        value: 7,
+        min: 1,
+        max: 30
+      },
+      {
+        key: 'social_twitter',
+        name: 'Twitter/X Link',
+        description: 'Official Twitter/X profile URL',
+        type: 'text',
+        value: 'https://twitter.com/goalcoin',
+        placeholder: 'https://twitter.com/...'
+      },
+      {
+        key: 'social_discord',
+        name: 'Discord Link',
+        description: 'Official Discord server URL',
+        type: 'text',
+        value: 'https://discord.gg/goalcoin',
+        placeholder: 'https://discord.gg/...'
+      },
+      {
+        key: 'social_telegram',
+        name: 'Telegram Link',
+        description: 'Official Telegram group URL',
+        type: 'text',
+        value: 'https://t.me/goalcoin',
+        placeholder: 'https://t.me/...'
       },
       {
         key: 'challenge_enrollment_open',
