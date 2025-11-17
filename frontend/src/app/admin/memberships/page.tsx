@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Pagination from '@/components/admin/Pagination';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 interface Membership {
   id: string;
@@ -257,7 +259,9 @@ export default function MembershipsPage() {
       {/* Table */}
       <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading memberships...</div>
+          <div className="p-4">
+            <LoadingSkeleton type="table" rows={10} />
+          </div>
         ) : memberships.length === 0 ? (
           <div className="p-8 text-center text-gray-400">No memberships found</div>
         ) : (

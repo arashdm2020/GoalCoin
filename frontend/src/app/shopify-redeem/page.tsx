@@ -66,16 +66,18 @@ export default function ShopifyRedeemPage() {
   };
 
   const handleRedeem = async () => {
-    if (!wallet) {
-      setMessage('❌ Please provide a wallet address');
-      return;
-    }
-
     setRedeeming(true);
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
       const token = localStorage.getItem('auth_token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+      if (!user.id && !wallet) {
+        setMessage('❌ Please login or provide a wallet address');
+        setRedeeming(false);
+        return;
+      }
 
       const response = await fetch(`${backendUrl}/api/shopify/redeem`, {
         method: 'POST',
@@ -84,8 +86,9 @@ export default function ShopifyRedeemPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          orderCode,
-          wallet,
+          order_code: orderCode,
+          user_id: user.id,
+          wallet: wallet || user.wallet,
         }),
       });
 

@@ -260,6 +260,7 @@ app.use('/api/migration', adminLimiter, migrationRoutes);
 app.use('/api/fix', adminLimiter, fixUrlsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/streak', require('./routes/streakRoutes').streakRoutes);
+app.use('/api/country', require('./routes/countryRoutes').countryRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
