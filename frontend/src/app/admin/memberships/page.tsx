@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, DollarSign, Filter, Download, Search, Calendar } from 'lucide-react';
 
 interface Membership {
   id: string;
@@ -159,14 +158,14 @@ export default function MembershipsPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Users className="w-5 h-5 text-blue-400" />
+              <span className="text-xl">👥</span>
               <span className="text-sm text-gray-400">Total Members</span>
             </div>
             <p className="text-2xl font-bold">{stats.total_members}</p>
           </div>
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-5 h-5 text-green-400" />
+              <span className="text-xl">💰</span>
               <span className="text-sm text-gray-400">Total Revenue</span>
             </div>
             <p className="text-2xl font-bold">${stats.total_revenue.toFixed(2)}</p>
@@ -200,7 +199,7 @@ export default function MembershipsPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
             <input
               type="text"
               placeholder="Search username, email, wallet..."
@@ -249,7 +248,7 @@ export default function MembershipsPage() {
             onClick={exportToCSV}
             className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
           >
-            <Download className="w-4 h-4" />
+            <span>📥</span>
             Export CSV
           </button>
         </div>
