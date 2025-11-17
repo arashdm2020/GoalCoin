@@ -261,6 +261,7 @@ app.use('/api/fix', adminLimiter, fixUrlsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/streak', require('./routes/streakRoutes').streakRoutes);
 app.use('/api/country', require('./routes/countryRoutes').countryRoutes);
+app.use('/api/challenge', require('./routes/challengeStatusRoutes').challengeStatusRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

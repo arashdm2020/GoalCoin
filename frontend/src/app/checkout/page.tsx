@@ -5,25 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '../../hooks/useToastNotification';
 import { ConnectWalletButton } from '@/components/ConnectWalletButton';
 
+interface ChallengeStatus {
+  maxParticipants: number;
+  currentParticipants: number;
+  remainingSpots: number;
+  isFull: boolean;
+}
+
+// Beta: Only $19 tier enabled
 const TIERS = [
   {
-    name: 'Tier 1',
+    name: 'Beta Entry',
     price: 19,
-    features: ['90-Day Challenge Access', 'Weekly Submissions', 'Basic Support', 'Leaderboard Access'],
-    color: 'from-gray-600 to-gray-700',
-  },
-  {
-    name: 'Tier 2',
-    price: 35,
-    features: ['Everything in Tier 1', 'Priority Support', 'Exclusive Content', 'Higher Burn Multiplier'],
-    color: 'from-blue-600 to-blue-700',
-    popular: true,
-  },
-  {
-    name: 'Tier 3',
-    price: 49,
-    features: ['Everything in Tier 2', 'VIP Support', 'Premium Content', 'Maximum Burn Multiplier', 'Founder NFT'],
-    color: 'from-purple-600 to-purple-700',
+    features: ['90-Day Challenge Access', 'Weekly Submissions', 'Community Support', 'Leaderboard Access', 'Token Burn Rewards'],
+    color: 'from-yellow-500 to-orange-600',
+    tier_code: 'TIER_19',
   },
 ];
 
@@ -32,11 +28,27 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
   const router = useRouter();
-  const { showError, ToastComponent } = useToast();
+  const { showError, showSuccess, ToastComponent } = useToast();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
+      // Fetch challenge status (public)
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+        const statusRes = await fetch(`${backendUrl}/api/challenge/status`);
+        if (statusRes.ok) {
+          const data = await statusRes.json();
+          setChallengeStatus(data);
+        }
+      } catch (error) {
+        console.error('Error fetching challenge status:', error);
+      }
+
+      // Fetch user
       const token = localStorage.getItem('auth_token');
       if (!token) {
         router.push('/auth');
@@ -58,10 +70,16 @@ export default function CheckoutPage() {
       }
     };
 
-    fetchUser();
+    fetchData();
   }, [router]);
 
   const handlePurchase = async (tierIndex: number) => {
+    // Check if challenge is full
+    if (challengeStatus?.isFull) {
+      showError('This beta is full. Please join the waitlist below.');
+      return;
+    }
+
     // Check if user has wallet
     if (!user?.wallet) {
       setSelectedTier(tierIndex);
@@ -86,15 +104,29 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           wallet: user.wallet,
-          amount: tier.price,
-          tier: `TIER_${tier.price}`,
+          email: user.email,
+          country_code: user.country_code,
+          tier: tier.tier_code,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Payment creation failed');
+        if (data.isFull) {
+          showError('Challenge is now full! Join the waitlist below.');
+          // Refresh status
+          const statusRes = await fetch(`${backendUrl}/api/challenge/status`);
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            setChallengeStatus(statusData);
+          }
+        } else {
+          throw new Error(data.error || 'Payment creation failed');
+        }
+        setLoading(false);
+        setSelectedTier(null);
+        return;
       }
 
       // Redirect to CoinPayments
@@ -105,6 +137,37 @@ export default function CheckoutPage() {
       showError(error.message || 'Failed to create checkout session');
       setLoading(false);
       setSelectedTier(null);
+    }
+  };
+
+  const handleWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistEmail) return;
+
+    setWaitlistLoading(true);
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+      const response = await fetch(`${backendUrl}/api/challenge/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: waitlistEmail,
+          name: user?.handle || user?.email,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSuccess('✅ Added to waitlist! We\'ll notify you when spots open.');
+        setWaitlistEmail('');
+      } else {
+        showError(data.message || 'Failed to join waitlist');
+      }
+    } catch (error) {
+      showError('Failed to join waitlist. Please try again.');
+    } finally {
+      setWaitlistLoading(false);
     }
   };
 
@@ -123,10 +186,27 @@ export default function CheckoutPage() {
 
       <main className="container mx-auto px-6 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Choose Your Tier</h1>
-          <p className="text-gray-400 text-lg">
-            Join the 90-Day Challenge and transform your life
+          <h1 className="text-4xl font-bold mb-4">Join the Beta Challenge</h1>
+          <p className="text-gray-400 text-lg mb-6">
+            Transform your life in 90 days
           </p>
+          
+          {/* Beta Spots Counter */}
+          {challengeStatus && (
+            <div className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/50 rounded-full px-6 py-3 mb-4">
+              <span className="text-2xl">🔥</span>
+              <div className="text-left">
+                <div className="text-sm text-gray-300">Limited Beta Access</div>
+                <div className="text-lg font-bold text-orange-400">
+                  {challengeStatus.isFull ? (
+                    'BETA FULL'
+                  ) : (
+                    `${challengeStatus.remainingSpots} / ${challengeStatus.maxParticipants} spots left`
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Revenue Split Info */}
@@ -185,14 +265,44 @@ export default function CheckoutPage() {
 
               <button
                 onClick={() => handlePurchase(index)}
-                disabled={loading && selectedTier === index}
-                className={`w-full py-3 bg-gradient-to-r ${tier.color} text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50`}
+                disabled={(loading && selectedTier === index) || challengeStatus?.isFull}
+                className={`w-full py-3 bg-gradient-to-r ${tier.color} text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {loading && selectedTier === index ? 'Processing...' : 'Select Tier'}
+                {challengeStatus?.isFull ? '❌ Beta Full' : loading && selectedTier === index ? 'Processing...' : '🚀 Join Beta ($19 USDT)'}
               </button>
             </div>
           ))}
         </div>
+
+        {/* Waitlist Section (shown when full) */}
+        {challengeStatus?.isFull && (
+          <div className="max-w-2xl mx-auto mt-12 p-8 bg-gradient-to-br from-red-900/30 to-orange-900/30 border border-red-500/50 rounded-lg">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold mb-2">🔒 Beta is Full</h3>
+              <p className="text-gray-300">
+                Join the waitlist to be notified when the next batch opens!
+              </p>
+            </div>
+            
+            <form onSubmit={handleWaitlist} className="flex gap-3">
+              <input
+                type="email"
+                value={waitlistEmail}
+                onChange={(e) => setWaitlistEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="flex-1 px-4 py-3 bg-black/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                required
+              />
+              <button
+                type="submit"
+                disabled={waitlistLoading}
+                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {waitlistLoading ? 'Joining...' : 'Join Waitlist'}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Payment Info */}
         <div className="max-w-2xl mx-auto mt-12 p-6 bg-gray-900 border border-gray-700 rounded-lg">
@@ -200,8 +310,8 @@ export default function CheckoutPage() {
           <ul className="space-y-2 text-sm text-gray-400">
             <li>• Payments processed via CoinPayments (USDT Polygon)</li>
             <li>• Secure and instant confirmation</li>
-            <li>• No refunds after challenge starts</li>
-            <li>• Your tier will be activated immediately after payment</li>
+            <li>• Limited to 200 beta participants</li>
+            <li>• Your spot is reserved immediately after payment</li>
           </ul>
         </div>
       </main>

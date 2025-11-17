@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient, PaymentTier } from '@prisma/client';
 import CoinPayments from 'coinpayments';
+import { challengeService } from '../services/challengeService';
 
 const prisma = new PrismaClient();
 
@@ -35,6 +36,15 @@ export const paymentController = {
     }
 
     try {
+      // Check if challenge is full (200 participant cap)
+      const eligibility = await challengeService.canJoin();
+      if (!eligibility.allowed) {
+        res.status(403).json({ 
+          error: eligibility.message || 'Challenge is full',
+          isFull: true,
+        });
+        return;
+      }
       const user = await prisma.user.upsert({
         where: { wallet },
         update: { email, country_code },
