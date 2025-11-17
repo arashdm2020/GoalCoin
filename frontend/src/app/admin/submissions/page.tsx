@@ -252,13 +252,11 @@ export default function SubmissionsPage() {
 
       const result = await response.json();
       if (result.success) {
-        const newStatus = modalAction === 'Approve' ? 'Approved' : 'Rejected';
         showSuccess(`Submission ${modalAction.toLowerCase()}d successfully`);
         setIsReasonModalOpen(false);
         setSelectedSubmission(null);
-        // Update filter to show the new status
-        setFilters({ ...filters, status: newStatus });
-        setCurrentPage(1); // Reset to first page
+        // Refresh the current page to show updated data
+        fetchSubmissions();
       } else {
         showError('Failed to update submission status: ' + (result.error || 'Unknown error'));
         console.error('Failed to update submission status:', result.error);
@@ -296,6 +294,7 @@ export default function SubmissionsPage() {
           <span className="text-gray-400 text-sm font-medium">Filters:</span>
           <div className="flex flex-col sm:flex-row gap-3">
             <select 
+              value={filters.status}
               className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
               onChange={e => setFilters({ ...filters, status: e.target.value })}
             >
@@ -306,11 +305,13 @@ export default function SubmissionsPage() {
             <option value="Flagged">Flagged</option>
           </select>
             <input 
-              type="date" 
+              type="date"
+              value={filters.date}
               className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
               onChange={e => setFilters({ ...filters, date: e.target.value })}
             />
-            <select 
+            <select
+              value={filters.country}
               className="px-3 py-2 bg-gray-800 rounded-lg text-sm flex-1 min-w-0" 
               onChange={e => setFilters({ ...filters, country: e.target.value })}
             >
@@ -416,7 +417,12 @@ export default function SubmissionsPage() {
                         {submission.status}
                       </span>
                     </td>
-                    <td className="p-2 text-sm">{new Date(submission.created_at).toLocaleDateString()}</td>
+                    <td className="p-2 text-sm">
+                      <div className="flex flex-col">
+                        <span>{new Date(submission.created_at).toLocaleDateString()}</span>
+                        <span className="text-xs text-gray-400">{new Date(submission.created_at).toLocaleTimeString()} UTC</span>
+                      </div>
+                    </td>
                     <td className="p-2 text-sm">
                       <div className="flex items-center gap-2">
                         {submission.user?.country_code ? (
