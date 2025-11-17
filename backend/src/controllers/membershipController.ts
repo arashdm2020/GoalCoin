@@ -8,6 +8,7 @@ class MembershipController {
    * Get all memberships with filters and pagination
    */
   async getMemberships(req: Request, res: Response): Promise<void> {
+    console.log('[MEMBERSHIPS] getMemberships called');
     try {
       const { 
         page = '1', 
@@ -17,6 +18,8 @@ class MembershipController {
         country, 
         search 
       } = req.query;
+      
+      console.log('[MEMBERSHIPS] Query params:', { page, limit, tier, status, country, search });
 
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
@@ -122,6 +125,7 @@ class MembershipController {
    * Get membership statistics
    */
   async getStats(req: Request, res: Response): Promise<void> {
+    console.log('[MEMBERSHIPS] getStats called');
     try {
       // Total members (unique users with payments)
       const total_members = await prisma.payment.groupBy({
