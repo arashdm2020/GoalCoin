@@ -55,24 +55,25 @@ export default function DietPage() {
       const token = localStorage.getItem('auth_token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-      const response = await fetch(`${backendUrl}/api/fitness/meal/log`, {
+      const response = await fetch(`${backendUrl}/api/meals/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: user.id,
-          diet_plan_id: selectedPlan.id,
-          meal_name: 'Daily Meal',
+          meal_id: selectedPlan.id,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        showSuccess(`🥗 Meal logged! +${data.xp_earned} XP earned!`);
+        const xpEarned = data.xp_awarded || data.xp_earned || 5;
+        showSuccess(`🥗 Meal logged! +${xpEarned} XP earned!`);
         router.push('/dashboard');
+      } else {
+        showError(data.message || 'Failed to log meal');
       }
     } catch (error) {
       console.error('Error logging meal:', error);
