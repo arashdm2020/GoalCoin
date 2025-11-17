@@ -229,21 +229,17 @@ export default function CheckoutPage() {
         </div>
 
         {/* Tier Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 gap-8 max-w-2xl mx-auto">
           {TIERS.map((tier, index) => (
             <div
               key={index}
-              className={`relative bg-gray-900 border ${
-                tier.popular ? 'border-[#FFD700]' : 'border-gray-700'
-              } rounded-lg p-8 hover:border-[#FFD700]/50 transition-colors`}
+              className="relative bg-gray-900 border border-[#FFD700] rounded-lg p-8 hover:border-[#FFD700]/80 transition-colors"
             >
-              {tier.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="px-4 py-1 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-sm font-semibold rounded-full">
-                    Most Popular
-                  </span>
-                </div>
-              )}
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span className="px-4 py-1 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-sm font-semibold rounded-full">
+                  🔥 Limited Beta
+                </span>
+              </div>
 
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
