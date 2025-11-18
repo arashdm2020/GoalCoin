@@ -158,7 +158,11 @@ GoalCoin Platform`,
         const data = await response.json();
         setUser(data.user);
         setMessages(mockMessages);
-        setSelectedMessage(mockMessages[0]); // Select first message by default
+        // Don't auto-select any message on mobile, let user choose
+        // On desktop, first message can be selected
+        if (window.innerWidth >= 1024) {
+          setSelectedMessage(mockMessages[0]);
+        }
       } catch (error) {
         localStorage.removeItem('auth_token');
         router.push('/auth');
@@ -168,7 +172,7 @@ GoalCoin Platform`,
     };
 
     fetchUser();
-  }, [router, user]);
+  }, [router]); // Remove 'user' dependency to prevent infinite loop
 
   const handleArchive = () => {
     if (selectedMessage) {
