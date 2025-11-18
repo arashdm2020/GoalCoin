@@ -312,15 +312,15 @@ GoalCoin Platform`,
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                       </button>
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-bold">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-bold flex-shrink-0">
                         {selectedMessage.sender.charAt(0)}
                       </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-white">{selectedMessage.subject}</h2>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <p className="text-sm text-gray-400">From: {selectedMessage.sender}</p>
-                          <span className="text-gray-600">•</span>
-                          <p className="text-sm text-gray-400">{selectedMessage.senderEmail}</p>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-white break-words pr-2">{selectedMessage.subject}</h2>
+                        <div className="flex items-center space-x-2 mt-1 flex-wrap">
+                          <p className="text-xs sm:text-sm text-gray-400 truncate">From: {selectedMessage.sender}</p>
+                          <span className="text-gray-600 hidden sm:inline">•</span>
+                          <p className="text-xs sm:text-sm text-gray-400 truncate">{selectedMessage.senderEmail}</p>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
                           {new Date(selectedMessage.timestamp).toLocaleString()}
