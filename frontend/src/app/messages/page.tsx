@@ -316,7 +316,14 @@ GoalCoin Platform`,
                         {selectedMessage.sender.charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h2 className="text-lg sm:text-xl font-bold text-white break-words pr-2">{selectedMessage.subject}</h2>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-lg sm:text-xl font-bold text-white break-words">{selectedMessage.subject}</h2>
+                          {!selectedMessage.read && (
+                            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full font-medium flex-shrink-0">
+                              New
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center space-x-2 mt-1 flex-wrap">
                           <p className="text-xs sm:text-sm text-gray-400 truncate">From: {selectedMessage.sender}</p>
                           <span className="text-gray-600 hidden sm:inline">•</span>
@@ -327,12 +334,7 @@ GoalCoin Platform`,
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
-                      {!selectedMessage.read && (
-                        <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full font-medium">
-                          New
-                        </span>
-                      )}
+                    <div className="hidden sm:flex items-center space-x-2 flex-shrink-0">
                       <button className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
