@@ -336,12 +336,6 @@ GoalCoin Platform`,
                 <div className="p-6 border-t border-gray-700">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm">
-                        Reply
-                      </button>
-                      <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm">
-                        Forward
-                      </button>
                       <button 
                         onClick={handleArchive}
                         className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"

@@ -7,17 +7,29 @@ const router = Router();
 
 /**
  * GET /api/referrals/leaderboard
- * Get monthly referral leaderboard
+ * Get monthly referral leaderboard with ranking
  * Query params: year, month, limit
  */
-router.get('/leaderboard', async (req: Request, res: Response) => {
+router.get('/leaderboard', authMiddleware, async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.userId;
     const year = req.query.year ? parseInt(req.query.year as string) : undefined;
     const month = req.query.month ? parseInt(req.query.month as string) : undefined;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
 
-    const leaderboard = await referralService.getMonthlyLeaderboard(year, month, limit);
-    res.json(leaderboard);
+    const data = await referralService.getMonthlyLeaderboard(year, month, limit);
+    
+    // Add ranking and format for frontend
+    const leaderboard = data.leaderboard.map((entry, index) => ({
+      rank: index + 1,
+      handle: entry.handle,
+      wallet: entry.user_id,
+      referral_count: entry.referral_count,
+      active_referrals: entry.referral_count, // For now, assume all are active
+      is_current_user: entry.user_id === userId,
+    }));
+
+    res.json({ leaderboard });
   } catch (error: any) {
     console.error('Error fetching referral leaderboard:', error);
     res.status(500).json({ error: 'Failed to fetch referral leaderboard' });
@@ -26,12 +38,28 @@ router.get('/leaderboard', async (req: Request, res: Response) => {
 
 /**
  * GET /api/referrals/prize
- * Get current month's prize info
+ * Get current month's prize info and last month's winner
  */
 router.get('/prize', async (req: Request, res: Response) => {
   try {
-    const prize = await referralService.getCurrentPrize();
-    res.json(prize);
+    const [prize, lastWinner] = await Promise.all([
+      referralService.getCurrentPrize(),
+      referralService.getLastMonthWinner(),
+    ]);
+    
+    // Format for frontend
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    res.json({
+      month: monthNames[prize.month - 1],
+      prize_amount: prize.prize_amount,
+      winner: lastWinner ? {
+        handle: lastWinner.winner.handle,
+        wallet: lastWinner.winner.user_id,
+        referral_count: lastWinner.winner.referral_count,
+      } : null,
+      announced: !!lastWinner,
+    });
   } catch (error: any) {
     console.error('Error fetching prize info:', error);
     res.status(500).json({ error: 'Failed to fetch prize info' });
@@ -60,7 +88,15 @@ router.get('/my-stats', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.userId;
     const stats = await referralService.getUserStats(userId);
-    res.json(stats);
+    
+    // Format for frontend
+    res.json({
+      total_referrals: stats.total_referrals,
+      active_referrals: stats.activated_referrals,
+      pending_referrals: stats.total_referrals - stats.activated_referrals,
+      total_rewards: 0, // TODO: Calculate based on rewards system
+      current_rank: stats.current_month_rank,
+    });
   } catch (error: any) {
     console.error('Error fetching user stats:', error);
     res.status(500).json({ error: 'Failed to fetch user stats' });
