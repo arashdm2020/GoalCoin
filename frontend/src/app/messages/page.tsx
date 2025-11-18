@@ -252,7 +252,10 @@ GoalCoin Platform`,
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  onClick={() => handleMessageSelect(message)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMessageSelect(message);
+                  }}
                   className={`p-4 border-b border-gray-800 cursor-pointer hover:bg-gray-800/50 transition-colors ${
                     selectedMessage?.id === message.id ? 'bg-blue-900/30 border-l-4 border-l-blue-500' : ''
                   } ${!message.read ? 'bg-blue-900/10' : ''}`}
@@ -295,7 +298,10 @@ GoalCoin Platform`,
                     <div className="flex items-center space-x-4">
                       {/* Back button for mobile */}
                       <button
-                        onClick={() => setSelectedMessage(null)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMessage(null);
+                        }}
                         className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50"
                       >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
