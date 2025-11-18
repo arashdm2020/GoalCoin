@@ -47,28 +47,28 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <main className="container mx-auto px-6 py-20">
+      <main className="container mx-auto px-6 py-10">
         <div className="max-w-4xl mx-auto text-center">
           {/* Logo/Icon */}
-          <div className="mb-8 flex justify-center">
+          <div className="mb-4 flex justify-center">
             <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center font-bold text-black text-5xl shadow-2xl">
               G
             </div>
           </div>
 
           {/* Headline */}
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent">
+          <h2 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent">
             90-Day Fitness Challenge
           </h2>
           
           {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-gray-300 mb-6 max-w-2xl mx-auto">
             Track workouts, earn XP, climb the leaderboard
           </p>
 
           {/* Pricing Tiers */}
-          <div className="mb-16">
-            <h3 className="text-3xl font-bold mb-8">Choose Your Challenge Tier</h3>
+          <div className="mb-8">
+            <h3 className="text-3xl font-bold mb-6">Choose Your Challenge Tier</h3>
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {/* Tier 1: $19 */}
               <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-gray-700 rounded-xl p-8 hover:border-yellow-500 transition-all">
