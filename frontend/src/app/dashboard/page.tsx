@@ -166,7 +166,7 @@ export default function DashboardPage() {
                       className="fixed inset-0 z-40"
                       onClick={() => setShowNotifications(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-96 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-[80vh] flex flex-col">
+                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-md bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-[70vh] flex flex-col">
                       <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
                         <div>
                           <h3 className="font-semibold text-white">Notifications</h3>
@@ -332,26 +332,19 @@ export default function DashboardPage() {
 
         {/* Active Challenge Status */}
         {!needsPayment && (
-          <div className="mb-8 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">90-Day Challenge Active</h3>
-                  <p className="text-gray-300">
-                    Enrolled as <span className="text-green-400 font-semibold">{user.tier}</span> member
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-400">Burn Multiplier</p>
-                <p className="text-3xl font-bold text-green-400">{user.burn_multiplier}×</p>
-              </div>
+          <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border border-green-500/50 rounded-lg p-6 hover:border-green-400 transition-all">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-green-400 text-sm font-medium">90-Day Challenge Active</span>
+              <span className="text-2xl">✅</span>
             </div>
+            <p className="text-white font-bold text-lg">Enrolled as {user.tier} member</p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm text-gray-400">Burn Multiplier:</span>
+              <span className="text-xl font-bold text-orange-400">{user.burn_multiplier}X</span>
+            </div>
+            <button className="mt-4 text-sm text-green-400 hover:text-green-300 transition-colors">
+              View Challenge Details →
+            </button>
           </div>
         )}
 

@@ -189,6 +189,7 @@ export default function WarmupPage() {
           {routines.map((routine) => (
             <div
               key={routine.id}
+              id={`routine-${routine.id}`}
               className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-orange-500 transition-all"
             >
               <div className="flex justify-between items-start mb-4">
@@ -200,7 +201,14 @@ export default function WarmupPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedRoutine(routine.id)}
+                  onClick={() => {
+                    setSelectedRoutine(routine.id);
+                    // Scroll to routine after a short delay to let it expand
+                    setTimeout(() => {
+                      const element = document.getElementById(`routine-${routine.id}`);
+                      element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                  }}
                   disabled={completing}
                   className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-bold transition-all disabled:opacity-50"
                 >

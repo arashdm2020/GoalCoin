@@ -256,11 +256,11 @@ export default function SubmitPage() {
                         type="button"
                         onClick={() => setWeekNo(ws.week.toString())}
                         disabled={isSubmitted}
-                        className={`relative px-3 py-4 rounded-lg border-2 transition-all ${bgColor} ${borderColor} ${textColor} disabled:cursor-not-allowed disabled:opacity-70`}
+                        className={`relative px-2 py-3 rounded-lg border-2 transition-all ${bgColor} ${borderColor} ${textColor} disabled:cursor-not-allowed disabled:opacity-70 flex flex-col items-center justify-center min-h-[60px] touch-manipulation`}
                         title={isSubmitted ? `Week ${ws.week}: ${ws.status}` : `Select Week ${ws.week}`}
                       >
-                        <div className="text-sm font-bold">W{ws.week}</div>
-                        {icon && <div className="text-xs mt-1">{icon}</div>}
+                        <div className="text-xs font-bold whitespace-nowrap">W{ws.week}</div>
+                        {icon && <div className="text-xs mt-0.5">{icon}</div>}
                       </button>
                     );
                   })}
