@@ -327,9 +327,9 @@ GoalCoin Platform`,
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
                       {!selectedMessage.read && (
-                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                        <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full font-medium">
                           New
                         </span>
                       )}
