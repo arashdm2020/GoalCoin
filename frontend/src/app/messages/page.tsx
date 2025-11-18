@@ -242,9 +242,9 @@ GoalCoin Platform`,
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-200px)]">
-          {/* Messages List - Left Side (4 columns) */}
-          <div className="col-span-4 bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
+          {/* Messages List - Left Side (4 columns on desktop, full width on mobile) */}
+          <div className={`lg:col-span-4 bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl overflow-hidden ${selectedMessage ? 'hidden lg:block' : 'block'}`}>
             <div className="p-4 border-b border-gray-700">
               <h2 className="font-semibold text-white">Inbox</h2>
             </div>
@@ -285,14 +285,23 @@ GoalCoin Platform`,
             </div>
           </div>
 
-          {/* Message Content - Right Side (8 columns) */}
-          <div className="col-span-8 bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl overflow-hidden">
+          {/* Message Content - Right Side (8 columns on desktop, full width on mobile) */}
+          <div className={`lg:col-span-8 bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl overflow-hidden ${selectedMessage ? 'block' : 'hidden lg:block'}`}>
             {selectedMessage ? (
               <div className="h-full flex flex-col">
                 {/* Message Header */}
                 <div className="p-6 border-b border-gray-700">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
+                      {/* Back button for mobile */}
+                      <button
+                        onClick={() => setSelectedMessage(null)}
+                        className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
                       <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-bold">
                         {selectedMessage.sender.charAt(0)}
                       </div>

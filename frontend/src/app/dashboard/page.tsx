@@ -166,7 +166,7 @@ export default function DashboardPage() {
                       className="fixed inset-0 z-40"
                       onClick={() => setShowNotifications(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-md bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-[70vh] flex flex-col">
+                    <div className="fixed sm:absolute right-4 sm:right-0 left-4 sm:left-auto top-16 sm:top-auto sm:mt-2 w-auto sm:w-96 max-w-md bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-[70vh] flex flex-col">
                       <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
                         <div>
                           <h3 className="font-semibold text-white">Notifications</h3>
