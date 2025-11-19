@@ -466,6 +466,9 @@ export default function DashboardPage() {
             </div>
             <div className="text-2xl font-bold text-white mb-1">{user.current_streak}</div>
             <div className="text-sm text-gray-400">Current Streak</div>
+            <Link href="/streak" className="text-xs text-orange-400 hover:text-orange-300 mt-2 inline-block">
+              View Details →
+            </Link>
           </div>
 
           <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors">
