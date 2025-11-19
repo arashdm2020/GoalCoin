@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { InstallPWA } from '@/components/InstallPWA';
+import { getCountryName } from '@/utils/countries';
 
 interface User {
   id: string;
@@ -37,8 +38,6 @@ interface Notification {
   created_at: string;
 }
 
-// Country names cache to avoid repeated API calls
-const countryNamesCache: Record<string, string> = {};
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -136,44 +135,12 @@ export default function DashboardPage() {
 
       if (response.ok) {
         const data = await response.json();
-        const leaderboardData = data.leaderboard || [];
-        
-        // Fetch country names for all unique country codes
-        const uniqueCountryCodes = [...new Set(leaderboardData.map((entry: LeaderboardEntry) => entry.country_code).filter(Boolean))];
-        await Promise.all(
-          uniqueCountryCodes.map(code => fetchCountryName(code as string, backendUrl))
-        );
-        
-        setLeaderboard(leaderboardData);
+        setLeaderboard(data.leaderboard || []);
       }
     } catch (error) {
       console.error('[DASHBOARD] Error fetching leaderboard:', error);
       setLeaderboard([]);
     }
-  };
-
-  const fetchCountryName = async (code: string, backendUrl: string): Promise<void> => {
-    // Check cache first
-    if (countryNamesCache[code]) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${backendUrl}/api/country/name/${code}`);
-      if (response.ok) {
-        const data = await response.json();
-        countryNamesCache[code] = data.country_name;
-      } else {
-        countryNamesCache[code] = code; // Fallback to code
-      }
-    } catch (error) {
-      console.error(`[DASHBOARD] Error fetching country name for ${code}:`, error);
-      countryNamesCache[code] = code; // Fallback to code
-    }
-  };
-
-  const getCountryName = (code: string): string => {
-    return countryNamesCache[code] || code;
   };
 
   const handleLogout = () => {
@@ -692,8 +659,16 @@ export default function DashboardPage() {
                       <div className="font-semibold text-white mb-1">{entry.handle}</div>
                       {entry.country_code && (
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl leading-none">{entry.country_code}</span>
-                          <span className="text-xs text-gray-400">{getCountryName(entry.country_code)}</span>
+                          <img 
+                            src={`https://flagsapi.com/${entry.country_code}/flat/32.png`}
+                            alt={entry.country_code}
+                            className="w-6 h-4 object-cover rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          <span className="text-xs text-gray-300">{entry.country_code}</span>
+                          <span className="text-xs text-gray-400">({getCountryName(entry.country_code)})</span>
                         </div>
                       )}
                     </div>
