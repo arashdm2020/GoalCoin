@@ -37,6 +37,24 @@ interface Notification {
   created_at: string;
 }
 
+// Country code to name mapping
+const getCountryName = (code: string): string => {
+  const countries: Record<string, string> = {
+    'US': 'USA', 'GB': 'UK', 'CA': 'Canada', 'AU': 'Australia',
+    'DE': 'Germany', 'FR': 'France', 'IT': 'Italy', 'ES': 'Spain',
+    'NL': 'Netherlands', 'BE': 'Belgium', 'CH': 'Switzerland',
+    'AT': 'Austria', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark',
+    'FI': 'Finland', 'PL': 'Poland', 'CZ': 'Czechia', 'RO': 'Romania',
+    'IR': 'Iran', 'TR': 'Turkey', 'SA': 'Saudi Arabia', 'AE': 'UAE',
+    'EG': 'Egypt', 'IQ': 'Iraq', 'JO': 'Jordan', 'LB': 'Lebanon',
+    'CN': 'China', 'JP': 'Japan', 'KR': 'S. Korea', 'IN': 'India',
+    'TH': 'Thailand', 'VN': 'Vietnam', 'PH': 'Philippines',
+    'BR': 'Brazil', 'MX': 'Mexico', 'AR': 'Argentina', 'CL': 'Chile',
+    'ZA': 'S. Africa', 'NG': 'Nigeria', 'KE': 'Kenya', 'GH': 'Ghana',
+  };
+  return countries[code] || code;
+};
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +63,7 @@ export default function DashboardPage() {
   const [showProfile, setShowProfile] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [challengeDay, setChallengeDay] = useState<number>(0);
+  const [leaderboardPage, setLeaderboardPage] = useState<number>(1);
   const router = useRouter();
 
   useEffect(() => {
@@ -125,7 +144,8 @@ export default function DashboardPage() {
 
   const fetchLeaderboardPreview = async (token: string, backendUrl: string) => {
     try {
-      const response = await fetch(`${backendUrl}/api/leaderboard?limit=5`, {
+      // Fetch top 20 for pagination (4 pages of 5 each)
+      const response = await fetch(`${backendUrl}/api/leaderboard?limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -637,13 +657,13 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl overflow-hidden">
-              {leaderboard.map((entry, index) => (
+              {leaderboard.slice((leaderboardPage - 1) * 5, leaderboardPage * 5).map((entry, index) => (
                 <div 
                   key={entry.rank}
-                  className={`flex items-center justify-between p-4 ${index !== leaderboard.length - 1 ? 'border-b border-gray-800' : ''} hover:bg-gray-800/50 transition-colors`}
+                  className={`flex items-center justify-between p-4 ${index !== 4 ? 'border-b border-gray-800' : ''} hover:bg-gray-800/50 transition-colors`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
                       entry.rank === 1 ? 'bg-yellow-500 text-black' :
                       entry.rank === 2 ? 'bg-gray-400 text-black' :
                       entry.rank === 3 ? 'bg-orange-600 text-white' :
@@ -651,13 +671,14 @@ export default function DashboardPage() {
                     }`}>
                       {entry.rank}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-white">{entry.handle}</span>
-                        {entry.country_code && (
-                          <span className="text-lg">{entry.country_code}</span>
-                        )}
-                      </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-white mb-1">{entry.handle}</div>
+                      {entry.country_code && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl leading-none">{entry.country_code}</span>
+                          <span className="text-xs text-gray-400">{getCountryName(entry.country_code)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
@@ -667,6 +688,29 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+            
+            {/* Pagination */}
+            {leaderboard.length > 5 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <button
+                  onClick={() => setLeaderboardPage(Math.max(1, leaderboardPage - 1))}
+                  disabled={leaderboardPage === 1}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  ← Previous
+                </button>
+                <span className="text-gray-400 text-sm">
+                  Page {leaderboardPage} of {Math.ceil(leaderboard.length / 5)}
+                </span>
+                <button
+                  onClick={() => setLeaderboardPage(Math.min(Math.ceil(leaderboard.length / 5), leaderboardPage + 1))}
+                  disabled={leaderboardPage >= Math.ceil(leaderboard.length / 5)}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>
