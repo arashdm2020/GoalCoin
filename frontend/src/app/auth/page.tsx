@@ -65,9 +65,20 @@ function AuthForm() {
       // Redirect based on action
       if (isLogin) {
         // Login: check if profile is complete
-        if (data.user.wallet && data.user.handle && data.user.country_code) {
+        // Use strict checking to ensure all fields exist and are not empty
+        const hasWallet = data.user.wallet && data.user.wallet.trim() !== '';
+        const hasHandle = data.user.handle && data.user.handle.trim() !== '';
+        const hasCountry = data.user.country_code && data.user.country_code.trim() !== '';
+        
+        if (hasWallet && hasHandle && hasCountry) {
+          console.log('[AUTH] Profile complete, redirecting to dashboard');
           router.push('/dashboard');
         } else {
+          console.log('[AUTH] Profile incomplete, redirecting to complete-profile', {
+            hasWallet,
+            hasHandle,
+            hasCountry
+          });
           router.push('/complete-profile');
         }
       } else {

@@ -45,8 +45,23 @@ export default function CompleteProfilePage() {
         const data = await response.json();
         const user = data.user;
 
+        // Strict checking for profile completion
+        const hasWallet = user.wallet && user.wallet.trim() !== '';
+        const hasHandle = user.handle && user.handle.trim() !== '';
+        const hasCountry = user.country_code && user.country_code.trim() !== '';
+
+        console.log('[COMPLETE-PROFILE] Profile status:', {
+          hasWallet,
+          hasHandle,
+          hasCountry,
+          wallet: user.wallet,
+          handle: user.handle,
+          country_code: user.country_code
+        });
+
         // If profile is complete, redirect to dashboard
-        if (user.wallet && user.handle && user.country_code) {
+        if (hasWallet && hasHandle && hasCountry) {
+          console.log('[COMPLETE-PROFILE] Profile complete, redirecting to dashboard');
           router.push('/dashboard');
           return;
         }
@@ -56,9 +71,11 @@ export default function CompleteProfilePage() {
         setCountryCode(user.country_code || '');
         setWallet(user.wallet || '');
         setEmailVerified(user.email_verified || false);
+        
+        console.log('[COMPLETE-PROFILE] Profile incomplete, staying on page');
       }
     } catch (error) {
-      console.error('Error checking profile status:', error);
+      console.error('[COMPLETE-PROFILE] Error checking profile status:', error);
     }
   };
 
