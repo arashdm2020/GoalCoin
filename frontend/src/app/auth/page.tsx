@@ -15,6 +15,48 @@ function AuthForm() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Check if user is already logged in
+    const checkAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        console.log('[AUTH] User already logged in, checking token validity');
+        try {
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+          const response = await fetch(`${backendUrl}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const user = data.user;
+            
+            // Check if profile is complete
+            const hasWallet = user.wallet && user.wallet.trim() !== '';
+            const hasHandle = user.handle && user.handle.trim() !== '';
+            const hasCountry = user.country_code && user.country_code.trim() !== '';
+            
+            if (hasWallet && hasHandle && hasCountry) {
+              console.log('[AUTH] Valid session found, redirecting to dashboard');
+              router.push('/dashboard');
+            } else {
+              console.log('[AUTH] Valid session but incomplete profile, redirecting to complete-profile');
+              router.push('/complete-profile');
+            }
+          } else {
+            // Token invalid, clear it
+            console.log('[AUTH] Invalid token, clearing session');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+          }
+        } catch (error) {
+          console.error('[AUTH] Error checking auth status:', error);
+          // Keep user on auth page if check fails
+        }
+      }
+    };
+
+    checkAuth();
+
     // Capture referral code from URL
     const ref = searchParams.get('ref');
     if (ref) {
@@ -23,7 +65,7 @@ function AuthForm() {
       localStorage.setItem('referral_code', ref);
       console.log('[REFERRAL] Captured referral code:', ref);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
