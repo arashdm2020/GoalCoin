@@ -50,6 +50,8 @@ export default function MealsPage() {
   ];
 
   useEffect(() => {
+    // Fetch meal data when component mounts or region changes
+    // Note: This is expected behavior - changing region refreshes the meal plan
     fetchMealData();
   }, [selectedRegion]);
 

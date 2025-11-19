@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { initializeSession, getDeviceId } from '../../utils/sessionManager';
 
 function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -52,9 +53,14 @@ function AuthForm() {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      // Store JWT token
+      // Store JWT token and initialize session
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Initialize session for multi-device management
+      const sessionId = initializeSession();
+      const deviceId = getDeviceId();
+      console.log('[AUTH] Session initialized:', { sessionId, deviceId });
 
       // Redirect based on action
       if (isLogin) {
