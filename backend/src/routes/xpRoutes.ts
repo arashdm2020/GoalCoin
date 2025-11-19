@@ -61,7 +61,7 @@ router.get('/logs', authMiddleware, async (req: Request, res: Response): Promise
     const userId = (req as any).user.id;
     const limit = parseInt(req.query.limit as string) || 100;
 
-    const events = await xpService.getUserXPHistory(userId, limit);
+    const events = await xpService.getUserXPHistory(userId, limit) as any[];
     
     // Get user's total XP
     const { PrismaClient } = require('@prisma/client');
