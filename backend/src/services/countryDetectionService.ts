@@ -113,39 +113,85 @@ class CountryDetectionService {
   /**
    * Get country name from code (basic mapping)
    */
-  private getCountryName(code: string): string {
+  getCountryName(code: string): string {
     const countries: Record<string, string> = {
-      US: 'United States',
-      GB: 'United Kingdom',
+      // North America
+      US: 'USA',
       CA: 'Canada',
-      AU: 'Australia',
+      MX: 'Mexico',
+      
+      // Europe
+      GB: 'UK',
       DE: 'Germany',
       FR: 'France',
       IT: 'Italy',
       ES: 'Spain',
       NL: 'Netherlands',
+      BE: 'Belgium',
+      CH: 'Switzerland',
+      AT: 'Austria',
       SE: 'Sweden',
       NO: 'Norway',
       DK: 'Denmark',
       FI: 'Finland',
       PL: 'Poland',
-      BR: 'Brazil',
-      MX: 'Mexico',
-      AR: 'Argentina',
-      IN: 'India',
+      CZ: 'Czechia',
+      RO: 'Romania',
+      GR: 'Greece',
+      PT: 'Portugal',
+      IE: 'Ireland',
+      
+      // Middle East
+      IR: 'Iran',
+      TR: 'Turkey',
+      SA: 'Saudi Arabia',
+      AE: 'UAE',
+      EG: 'Egypt',
+      IQ: 'Iraq',
+      JO: 'Jordan',
+      LB: 'Lebanon',
+      KW: 'Kuwait',
+      QA: 'Qatar',
+      OM: 'Oman',
+      BH: 'Bahrain',
+      
+      // Asia
       CN: 'China',
       JP: 'Japan',
-      KR: 'South Korea',
+      KR: 'S. Korea',
+      IN: 'India',
+      TH: 'Thailand',
+      VN: 'Vietnam',
+      PH: 'Philippines',
       SG: 'Singapore',
-      AE: 'United Arab Emirates',
-      SA: 'Saudi Arabia',
-      ZA: 'South Africa',
+      MY: 'Malaysia',
+      ID: 'Indonesia',
+      PK: 'Pakistan',
+      BD: 'Bangladesh',
+      
+      // South America
+      BR: 'Brazil',
+      AR: 'Argentina',
+      CL: 'Chile',
+      CO: 'Colombia',
+      PE: 'Peru',
+      VE: 'Venezuela',
+      
+      // Africa
+      ZA: 'S. Africa',
       NG: 'Nigeria',
-      EG: 'Egypt',
-      TR: 'Turkey',
+      KE: 'Kenya',
+      GH: 'Ghana',
+      ET: 'Ethiopia',
+      TZ: 'Tanzania',
+      
+      // Oceania
+      AU: 'Australia',
+      NZ: 'New Zealand',
+      
+      // Other
       RU: 'Russia',
       UA: 'Ukraine',
-      // Add more as needed
     };
     
     return countries[code] || code;

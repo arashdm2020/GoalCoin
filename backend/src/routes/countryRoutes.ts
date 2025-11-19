@@ -28,4 +28,28 @@ router.get('/detect', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/country/name/:code
+ * Get country name from country code
+ */
+router.get('/name/:code', async (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+    const countryName = (countryDetectionService as any).getCountryName(code.toUpperCase());
+    
+    res.json({
+      success: true,
+      country_code: code.toUpperCase(),
+      country_name: countryName,
+    });
+  } catch (error: any) {
+    console.error('[COUNTRY] Name lookup error:', error);
+    res.status(500).json({ 
+      error: 'Failed to get country name',
+      country_code: req.params.code,
+      country_name: req.params.code,
+    });
+  }
+});
+
 export { router as countryRoutes };

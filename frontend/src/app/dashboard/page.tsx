@@ -37,23 +37,8 @@ interface Notification {
   created_at: string;
 }
 
-// Country code to name mapping
-const getCountryName = (code: string): string => {
-  const countries: Record<string, string> = {
-    'US': 'USA', 'GB': 'UK', 'CA': 'Canada', 'AU': 'Australia',
-    'DE': 'Germany', 'FR': 'France', 'IT': 'Italy', 'ES': 'Spain',
-    'NL': 'Netherlands', 'BE': 'Belgium', 'CH': 'Switzerland',
-    'AT': 'Austria', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark',
-    'FI': 'Finland', 'PL': 'Poland', 'CZ': 'Czechia', 'RO': 'Romania',
-    'IR': 'Iran', 'TR': 'Turkey', 'SA': 'Saudi Arabia', 'AE': 'UAE',
-    'EG': 'Egypt', 'IQ': 'Iraq', 'JO': 'Jordan', 'LB': 'Lebanon',
-    'CN': 'China', 'JP': 'Japan', 'KR': 'S. Korea', 'IN': 'India',
-    'TH': 'Thailand', 'VN': 'Vietnam', 'PH': 'Philippines',
-    'BR': 'Brazil', 'MX': 'Mexico', 'AR': 'Argentina', 'CL': 'Chile',
-    'ZA': 'S. Africa', 'NG': 'Nigeria', 'KE': 'Kenya', 'GH': 'Ghana',
-  };
-  return countries[code] || code;
-};
+// Country names cache to avoid repeated API calls
+const countryNamesCache: Record<string, string> = {};
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -151,12 +136,44 @@ export default function DashboardPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setLeaderboard(data.leaderboard || []);
+        const leaderboardData = data.leaderboard || [];
+        
+        // Fetch country names for all unique country codes
+        const uniqueCountryCodes = [...new Set(leaderboardData.map((entry: LeaderboardEntry) => entry.country_code).filter(Boolean))];
+        await Promise.all(
+          uniqueCountryCodes.map(code => fetchCountryName(code as string, backendUrl))
+        );
+        
+        setLeaderboard(leaderboardData);
       }
     } catch (error) {
       console.error('[DASHBOARD] Error fetching leaderboard:', error);
       setLeaderboard([]);
     }
+  };
+
+  const fetchCountryName = async (code: string, backendUrl: string): Promise<void> => {
+    // Check cache first
+    if (countryNamesCache[code]) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/api/country/name/${code}`);
+      if (response.ok) {
+        const data = await response.json();
+        countryNamesCache[code] = data.country_name;
+      } else {
+        countryNamesCache[code] = code; // Fallback to code
+      }
+    } catch (error) {
+      console.error(`[DASHBOARD] Error fetching country name for ${code}:`, error);
+      countryNamesCache[code] = code; // Fallback to code
+    }
+  };
+
+  const getCountryName = (code: string): string => {
+    return countryNamesCache[code] || code;
   };
 
   const handleLogout = () => {
