@@ -37,6 +37,7 @@ export default function MealsPage() {
   const [loading, setLoading] = useState(true);
   const [logging, setLogging] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string>('global');
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { showSuccess, showError, ToastComponent } = useToast();
 
   const regions = [
@@ -52,6 +53,12 @@ export default function MealsPage() {
   useEffect(() => {
     // Fetch meal data when component mounts or region changes
     // Note: This is expected behavior - changing region refreshes the meal plan
+    if (isInitialLoad) {
+      console.log('[MEALS] Initial load, fetching meal data for region:', selectedRegion);
+      setIsInitialLoad(false);
+    } else {
+      console.log('[MEALS] Region changed to:', selectedRegion, '- Refreshing meal plan');
+    }
     fetchMealData();
   }, [selectedRegion]);
 
@@ -59,6 +66,8 @@ export default function MealsPage() {
     try {
       const token = localStorage.getItem('auth_token');
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'https://goalcoin.onrender.com';
+      
+      console.log('[MEALS] Fetching meal plan for region:', selectedRegion);
       
       // Fetch today's meal plan
       const planRes = await fetch(
@@ -69,16 +78,19 @@ export default function MealsPage() {
       );
       
       if (!planRes.ok) {
+        console.error('[MEALS] Failed to fetch meal plan, status:', planRes.status);
         throw new Error('Failed to fetch meal plan');
       }
       
       const planData = await planRes.json();
+      console.log('[MEALS] Received meal plan:', planData);
       
       // Validate meal plan data
       if (planData && planData.breakfast && planData.lunch && planData.dinner) {
+        console.log('[MEALS] Meal plan valid, updating state');
         setMealPlan(planData);
       } else {
-        console.error('Invalid meal plan data:', planData);
+        console.error('[MEALS] Invalid meal plan data:', planData);
         setMealPlan(null);
       }
 
@@ -87,11 +99,12 @@ export default function MealsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const statsData = await statsRes.json();
+      console.log('[MEALS] Received stats:', statsData);
       setStats(statsData);
 
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching meal data:', error);
+      console.error('[MEALS] Error fetching meal data:', error);
       setLoading(false);
     }
   };
