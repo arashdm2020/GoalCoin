@@ -16,6 +16,15 @@ interface User {
   current_streak: number;
   longest_streak: number;
   burn_multiplier: number;
+  challenge_start_date?: string;
+  payment_tier?: string;
+}
+
+interface LeaderboardEntry {
+  rank: number;
+  handle: string;
+  xp_points: number;
+  country_code?: string;
 }
 
 interface Notification {
@@ -34,6 +43,8 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [challengeDay, setChallengeDay] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -64,8 +75,20 @@ export default function DashboardPage() {
         
         setUser(data.user);
         
+        // Calculate challenge day
+        if (data.user.challenge_start_date) {
+          const startDate = new Date(data.user.challenge_start_date);
+          const today = new Date();
+          const diffTime = Math.abs(today.getTime() - startDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          setChallengeDay(Math.min(diffDays, 90));
+        }
+        
         // Fetch real notifications
         fetchNotifications(token, backendUrl);
+        
+        // Fetch leaderboard preview
+        fetchLeaderboardPreview(token, backendUrl);
       } catch (error) {
         localStorage.removeItem('auth_token');
         router.push('/auth');
@@ -97,6 +120,22 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('[DASHBOARD] Error fetching notifications:', error);
       setNotifications([]);
+    }
+  };
+
+  const fetchLeaderboardPreview = async (token: string, backendUrl: string) => {
+    try {
+      const response = await fetch(`${backendUrl}/api/leaderboard?limit=5`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.leaderboard || []);
+      }
+    } catch (error) {
+      console.error('[DASHBOARD] Error fetching leaderboard:', error);
+      setLeaderboard([]);
     }
   };
 
@@ -332,19 +371,41 @@ export default function DashboardPage() {
 
         {/* Active Challenge Status */}
         {!needsPayment && (
-          <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border border-green-500/50 rounded-lg p-6 hover:border-green-400 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-green-400 text-sm font-medium">90-Day Challenge Active</span>
-              <span className="text-2xl">✅</span>
+          <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border border-green-500/50 rounded-lg p-6 hover:border-green-400 transition-all mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-green-400 text-sm font-medium">90-Day Challenge Active</span>
+                  <span className="text-2xl">✅</span>
+                </div>
+                <p className="text-white font-bold text-lg">Enrolled as {user.tier} member</p>
+                {user.payment_tier && (
+                  <p className="text-sm text-gray-400 mt-1">Payment Tier: {user.payment_tier}</p>
+                )}
+              </div>
+              {challengeDay > 0 && (
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-white">Day {challengeDay}</div>
+                  <div className="text-sm text-gray-400">of 90</div>
+                  <div className="mt-2 w-32 bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full transition-all"
+                      style={{ width: `${(challengeDay / 90) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-white font-bold text-lg">Enrolled as {user.tier} member</p>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-sm text-gray-400">Burn Multiplier:</span>
-              <span className="text-xl font-bold text-orange-400">{user.burn_multiplier}X</span>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">Burn Multiplier:</span>
+                <span className="text-2xl font-bold text-orange-400">🔥 {user.burn_multiplier}X</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">Current Streak:</span>
+                <span className="text-2xl font-bold text-yellow-400">⚡ {user.current_streak} days</span>
+              </div>
             </div>
-            <button className="mt-4 text-sm text-green-400 hover:text-green-300 transition-colors">
-              View Challenge Details →
-            </button>
           </div>
         )}
 
@@ -389,6 +450,9 @@ export default function DashboardPage() {
             </div>
             <div className="text-2xl font-bold text-white mb-1">{user.xp_points.toLocaleString()}</div>
             <div className="text-sm text-gray-400">Experience Points</div>
+            <Link href="/dashboard/xp-logs" className="text-xs text-blue-400 hover:text-blue-300 mt-2 inline-block">
+              View History →
+            </Link>
           </div>
 
           <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors">
@@ -559,6 +623,49 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {/* Leaderboard Preview */}
+        {leaderboard.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">🏆 Top Performers</h3>
+              <Link href="/leaderboard" className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors">
+                View Full Leaderboard →
+              </Link>
+            </div>
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl overflow-hidden">
+              {leaderboard.map((entry, index) => (
+                <div 
+                  key={entry.rank}
+                  className={`flex items-center justify-between p-4 ${index !== leaderboard.length - 1 ? 'border-b border-gray-800' : ''} hover:bg-gray-800/50 transition-colors`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      entry.rank === 1 ? 'bg-yellow-500 text-black' :
+                      entry.rank === 2 ? 'bg-gray-400 text-black' :
+                      entry.rank === 3 ? 'bg-orange-600 text-white' :
+                      'bg-gray-700 text-gray-300'
+                    }`}>
+                      {entry.rank}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-white">{entry.handle}</span>
+                        {entry.country_code && (
+                          <span className="text-lg">{entry.country_code}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-yellow-400">{entry.xp_points.toLocaleString()}</div>
+                    <div className="text-xs text-gray-500">XP</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

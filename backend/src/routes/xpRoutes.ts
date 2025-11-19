@@ -55,4 +55,40 @@ router.get('/history', authMiddleware, async (req: Request, res: Response): Prom
   }
 });
 
+// Get user XP logs (formatted for frontend)
+router.get('/logs', authMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const limit = parseInt(req.query.limit as string) || 100;
+
+    const events = await xpService.getUserXPHistory(userId, limit);
+    
+    // Get user's total XP
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { xp_points: true }
+    });
+
+    // Format logs for frontend
+    const logs = events.map((event: any) => ({
+      id: event.id,
+      action_type: event.action_key || 'unknown',
+      xp_earned: event.xp_awarded || 0,
+      description: event.metadata?.description || `Earned XP from ${event.action_key}`,
+      created_at: event.created_at,
+      metadata: event.metadata
+    }));
+
+    res.json({
+      logs,
+      total_xp: user?.xp_points || 0,
+      count: logs.length
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export { router as xpRoutes };
