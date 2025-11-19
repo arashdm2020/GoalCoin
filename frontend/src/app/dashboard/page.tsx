@@ -347,7 +347,7 @@ export default function DashboardPage() {
 
       <main className="container mx-auto px-6 py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
+        <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-3xl font-bold text-white">Good morning, {user.handle}!</h2>
