@@ -135,7 +135,6 @@ export const adminController = {
           email: true,
           wallet: true,
           tier: true,
-          payment_tier: true,
           xp_points: true,
           goal_points: true,
           current_streak: true,

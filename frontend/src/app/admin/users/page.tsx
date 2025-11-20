@@ -9,7 +9,6 @@ interface User {
   handle: string;
   email: string;
   tier: string;
-  payment_tier?: string;
   xp_points: number;
   goal_points: number;
   current_streak: number;
@@ -149,9 +148,6 @@ export default function UsersPage() {
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-yellow-500/10 text-yellow-400 border-yellow-500/30">
                         {user.tier}
                       </span>
-                      {user.payment_tier && (
-                        <div className="text-xs text-green-400 mt-1">${user.payment_tier}</div>
-                      )}
                     </td>
                     <td className="px-4 py-3 font-medium text-yellow-400">{user.xp_points.toLocaleString()}</td>
                     <td className="px-4 py-3 font-medium text-green-400">{user.goal_points.toLocaleString()}</td>
