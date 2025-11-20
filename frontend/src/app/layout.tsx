@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Orbitron, Exo_2 } from "next/font/google";
 import "./globals.css";
+import "../styles/ios.css";
 import { Providers } from "./providers";
 import AnimatedBackground from "../components/AnimatedBackground";
 
@@ -31,6 +32,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover", // iOS safe area support
   themeColor: "#FFD700",
 };
 

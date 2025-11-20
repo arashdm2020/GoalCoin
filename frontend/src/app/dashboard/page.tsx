@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { InstallPWA } from '@/components/InstallPWA';
 import { getCountryName } from '@/utils/countries';
 import { getTierBadge, getBurnMultiplier, getStreakCap, isStakedMember } from '@/utils/tierUtils';
+import { isIOS, lockScroll, unlockScroll } from '@/utils/iosHelpers';
+import '@/styles/ios.css';
 
 interface User {
   id: string;
@@ -210,7 +212,7 @@ export default function DashboardPage() {
                       className="fixed inset-0 z-40"
                       onClick={() => setShowNotifications(false)}
                     />
-                    <div className="fixed sm:absolute right-4 sm:right-0 left-4 sm:left-auto top-16 sm:top-auto sm:mt-2 w-auto sm:w-96 max-w-md bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-[70vh] flex flex-col">
+                    <div className="ios-notification-drawer bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col">
                       <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
                         <div>
                           <h3 className="font-semibold text-white">Notifications</h3>
@@ -229,7 +231,7 @@ export default function DashboardPage() {
                           </button>
                         )}
                       </div>
-                      <div className="overflow-y-auto flex-1 custom-scrollbar">
+                      <div className="overflow-y-auto flex-1 custom-scrollbar ios-scroll">
                         {notifications.length === 0 ? (
                           <div className="p-8 text-center text-gray-400">
                             <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
