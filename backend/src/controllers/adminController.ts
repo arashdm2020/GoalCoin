@@ -1660,7 +1660,7 @@ export const adminController = {
       }
 
       // Fetch XP events for this user
-      const xpEvents = await prisma.xPEvent.findMany({
+      const xpEvents = await (prisma as any).xPEvent.findMany({
         where: { user_id: id },
         orderBy: { created_at: 'desc' },
         take: limit,
@@ -1717,7 +1717,7 @@ export const adminController = {
       }
 
       // Fetch submissions that affected streak (approved/rejected)
-      const submissions = await prisma.submission.findMany({
+      const submissions = await (prisma.submission.findMany as any)({
         where: { 
           user_id: id,
           status: { in: ['APPROVED', 'REJECTED'] },
@@ -1758,6 +1758,65 @@ export const adminController = {
     } catch (error) {
       console.error('Failed to fetch user streak logs:', error);
       res.status(500).json({ error: 'Failed to fetch streak logs' });
+    }
+  },
+
+  async getUserChallengeProgress(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      // Check if user exists and get challenge start date
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { 
+          id: true,
+          created_at: true,
+        },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Calculate current day (assuming challenge starts from user creation)
+      const startDate = new Date(user.created_at);
+      const currentDate = new Date();
+      const daysDiff = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const currentDay = Math.min(daysDiff + 1, 45); // Cap at 45 days
+      const totalDays = 45;
+
+      // Fetch all submissions for this user
+      const submissions = await (prisma.submission.findMany as any)({
+        where: { user_id: id },
+        orderBy: { week_number: 'asc' },
+        select: {
+          id: true,
+          week_number: true,
+          status: true,
+          created_at: true,
+        },
+      });
+
+      // Format submissions by week
+      const submissionsByWeek = submissions.map((sub: any) => ({
+        week: sub.week_number,
+        status: sub.status,
+        submitted_at: sub.created_at,
+      }));
+
+      res.status(200).json({
+        success: true,
+        progress: {
+          current_day: currentDay,
+          total_days: totalDays,
+          start_date: startDate,
+          submissions_by_week: submissionsByWeek,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch challenge progress:', error);
+      res.status(500).json({ error: 'Failed to fetch challenge progress' });
     }
   },
 

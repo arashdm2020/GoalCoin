@@ -25,6 +25,18 @@ interface UserData {
   email_verified: boolean;
   created_at: string;
   last_activity_date?: string;
+  challenge_start_date?: string;
+}
+
+interface ChallengeProgress {
+  current_day: number;
+  total_days: number;
+  start_date: string;
+  submissions_by_week: {
+    week: number;
+    status: string;
+    submitted_at: string;
+  }[];
 }
 
 interface UserStats {
@@ -60,7 +72,8 @@ export default function UserDetailPage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [xpLogs, setXpLogs] = useState<XPLog[]>([]);
   const [streakLogs, setStreakLogs] = useState<StreakLog[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'xp' | 'streak'>('overview');
+  const [challengeProgress, setChallengeProgress] = useState<ChallengeProgress | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'xp' | 'streak' | 'challenge'>('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -125,6 +138,16 @@ export default function UserDetailPage() {
       if (streakResponse.ok) {
         const streakData = await streakResponse.json();
         setStreakLogs(streakData.logs || []);
+      }
+
+      // Fetch challenge progress
+      const challengeResponse = await fetch(`${getBackendUrl()}/api/admin/users/${userId}/challenge-progress`, {
+        headers: { 'Authorization': authHeader }
+      });
+
+      if (challengeResponse.ok) {
+        const challengeData = await challengeResponse.json();
+        setChallengeProgress(challengeData.progress || null);
       }
 
       setLoading(false);
@@ -347,6 +370,16 @@ export default function UserDetailPage() {
             >
               🔥 Streak History ({streakLogs.length})
             </button>
+            <button
+              onClick={() => setActiveTab('challenge')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'challenge'
+                  ? 'text-yellow-400 border-b-2 border-yellow-400'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              📅 Challenge Progress
+            </button>
           </div>
         </div>
 
@@ -498,6 +531,90 @@ export default function UserDetailPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Challenge Progress Tab */}
+        {activeTab === 'challenge' && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-white">45-Day Challenge Progress</h2>
+              {challengeProgress && (
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-yellow-400">
+                    Day {challengeProgress.current_day} of {challengeProgress.total_days}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    Started: {new Date(challengeProgress.start_date).toLocaleDateString()}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {!challengeProgress ? (
+              <div className="text-center py-12 text-gray-400">
+                User has not started the challenge yet
+              </div>
+            ) : (
+              <div>
+                {/* Progress Bar */}
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-400">Overall Progress</span>
+                    <span className="text-sm font-medium text-white">
+                      {Math.round((challengeProgress.current_day / challengeProgress.total_days) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-4">
+                    <div 
+                      className="bg-gradient-to-r from-green-400 to-emerald-500 h-4 rounded-full transition-all"
+                      style={{ width: `${(challengeProgress.current_day / challengeProgress.total_days) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Weekly Submissions */}
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Weekly Submissions</h3>
+                  {challengeProgress.submissions_by_week.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      No submissions yet
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {challengeProgress.submissions_by_week.map((submission, index) => (
+                        <div 
+                          key={index}
+                          className={`bg-white/5 rounded-lg p-4 border ${
+                            submission.status === 'APPROVED' 
+                              ? 'border-green-500/30 bg-green-500/5' 
+                              : submission.status === 'REJECTED'
+                              ? 'border-red-500/30 bg-red-500/5'
+                              : 'border-yellow-500/30 bg-yellow-500/5'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-lg font-bold text-white">Week {submission.week}</span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              submission.status === 'APPROVED'
+                                ? 'bg-green-500/20 text-green-300'
+                                : submission.status === 'REJECTED'
+                                ? 'bg-red-500/20 text-red-300'
+                                : 'bg-yellow-500/20 text-yellow-300'
+                            }`}>
+                              {submission.status}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {new Date(submission.submitted_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

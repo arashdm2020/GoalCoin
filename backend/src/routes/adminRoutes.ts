@@ -13,6 +13,7 @@ router.get('/users/:id', basicAuthMiddleware, adminController.getUserDetails);
 router.get('/users/:id/stats', basicAuthMiddleware, adminController.getUserStats);
 router.get('/users/:id/xp-logs', basicAuthMiddleware, adminController.getUserXPLogs);
 router.get('/users/:id/streak-logs', basicAuthMiddleware, adminController.getUserStreakLogs);
+router.get('/users/:id/challenge-progress', basicAuthMiddleware, adminController.getUserChallengeProgress);
 
 // Reviewer management
 router.get('/reviewers', basicAuthMiddleware, adminController.listReviewers);
