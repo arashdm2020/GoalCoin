@@ -649,6 +649,64 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Weekly Tips Section */}
+        {user && user.payment_tier && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl p-6 backdrop-blur-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">
+                    💡 Weekly Tips
+                    {isStakedMember(user.payment_tier) && (
+                      <span className="ml-2 text-xs px-2 py-1 bg-purple-500/30 text-purple-300 rounded-full border border-purple-500/50">
+                        Premium
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-gray-400">Expert advice for your fitness journey</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="bg-black/30 rounded-lg p-4 border border-purple-500/20">
+                  <h4 className="font-semibold text-purple-300 mb-2">🎯 This Week's Focus</h4>
+                  <p className="text-sm text-gray-300">
+                    Focus on progressive overload - increase weight or reps by 5-10% each week. 
+                    Track your numbers to ensure consistent progress.
+                  </p>
+                </div>
+                
+                <div className="bg-black/30 rounded-lg p-4 border border-purple-500/20">
+                  <h4 className="font-semibold text-purple-300 mb-2">🍽️ Nutrition Tip</h4>
+                  <p className="text-sm text-gray-300">
+                    Aim for 0.8-1g of protein per pound of body weight. 
+                    Spread intake across 4-5 meals for optimal muscle recovery.
+                  </p>
+                </div>
+                
+                {isStakedMember(user.payment_tier) && (
+                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-4 border border-purple-500/30">
+                    <h4 className="font-semibold text-purple-300 mb-2">⭐ Premium Insight</h4>
+                    <p className="text-sm text-gray-300">
+                      Time your carbs around workouts for maximum performance. 
+                      Consume 30-50g of fast-acting carbs 30 minutes pre-workout for energy boost.
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-4 text-xs text-gray-500 text-center">
+                Tips updated weekly • Curated by certified trainers
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Leaderboard Preview */}
         {leaderboard.length > 0 && (
           <div className="mb-8">

@@ -69,12 +69,12 @@ export default function Home() {
           {/* Pricing Tiers */}
           <div className="mb-8">
             <h3 className="text-3xl font-bold mb-6">Choose Your Challenge Tier</h3>
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {/* Tier 1: $19 */}
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-gray-700 rounded-xl p-8 hover:border-yellow-500 transition-all">
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* Tier 1: $19 - Base Member */}
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-blue-500/50 rounded-xl p-8 hover:border-blue-500 transition-all">
                 <div className="text-center mb-6">
-                  <div className="text-5xl font-bold text-yellow-400 mb-2">$19</div>
-                  <div className="text-sm text-gray-400">Entry Tier</div>
+                  <div className="text-5xl font-bold text-blue-400 mb-2">$19</div>
+                  <div className="text-sm text-gray-400">Base Member</div>
                 </div>
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2">
@@ -90,72 +90,59 @@ export default function Home() {
                     <span className="text-sm">XP & Leaderboard</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-sm">5 Day Streak Cap</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <span className="text-orange-400 font-bold">🔥</span>
-                    <span className="text-sm font-semibold">1.5X Burn Multiplier</span>
+                    <span className="text-sm font-semibold">1.00X Burn Multiplier</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400 font-bold">⚡</span>
+                    <span className="text-sm font-semibold">1.00X XP Multiplier</span>
                   </div>
                 </div>
-                <Link href="/auth" className="block w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg text-center transition-all">
+                <Link href="/auth" className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-center transition-all">
                   Start Challenge
                 </Link>
               </div>
 
-              {/* Tier 2: $35 */}
-              <div className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 border-2 border-yellow-500 rounded-xl p-8 transform scale-105 shadow-2xl relative">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-4 py-1 rounded-full text-xs font-bold">
-                  POPULAR
+              {/* Tier 2: $35 - Staked Member */}
+              <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-2 border-purple-500 rounded-xl p-8 transform scale-105 shadow-2xl relative">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold">
+                  RECOMMENDED
                 </div>
                 <div className="text-center mb-6">
-                  <div className="text-5xl font-bold text-yellow-400 mb-2">$35</div>
-                  <div className="text-sm text-gray-400">Pro Tier</div>
+                  <div className="text-5xl font-bold text-purple-400 mb-2">$35</div>
+                  <div className="text-sm text-gray-400">Staked Member</div>
                 </div>
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2">
                     <span className="text-green-400">✓</span>
-                    <span className="text-sm">Everything in Entry</span>
+                    <span className="text-sm">Everything in Base</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-green-400">✓</span>
-                    <span className="text-sm">Priority Support</span>
+                    <span className="text-sm">7 Day Streak Cap</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-green-400">✓</span>
-                    <span className="text-sm">Exclusive Content</span>
+                    <span className="text-sm">Premium Weekly Tips</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-orange-400 font-bold">🔥🔥</span>
-                    <span className="text-sm font-semibold">2.0X Burn Multiplier</span>
+                    <span className="text-purple-400 font-bold">🌟</span>
+                    <span className="text-sm font-semibold">Early Access: Phase 2</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-orange-400 font-bold">🔥</span>
+                    <span className="text-sm font-semibold">1.20X Burn Multiplier</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400 font-bold">⚡</span>
+                    <span className="text-sm font-semibold">1.10X XP Multiplier</span>
                   </div>
                 </div>
-                <Link href="/auth" className="block w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold py-3 rounded-lg text-center transition-all hover:opacity-90">
-                  Start Challenge
-                </Link>
-              </div>
-
-              {/* Tier 3: $49 */}
-              <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-2 border-purple-500 rounded-xl p-8 hover:border-purple-400 transition-all">
-                <div className="text-center mb-6">
-                  <div className="text-5xl font-bold text-purple-400 mb-2">$49</div>
-                  <div className="text-sm text-gray-400">Elite Tier</div>
-                </div>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span className="text-sm">Everything in Pro</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span className="text-sm">1-on-1 Coaching</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span className="text-sm">Custom Meal Plans</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-orange-400 font-bold">🔥🔥🔥</span>
-                    <span className="text-sm font-semibold">2.5X Burn Multiplier</span>
-                  </div>
-                </div>
-                <Link href="/auth" className="block w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-lg text-center transition-all">
+                <Link href="/auth" className="block w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 rounded-lg text-center transition-all hover:opacity-90">
                   Start Challenge
                 </Link>
               </div>
