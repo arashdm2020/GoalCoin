@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { warmupService } from '../services/warmupService';
 import { authMiddleware } from '../middleware/auth';
+import { PrismaClient } from '@prisma/client';
 
 const router = Router();
+const prisma = new PrismaClient();
 
 /**
  * GET /api/warmups/moves
@@ -109,10 +111,11 @@ router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.userId;
     
-    // Get user's warmup count and streak
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     
+    // Get user's warmup count and streak
     const warmupCount = await prisma.warmupLog.count({
       where: { user_id: userId }
     });
@@ -122,14 +125,18 @@ router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
       select: { current_streak: true, xp_points: true }
     });
     
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
     res.json({
-      current_streak: user?.current_streak || 0,
+      current_streak: user.current_streak || 0,
       total_sessions: warmupCount,
-      total_xp_earned: user?.xp_points || 0
+      total_xp_earned: user.xp_points || 0
     });
   } catch (error: any) {
     console.error('Error fetching warmup stats:', error);
-    res.status(500).json({ error: 'Failed to fetch warmup stats' });
+    res.status(500).json({ error: 'Failed to fetch warmup stats', details: error.message });
   }
 });
 
