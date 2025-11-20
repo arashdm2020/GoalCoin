@@ -400,15 +400,21 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-400">Burn Multiplier:</span>
-                <span className="text-2xl font-bold text-orange-400">🔥 {user.burn_multiplier}X</span>
+                <span className="text-2xl font-bold text-orange-400">🔥 {user.burn_multiplier.toFixed(2)}x</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-400">Current Streak:</span>
                 <span className="text-2xl font-bold text-yellow-400">⚡ {user.current_streak} days</span>
               </div>
+              {user.payment_tier && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Payment Tier:</span>
+                  <span className="text-lg font-bold text-green-400">${user.payment_tier}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
