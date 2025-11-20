@@ -30,8 +30,12 @@ export default function UsersPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchUsers();
-  }, [currentPage, searchTerm]);
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 300); // Debounce search by 300ms
+
+    return () => clearTimeout(timer);
+  }, [currentPage, searchTerm, itemsPerPage]);
 
   const fetchUsers = async () => {
     try {
@@ -45,8 +49,13 @@ export default function UsersPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
-        ...(searchTerm && { search: searchTerm }),
       });
+      
+      if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+
+      console.log('Fetching users with params:', params.toString());
 
       const response = await fetch(`${getBackendUrl()}/api/admin/users?${params}`, {
         headers: { Authorization: authHeader },
