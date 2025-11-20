@@ -247,7 +247,9 @@ app.use('/api/dev', healthRoutes);
 app.use('/api/admin-test', adminAuthTestRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/warmups', warmupRoutes);
+app.use('/api/warmup', warmupRoutes); // Alias for singular form
 app.use('/api/meals', mealRoutes);
+app.use('/api/meal', mealRoutes); // Alias for singular form
 app.use('/api/referrals', referralRoutes);
 app.use('/api/widgets', scoreboardWidgetRoutes);
 app.use('/api/analytics', analyticsRoutes);
