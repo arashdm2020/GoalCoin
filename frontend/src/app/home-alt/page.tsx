@@ -88,12 +88,12 @@ export default function HomeAlternative() {
                 <div className="text-sm text-gray-500">Days Challenge</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-orange-400">2.5X</div>
+                <div className="text-4xl font-bold text-orange-400">1.20X</div>
                 <div className="text-sm text-gray-500">Max Multiplier</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-yellow-400">$49</div>
-                <div className="text-sm text-gray-500">Elite Tier</div>
+                <div className="text-4xl font-bold text-purple-400">$35</div>
+                <div className="text-sm text-gray-500">Staked Tier</div>
               </div>
             </div>
 
@@ -135,109 +135,75 @@ export default function HomeAlternative() {
             <p className="text-xl text-gray-400">Select the tier that matches your commitment</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Entry Tier */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Base Tier */}
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-gray-700 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
-              <div className="relative bg-gray-900 border border-gray-700 rounded-2xl p-8 hover:border-yellow-500 transition-all">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
+              <div className="relative bg-gray-900 border border-blue-500 rounded-2xl p-8 hover:border-blue-400 transition-all">
                 <div className="text-center mb-8">
-                  <div className="text-gray-400 text-sm mb-2">ENTRY</div>
+                  <div className="text-blue-400 text-sm mb-2">BASE</div>
                   <div className="text-6xl font-bold text-white mb-2">$19</div>
                   <div className="text-gray-500 text-sm">per challenge</div>
                 </div>
 
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-400 text-sm">✓</span>
+                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-400 text-sm">✓</span>
                     </div>
                     <span className="text-gray-300">90-Day Challenge Access</span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-400 text-sm">✓</span>
+                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-400 text-sm">✓</span>
                     </div>
                     <span className="text-gray-300">Weekly Submissions</span>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-400 text-sm">✓</span>
+                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-400 text-sm">✓</span>
                     </div>
                     <span className="text-gray-300">XP & Leaderboard</span>
                   </div>
                   <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-400 text-sm">✓</span>
+                    </div>
+                    <span className="text-gray-300">5 Day Streak Cap</span>
+                  </div>
+                  <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-orange-400 text-sm">🔥</span>
                     </div>
-                    <span className="text-white font-semibold">1.5X Burn Multiplier</span>
+                    <span className="text-white font-semibold">1.00X Burn Multiplier</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-yellow-400 text-sm">⚡</span>
+                    </div>
+                    <span className="text-white font-semibold">1.00X XP Multiplier</span>
                   </div>
                 </div>
 
                 <Link
                   href="/auth"
-                  className="block w-full py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg text-center transition-all"
+                  className="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-center transition-all"
                 >
                   Get Started
                 </Link>
               </div>
             </div>
 
-            {/* Pro Tier - Highlighted */}
+            {/* Staked Tier - Highlighted */}
             <div className="relative group transform md:scale-110">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold rounded-full">
-                MOST POPULAR
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+                RECOMMENDED
               </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl blur opacity-50 group-hover:opacity-75 transition-opacity"></div>
-              <div className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-yellow-500 rounded-2xl p-8">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50 group-hover:opacity-75 transition-opacity"></div>
+              <div className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-purple-500 rounded-2xl p-8">
                 <div className="text-center mb-8">
-                  <div className="text-yellow-400 text-sm mb-2">PRO</div>
-                  <div className="text-6xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent mb-2">$35</div>
-                  <div className="text-gray-500 text-sm">per challenge</div>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-400 text-sm">✓</span>
-                    </div>
-                    <span className="text-gray-300">Everything in Entry</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-400 text-sm">✓</span>
-                    </div>
-                    <span className="text-gray-300">Priority Support</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-400 text-sm">✓</span>
-                    </div>
-                    <span className="text-gray-300">Exclusive Content</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-orange-400 text-sm">🔥</span>
-                    </div>
-                    <span className="text-white font-semibold">2.0X Burn Multiplier</span>
-                  </div>
-                </div>
-
-                <Link
-                  href="/auth"
-                  className="block w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold rounded-lg text-center hover:shadow-lg hover:shadow-yellow-500/50 transition-all"
-                >
-                  Get Started
-                </Link>
-              </div>
-            </div>
-
-            {/* Elite Tier */}
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
-              <div className="relative bg-gray-900 border border-purple-500 rounded-2xl p-8 hover:border-purple-400 transition-all">
-                <div className="text-center mb-8">
-                  <div className="text-purple-400 text-sm mb-2">ELITE</div>
-                  <div className="text-6xl font-bold text-purple-400 mb-2">$49</div>
+                  <div className="text-purple-400 text-sm mb-2">STAKED</div>
+                  <div className="text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">$35</div>
                   <div className="text-gray-500 text-sm">per challenge</div>
                 </div>
 
@@ -246,36 +212,49 @@ export default function HomeAlternative() {
                     <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-purple-400 text-sm">✓</span>
                     </div>
-                    <span className="text-gray-300">Everything in Pro</span>
+                    <span className="text-gray-300">Everything in Base</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-purple-400 text-sm">✓</span>
                     </div>
-                    <span className="text-gray-300">1-on-1 Coaching</span>
+                    <span className="text-gray-300">7 Day Streak Cap</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-purple-400 text-sm">✓</span>
                     </div>
-                    <span className="text-gray-300">Custom Meal Plans</span>
+                    <span className="text-gray-300">Premium Weekly Tips</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-purple-400 text-sm">🌟</span>
+                    </div>
+                    <span className="text-white font-semibold">Early Access: Phase 2</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-orange-400 text-sm">🔥</span>
                     </div>
-                    <span className="text-white font-semibold">2.5X Burn Multiplier</span>
+                    <span className="text-white font-semibold">1.20X Burn Multiplier</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-yellow-400 text-sm">⚡</span>
+                    </div>
+                    <span className="text-white font-semibold">1.10X XP Multiplier</span>
                   </div>
                 </div>
 
                 <Link
                   href="/auth"
-                  className="block w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-center transition-all"
+                  className="block w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-lg text-center hover:shadow-lg hover:shadow-purple-500/50 transition-all"
                 >
                   Get Started
                 </Link>
               </div>
             </div>
+
           </div>
         </div>
       </section>
