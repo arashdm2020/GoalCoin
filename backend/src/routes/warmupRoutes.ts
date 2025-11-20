@@ -102,16 +102,76 @@ router.get('/streak', authMiddleware, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/warmups/stats
- * Get warm-up stats (admin only)
+ * GET /api/warmup/stats
+ * Get user's warm-up stats
  */
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const stats = await warmupService.getStats();
-    res.json(stats);
+    const userId = (req as any).user.userId;
+    
+    // Get user's warmup count and streak
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const warmupCount = await prisma.warmupLog.count({
+      where: { user_id: userId }
+    });
+    
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { current_streak: true, xp_points: true }
+    });
+    
+    res.json({
+      current_streak: user?.current_streak || 0,
+      total_sessions: warmupCount,
+      total_xp_earned: user?.xp_points || 0
+    });
   } catch (error: any) {
     console.error('Error fetching warmup stats:', error);
     res.status(500).json({ error: 'Failed to fetch warmup stats' });
+  }
+});
+
+/**
+ * POST /api/warmup/complete
+ * Complete a warmup session and award XP
+ */
+router.post('/complete', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.userId;
+    const { routine_name, duration_seconds } = req.body;
+    
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const { xpService } = require('../services/xpService');
+    
+    // Log warmup
+    await prisma.warmupLog.create({
+      data: {
+        user_id: userId,
+        routine_name: routine_name || 'Quick Warmup',
+        duration_seconds: duration_seconds || 300,
+        completed_at: new Date()
+      }
+    });
+    
+    // Award XP
+    const xpEarned = Math.floor((duration_seconds || 300) / 60) * 10; // 10 XP per minute
+    await xpService.awardXP({
+      userId,
+      actionKey: 'warmup_completed',
+      metadata: { routine_name, duration_seconds, xp_earned: xpEarned }
+    });
+    
+    res.json({
+      success: true,
+      xp_earned: xpEarned,
+      message: 'Warmup completed successfully'
+    });
+  } catch (error: any) {
+    console.error('Error completing warmup:', error);
+    res.status(500).json({ error: 'Failed to complete warmup' });
   }
 });
 
