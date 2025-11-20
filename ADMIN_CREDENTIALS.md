@@ -6,7 +6,9 @@
 
 ### Login Credentials:
 - **Username:** `admin`
-- **Password:** `GoalCoin2024!`
+- **Password:** `admin123`
+
+**Note:** Logout button is available in the top-right corner of the admin navigation.
 
 ---
 
