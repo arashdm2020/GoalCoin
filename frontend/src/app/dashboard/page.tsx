@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { InstallPWA } from '@/components/InstallPWA';
 import { getCountryName } from '@/utils/countries';
+import { getTierBadge, getBurnMultiplier, getStreakCap, isStakedMember } from '@/utils/tierUtils';
 
 interface User {
   id: string;
@@ -401,20 +402,31 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">Burn Multiplier:</span>
-                <span className="text-2xl font-bold text-orange-400">🔥 {user.burn_multiplier.toFixed(2)}x</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">Current Streak:</span>
-                <span className="text-2xl font-bold text-yellow-400">⚡ {user.current_streak} days</span>
-              </div>
+              {/* Tier Badge */}
               {user.payment_tier && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-400">Payment Tier:</span>
-                  <span className="text-lg font-bold text-green-400">${user.payment_tier}</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                    isStakedMember(user.payment_tier) 
+                      ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 border border-purple-500/30' 
+                      : 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border border-blue-500/30'
+                  }`}>
+                    {getTierBadge(user.payment_tier)}
+                  </span>
+                  {isStakedMember(user.payment_tier) && (
+                    <span className="text-xs text-purple-400">Early Access: Phase 2 Guaranteed</span>
+                  )}
                 </div>
               )}
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">Burn Multiplier:</span>
+                <span className="text-2xl font-bold text-orange-400">🔥 {getBurnMultiplier(user.payment_tier)}x</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">Current Streak:</span>
+                <span className="text-2xl font-bold text-yellow-400">⚡ {user.current_streak}/{getStreakCap(user.payment_tier)} days</span>
+              </div>
             </div>
           </div>
         )}

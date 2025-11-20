@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '../../hooks/useToastNotification';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import { getTierBadge, isStakedMember } from '@/utils/tierUtils';
 
 interface User {
   id: string;
@@ -11,6 +12,7 @@ interface User {
   wallet?: string;
   handle?: string;
   tier: string;
+  payment_tier?: string;
   xp_points: number;
   goal_points: number;
   current_streak: number;

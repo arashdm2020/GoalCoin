@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getTierDisplayName } from '@/utils/tierMapping';
+import { isStakedMember } from '@/utils/tierUtils';
 
 interface LeaderboardEntry {
   wallet?: string;
   handle?: string;
   country_code?: string;
   tier: string;
+  payment_tier?: string;
   total_submissions: number;
   approved_submissions: number;
   success_rate: number;
@@ -232,8 +234,15 @@ export default function LeaderboardPage() {
                               {(entry.handle || 'U').charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className={`font-medium ${entry.is_current_user ? 'text-blue-400' : 'text-white'}`}>
-                                {entry.handle || (entry.wallet ? entry.wallet.slice(0, 10) + '...' : 'Anonymous')}
+                              <div className="flex items-center gap-2">
+                                <span className={`font-medium ${entry.is_current_user ? 'text-blue-400' : 'text-white'}`}>
+                                  {entry.handle || (entry.wallet ? entry.wallet.slice(0, 10) + '...' : 'Anonymous')}
+                                </span>
+                                {isStakedMember(entry.payment_tier) && (
+                                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-xs font-bold rounded border border-purple-500/30">
+                                    Staked
+                                  </span>
+                                )}
                               </div>
                               {entry.current_streak && (
                                 <div className="text-xs text-orange-400">
