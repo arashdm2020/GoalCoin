@@ -14,6 +14,7 @@ interface UserData {
   country_code: string;
   tier: string;
   fan_tier?: string;
+  payment_tier?: string;
   xp_points: number;
   goal_points: number;
   current_streak: number;
@@ -37,9 +38,29 @@ interface UserStats {
   successRate: number;
 }
 
+interface XPLog {
+  id: string;
+  action_type: string;
+  xp_earned: number;
+  description: string;
+  created_at: string;
+  metadata?: any;
+}
+
+interface StreakLog {
+  id: string;
+  date: string;
+  streak_count: number;
+  action: string;
+  reason?: string;
+}
+
 export default function UserDetailPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [xpLogs, setXpLogs] = useState<XPLog[]>([]);
+  const [streakLogs, setStreakLogs] = useState<StreakLog[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'xp' | 'streak'>('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -84,6 +105,26 @@ export default function UserDetailPage() {
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setStats(statsData.stats || statsData);
+      }
+
+      // Fetch XP logs
+      const xpResponse = await fetch(`${getBackendUrl()}/api/admin/users/${userId}/xp-logs`, {
+        headers: { 'Authorization': authHeader }
+      });
+
+      if (xpResponse.ok) {
+        const xpData = await xpResponse.json();
+        setXpLogs(xpData.logs || []);
+      }
+
+      // Fetch streak logs
+      const streakResponse = await fetch(`${getBackendUrl()}/api/admin/users/${userId}/streak-logs`, {
+        headers: { 'Authorization': authHeader }
+      });
+
+      if (streakResponse.ok) {
+        const streakData = await streakResponse.json();
+        setStreakLogs(streakData.logs || []);
       }
 
       setLoading(false);
@@ -156,6 +197,12 @@ export default function UserDetailPage() {
                 <span className="text-gray-300">Tier:</span>
                 <span className="text-yellow-400 ml-2 font-medium">{user.tier}</span>
               </div>
+              {user.payment_tier && (
+                <div>
+                  <span className="text-gray-300">Payment Tier:</span>
+                  <span className="text-green-400 ml-2 font-medium">${user.payment_tier}</span>
+                </div>
+              )}
               {user.fan_tier && (
                 <div>
                   <span className="text-gray-300">Fan Tier:</span>
@@ -267,8 +314,44 @@ export default function UserDetailPage() {
           </div>
         </div>
 
-        {/* Activity Statistics */}
-        {stats && (
+        {/* Tabs */}
+        <div className="mb-6">
+          <div className="flex space-x-2 border-b border-white/20">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'overview'
+                  ? 'text-yellow-400 border-b-2 border-yellow-400'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              📊 Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('xp')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'xp'
+                  ? 'text-yellow-400 border-b-2 border-yellow-400'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              🏆 XP Logs ({xpLogs.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('streak')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'streak'
+                  ? 'text-yellow-400 border-b-2 border-yellow-400'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              🔥 Streak History ({streakLogs.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'overview' && stats && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
               <div className="flex items-center space-x-3 mb-4">
@@ -323,6 +406,100 @@ export default function UserDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* XP Logs Tab */}
+        {activeTab === 'xp' && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-white">XP Transaction History</h2>
+              <div className="text-gray-300">Total: {user.xp_points.toLocaleString()} XP</div>
+            </div>
+            
+            {xpLogs.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                No XP logs found for this user
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {xpLogs.map((log) => (
+                  <div key={log.id} className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-white/20 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-lg font-semibold text-yellow-400">+{log.xp_earned} XP</span>
+                          <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
+                            {log.action_type}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 text-sm mb-2">{log.description}</p>
+                        <div className="text-xs text-gray-500">
+                          {new Date(log.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                    {log.metadata && Object.keys(log.metadata).length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <details className="text-xs text-gray-400">
+                          <summary className="cursor-pointer hover:text-white">Metadata</summary>
+                          <pre className="mt-2 p-2 bg-black/30 rounded overflow-x-auto">
+                            {JSON.stringify(log.metadata, null, 2)}
+                          </pre>
+                        </details>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Streak History Tab */}
+        {activeTab === 'streak' && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-white">Streak Timeline</h2>
+              <div className="text-gray-300">
+                Current: {user.current_streak} days | Longest: {user.longest_streak} days
+              </div>
+            </div>
+            
+            {streakLogs.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                No streak logs found for this user
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {streakLogs.map((log) => (
+                  <div key={log.id} className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-white/20 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-lg font-semibold text-orange-400">
+                            {log.action === 'break' ? '💔' : '🔥'} {log.streak_count} days
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-sm ${
+                            log.action === 'break' 
+                              ? 'bg-red-500/20 text-red-300' 
+                              : 'bg-green-500/20 text-green-300'
+                          }`}>
+                            {log.action}
+                          </span>
+                        </div>
+                        {log.reason && (
+                          <p className="text-gray-300 text-sm mb-2">{log.reason}</p>
+                        )}
+                        <div className="text-xs text-gray-500">
+                          {new Date(log.date).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

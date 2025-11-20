@@ -11,6 +11,8 @@ router.get('/dashboard-stats', basicAuthMiddleware, adminController.getDashboard
 router.get('/users', basicAuthMiddleware, adminController.getUsers);
 router.get('/users/:id', basicAuthMiddleware, adminController.getUserDetails);
 router.get('/users/:id/stats', basicAuthMiddleware, adminController.getUserStats);
+router.get('/users/:id/xp-logs', basicAuthMiddleware, adminController.getUserXPLogs);
+router.get('/users/:id/streak-logs', basicAuthMiddleware, adminController.getUserStreakLogs);
 
 // Reviewer management
 router.get('/reviewers', basicAuthMiddleware, adminController.listReviewers);

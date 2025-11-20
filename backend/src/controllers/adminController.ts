@@ -1643,6 +1643,124 @@ export const adminController = {
     }
   },
 
+  async getUserXPLogs(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const limit = parseInt(req.query.limit as string) || 100;
+
+      // Check if user exists
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true, xp_points: true },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Fetch XP events for this user
+      const xpEvents = await prisma.xPEvent.findMany({
+        where: { user_id: id },
+        orderBy: { created_at: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          action_key: true,
+          xp_awarded: true,
+          metadata: true,
+          created_at: true,
+        },
+      });
+
+      // Format logs for frontend
+      const logs = xpEvents.map((event: any) => ({
+        id: event.id,
+        action_type: event.action_key || 'unknown',
+        xp_earned: event.xp_awarded || 0,
+        description: event.metadata?.description || `Earned XP from ${event.action_key}`,
+        created_at: event.created_at,
+        metadata: event.metadata,
+      }));
+
+      res.status(200).json({
+        success: true,
+        logs,
+        total_xp: user.xp_points,
+        count: logs.length,
+      });
+    } catch (error) {
+      console.error('Failed to fetch user XP logs:', error);
+      res.status(500).json({ error: 'Failed to fetch XP logs' });
+    }
+  },
+
+  async getUserStreakLogs(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const limit = parseInt(req.query.limit as string) || 100;
+
+      // Check if user exists
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { 
+          id: true, 
+          current_streak: true, 
+          longest_streak: true,
+          last_activity_date: true,
+        },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Fetch submissions that affected streak (approved/rejected)
+      const submissions = await prisma.submission.findMany({
+        where: { 
+          user_id: id,
+          status: { in: ['APPROVED', 'REJECTED'] },
+        },
+        orderBy: { updated_at: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          status: true,
+          week_number: true,
+          updated_at: true,
+          created_at: true,
+        },
+      });
+
+      // Create streak logs from submissions
+      const logs = submissions.map((submission: any) => {
+        const isApproved = submission.status === 'APPROVED';
+        return {
+          id: submission.id,
+          date: submission.updated_at || submission.created_at,
+          streak_count: 0, // We don't track historical streak counts
+          action: isApproved ? 'maintained' : 'break',
+          reason: isApproved 
+            ? `Week ${submission.week_number} submission approved - streak maintained`
+            : `Week ${submission.week_number} submission rejected - streak broken`,
+        };
+      });
+
+      res.status(200).json({
+        success: true,
+        logs,
+        current_streak: user.current_streak,
+        longest_streak: user.longest_streak,
+        last_activity: user.last_activity_date,
+        count: logs.length,
+      });
+    } catch (error) {
+      console.error('Failed to fetch user streak logs:', error);
+      res.status(500).json({ error: 'Failed to fetch streak logs' });
+    }
+  },
+
   // --- Clear All Users (MVP Only) ---
   async clearAllUsers(req: Request, res: Response): Promise<void> {
     try {
