@@ -107,7 +107,7 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg overflow-hidden">
+      <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg overflow-hidden mb-6">
         {loading ? (
           <div className="p-8 text-center text-gray-400">Loading users...</div>
         ) : users.length === 0 ? (
@@ -181,17 +181,17 @@ export default function UsersPage() {
             </table>
           </div>
         )}
-
-        {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          itemsPerPage={itemsPerPage}
-          totalItems={totalItems}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handleItemsPerPageChange}
-        />
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onItemsPerPageChange={handleItemsPerPageChange}
+      />
     </div>
   );
 }
