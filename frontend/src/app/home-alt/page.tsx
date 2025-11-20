@@ -196,11 +196,11 @@ export default function HomeAlternative() {
 
             {/* Staked Tier - Highlighted */}
             <div className="relative group transform md:scale-110">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full z-10">
                 RECOMMENDED
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50 group-hover:opacity-75 transition-opacity"></div>
-              <div className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-purple-500 rounded-2xl p-8">
+              <div className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-purple-500 rounded-2xl p-8 z-0">
                 <div className="text-center mb-8">
                   <div className="text-purple-400 text-sm mb-2">STAKED</div>
                   <div className="text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">$35</div>
