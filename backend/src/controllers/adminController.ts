@@ -105,23 +105,54 @@ export const adminController = {
   // --- User Management ---
   async getUsers(req: Request, res: Response): Promise<void> {
     try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 25;
+      const search = req.query.search as string;
+      const skip = (page - 1) * limit;
+
+      // Build where clause for search
+      const where: any = {};
+      if (search && search.trim()) {
+        where.OR = [
+          { handle: { contains: search.trim(), mode: 'insensitive' } },
+          { email: { contains: search.trim(), mode: 'insensitive' } },
+          { wallet: { contains: search.trim(), mode: 'insensitive' } },
+        ];
+      }
+
+      // Get total count for pagination
+      const total = await prisma.user.count({ where });
+
+      // Fetch users with pagination
       const users = await prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
         orderBy: { created_at: 'desc' },
-        include: {
-          submissions: {
-            select: {
-              id: true,
-              status: true,
-              created_at: true,
-            },
-          },
+        select: {
+          id: true,
+          handle: true,
+          email: true,
+          wallet: true,
+          tier: true,
+          payment_tier: true,
+          xp_points: true,
+          goal_points: true,
+          current_streak: true,
+          country_code: true,
+          created_at: true,
         },
       });
+
+      const totalPages = Math.ceil(total / limit);
 
       res.json({
         success: true,
         users: users,
+        total: total,
         count: users.length,
+        page: page,
+        totalPages: totalPages,
       });
     } catch (error) {
       console.error('Error fetching users:', error);
