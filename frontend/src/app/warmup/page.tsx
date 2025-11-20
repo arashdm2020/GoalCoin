@@ -46,7 +46,19 @@ export default function WarmupPage() {
         return;
       }
       
-      // Mock data for now - replace with real API calls later
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+      
+      // Fetch warmup stats
+      const statsResponse = await fetch(`${backendUrl}/api/warmup/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setStats(statsData);
+      }
+      
+      // Use predefined routines
       const mockRoutines: WarmupRoutine[] = [
         {
           id: '1',
@@ -86,14 +98,7 @@ export default function WarmupPage() {
         }
       ];
 
-      const mockStats: WarmupStats = {
-        current_streak: 5,
-        total_sessions: 23,
-        total_xp_earned: 1150
-      };
-
       setRoutines(mockRoutines);
-      setStats(mockStats);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching warmup data:', error);
@@ -104,23 +109,31 @@ export default function WarmupPage() {
   const completeWarmup = async (routineId: string) => {
     setCompleting(true);
     try {
-      // Mock completion for now
+      const token = localStorage.getItem('auth_token');
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+      
       const routine = routines.find(r => r.id === routineId);
-      const xpEarned = Math.floor(routine!.duration_seconds / 60) * 10; // 10 XP per minute
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${backendUrl}/api/warmup/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          routine_name: routine?.name,
+          duration_seconds: routine?.duration_seconds,
+        }),
+      });
       
-      showSuccess(`Warm-up completed! +${xpEarned} XP earned`);
-      
-      // Update stats
-      if (stats) {
-        setStats({
-          ...stats,
-          current_streak: stats.current_streak + 1,
-          total_sessions: stats.total_sessions + 1,
-          total_xp_earned: stats.total_xp_earned + xpEarned,
-        });
+      if (response.ok) {
+        const data = await response.json();
+        showSuccess(`Warm-up completed! +${data.xp_earned || 50} XP earned`);
+        
+        // Refresh stats
+        await fetchWarmupData();
+      } else {
+        throw new Error('Failed to complete warmup');
       }
     } catch (error) {
       console.error('Error completing warmup:', error);
