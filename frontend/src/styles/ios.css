@@ -256,3 +256,97 @@ select {
 .ios-haptic-feedback {
   animation: ios-haptic 0.1s ease-in-out;
 }
+
+/* iOS Fade In Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* iOS Slide Up Animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* iOS Bounce Animation */
+@keyframes ios-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-ios {
+  animation: ios-bounce 0.5s ease-in-out;
+}
+
+/* iOS Pull to Refresh */
+.ios-pull-indicator {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: top 0.3s ease-out;
+}
+
+.ios-pull-indicator.active {
+  top: 10px;
+}
+
+/* iOS Swipe Indicator */
+.ios-swipe-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.ios-swipe-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.3s ease-out;
+}
+
+.ios-swipe-indicator.swiping::after {
+  left: 100%;
+}
+
+/* iOS Button Active State */
+button:active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease-out;
+}
+
+/* iOS Card Press Effect */
+.ios-card-press {
+  transition: all 0.1s ease-out;
+}
+
+.ios-card-press:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
