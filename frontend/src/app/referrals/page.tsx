@@ -174,7 +174,20 @@ export default function ReferralsPage() {
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-2xl font-bold text-purple-500">
-                {userStats.current_rank ? `#${userStats.current_rank}` : 'N/A'}
+                {(() => {
+                  // Try to get rank from userStats
+                  if (userStats.current_rank) return `#${userStats.current_rank}`;
+                  
+                  // Try to find rank from leaderboard
+                  const userEntry = leaderboard.find(entry => entry.is_current_user);
+                  if (userEntry) return `#${userEntry.rank}`;
+                  
+                  // If no referrals yet, show unranked
+                  if (userStats.total_referrals === 0) return 'Unranked';
+                  
+                  // Otherwise show N/A
+                  return 'N/A';
+                })()}
               </div>
               <div className="text-sm text-gray-400">Your Rank</div>
             </div>
