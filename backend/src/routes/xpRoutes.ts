@@ -113,7 +113,7 @@ router.get('/logs', authMiddleware, async (req: Request, res: Response): Promise
 
     // Combine and format logs
     const allLogs = [
-      ...warmupLogs.map(log => ({
+      ...warmupLogs.map((log: any) => ({
         id: log.id,
         action_type: 'warmup',
         xp_earned: log.xp_earned,
@@ -121,7 +121,7 @@ router.get('/logs', authMiddleware, async (req: Request, res: Response): Promise
         created_at: log.completed_at,
         metadata: { routine_id: log.routine_id, duration_seconds: log.duration_seconds }
       })),
-      ...workoutLogs.map(log => ({
+      ...workoutLogs.map((log: any) => ({
         id: log.id,
         action_type: 'workout',
         xp_earned: log.xp_earned,
@@ -129,7 +129,7 @@ router.get('/logs', authMiddleware, async (req: Request, res: Response): Promise
         created_at: log.completed_at,
         metadata: { workout_type: log.workout_type, duration_min: log.duration_min }
       })),
-      ...mealLogs.map(log => ({
+      ...mealLogs.map((log: any) => ({
         id: log.id,
         action_type: 'meal',
         xp_earned: log.xp_earned,
