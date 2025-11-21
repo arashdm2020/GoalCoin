@@ -229,24 +229,24 @@ export default function Home() {
           <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-8 mb-8">
             <h3 className="text-3xl font-bold mb-4">
               <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                Ready to Transform?
+                Ready to Transform Your Life in 90 Days?
               </span>
             </h3>
             <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
-              Join thousands of members who are already crushing their fitness goals
+              Join thousands of members who are already crushing their fitness goals. Start your transformation journey today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button 
                 onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
                 className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold py-4 px-12 rounded-lg hover:opacity-90 transition-all shadow-lg text-lg"
               >
-                Start Your 90-Day Challenge
+                View Pricing Plans
               </button>
               <Link 
                 href="/auth"
                 className="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-12 rounded-lg transition-all border border-gray-700"
               >
-                Login
+                Login to Dashboard
               </Link>
             </div>
           </div>

@@ -230,7 +230,8 @@ export default function DashboardPage() {
                         {unreadCount > 0 && (
                           <button
                             onClick={() => {
-                              setNotifications(notifications.map(n => ({ ...n, read: true })));
+                              const updatedNotifications = notifications.map(n => ({ ...n, read: true }));
+                              setNotifications(updatedNotifications);
                             }}
                             className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
                           >
@@ -252,9 +253,10 @@ export default function DashboardPage() {
                               key={notification.id} 
                               className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-900/20 border-l-2 border-l-blue-500' : ''}`}
                               onClick={() => {
-                                setNotifications(notifications.map(n => 
+                                const updatedNotifications = notifications.map(n => 
                                   n.id === notification.id ? { ...n, read: true } : n
-                                ));
+                                );
+                                setNotifications(updatedNotifications);
                               }}
                             >
                               <div className="flex justify-between items-start gap-3">

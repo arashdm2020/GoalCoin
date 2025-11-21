@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getTierDisplayName } from '@/utils/tierMapping';
 import { isStakedMember } from '@/utils/tierUtils';
+import { getCountryFlag, getCountryName } from '@/utils/countryUtils';
 
 interface LeaderboardEntry {
   wallet?: string;
@@ -95,19 +96,9 @@ export default function LeaderboardPage() {
   };
 
   const getTierColor = (tier: string) => {
-    // Map fan tiers
+    // Map challenge tiers (not fan tiers)
     const tierUpper = tier?.toUpperCase();
     switch (tierUpper) {
-      case 'APEX':
-        return 'text-red-500';
-      case 'ASCENDANT':
-        return 'text-purple-400';
-      case 'VERIFIED':
-        return 'text-blue-400';
-      case 'STAKED':
-        return 'text-green-400';
-      case 'MINTED':
-        return 'text-yellow-400';
       case 'FOUNDER':
         return 'text-purple-600';
       case 'PLAYER':
@@ -255,12 +246,8 @@ export default function LeaderboardPage() {
                         <td className="px-6 py-4 text-sm">
                           {entry.country_code ? (
                             <div className="flex items-center gap-2">
-                              <img 
-                                src={`https://flagcdn.com/w20/${entry.country_code.toLowerCase()}.png`}
-                                alt={entry.country_code}
-                                className="w-5 h-4 object-cover rounded"
-                              />
-                              <span className="text-gray-400">{entry.country_code}</span>
+                              <span className="text-lg">{getCountryFlag(entry.country_code)}</span>
+                              <span className="text-gray-300">{getCountryName(entry.country_code)}</span>
                             </div>
                           ) : (
                             <span className="text-gray-400">-</span>
@@ -268,7 +255,7 @@ export default function LeaderboardPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`text-sm font-semibold px-2 py-1 rounded-full ${getTierColor(entry.tier)} bg-opacity-20`}>
-                            {entry.tier}
+                            {getTierDisplay(entry.tier)}
                           </span>
                         </td>
                         <td className="px-6 py-4">

@@ -90,12 +90,14 @@ a,
   position: fixed;
   right: 1rem;
   top: 4rem;
-  max-height: min(70vh, 500px);
+  max-height: min(60vh, 400px);
   width: calc(100vw - 2rem);
-  max-width: 400px;
+  max-width: 380px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   z-index: 50;
+  transform: translateY(0);
+  transition: all 0.2s ease-out;
 }
 
 @media (max-width: 640px) {
@@ -104,6 +106,7 @@ a,
     left: 0.5rem;
     width: calc(100vw - 1rem);
     max-width: none;
+    max-height: min(50vh, 350px);
   }
 }
 

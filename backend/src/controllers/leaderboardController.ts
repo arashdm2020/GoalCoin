@@ -75,7 +75,7 @@ export const leaderboardController = {
           wallet: user.wallet,
           handle: user.handle,
           country_code: user.country_code,
-          tier: user.fan_tier || user.tier, // Use fan_tier for display
+          tier: user.tier, // Use challenge tier (PLAYER/FOUNDER) not fan tier
           xp_points: user.xp_points || 0,
           current_streak: user.current_streak || 0,
           total_submissions: totalSubmissions,
