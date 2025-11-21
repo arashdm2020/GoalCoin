@@ -56,13 +56,62 @@ router.get('/today', authMiddleware, async (req: Request, res: Response) => {
  */
 router.post('/complete', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
-    const { routine_id } = req.body;
+    const userId = (req as any).user.id;
+    const { routine_id, routine_name, duration_seconds } = req.body;
 
-    if (!routine_id) {
-      return res.status(400).json({ error: 'routine_id is required' });
+    // Accept either routine_id or routine_name
+    if (!routine_id && !routine_name) {
+      return res.status(400).json({ error: 'routine_id or routine_name is required' });
     }
 
+    // If routine_name is provided, use the new flow
+    if (routine_name) {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      // Check if already completed today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const existingLog = await prisma.warmupLog.findFirst({
+        where: {
+          user_id: userId,
+          completed_at: { gte: today }
+        }
+      });
+
+      if (existingLog) {
+        return res.status(400).json({ 
+          error: 'Warmup already completed today',
+          message: 'You can only complete one warmup session per day'
+        });
+      }
+      
+      // Create warmup log
+      const warmupLog = await prisma.warmupLog.create({
+        data: {
+          user_id: userId,
+          routine_id: routine_id || 'quick-warmup',
+          duration_seconds: duration_seconds || 300,
+          completed: true,
+          xp_earned: 10
+        }
+      });
+      
+      // Update user XP
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET xp_points = xp_points + 10, last_activity_date = CURRENT_TIMESTAMP WHERE id = $1`,
+        userId
+      );
+      
+      return res.json({
+        success: true,
+        xp_earned: 10,
+        message: 'Warmup completed successfully'
+      });
+    }
+
+    // Otherwise use the old service
     const result = await warmupService.completeWarmup(userId, routine_id);
     res.json(result);
   } catch (error: any) {
@@ -77,7 +126,7 @@ router.post('/complete', authMiddleware, async (req: Request, res: Response) => 
  */
 router.get('/history', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).user.id;
     const limit = parseInt(req.query.limit as string) || 30;
 
     const history = await warmupService.getUserHistory(userId, limit);
@@ -94,7 +143,7 @@ router.get('/history', authMiddleware, async (req: Request, res: Response) => {
  */
 router.get('/streak', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).user.id;
     const streak = await warmupService.getUserStreak(userId);
     res.json(streak);
   } catch (error: any) {
