@@ -61,32 +61,96 @@ router.get('/logs', authMiddleware, async (req: Request, res: Response): Promise
     const userId = (req as any).user.id;
     const limit = parseInt(req.query.limit as string) || 100;
 
-    const events = await xpService.getUserXPHistory(userId, limit) as any[];
-    
-    // Get user's total XP
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
+    
+    // Get user's total XP
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { xp_points: true }
     });
 
-    // Format logs for frontend
-    const logs = events.map((event: any) => ({
-      id: event.id,
-      action_type: event.action_key || 'unknown',
-      xp_earned: event.xp_awarded || 0,
-      description: event.metadata?.description || `Earned XP from ${event.action_key}`,
-      created_at: event.created_at,
-      metadata: event.metadata
-    }));
+    // Fetch logs from warmup_logs, workout_logs, and meal_logs
+    const [warmupLogs, workoutLogs, mealLogs] = await Promise.all([
+      prisma.warmupLog.findMany({
+        where: { user_id: userId },
+        orderBy: { completed_at: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          xp_earned: true,
+          completed_at: true,
+          routine_id: true,
+          duration_seconds: true
+        }
+      }),
+      prisma.workoutLog.findMany({
+        where: { user_id: userId },
+        orderBy: { completed_at: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          xp_earned: true,
+          completed_at: true,
+          workout_type: true,
+          duration_min: true,
+          notes: true
+        }
+      }),
+      prisma.mealLog.findMany({
+        where: { user_id: userId },
+        orderBy: { completed_at: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          xp_earned: true,
+          completed_at: true,
+          meal_type: true,
+          calories: true
+        }
+      })
+    ]);
+
+    // Combine and format logs
+    const allLogs = [
+      ...warmupLogs.map(log => ({
+        id: log.id,
+        action_type: 'warmup',
+        xp_earned: log.xp_earned,
+        description: `Completed warmup session (${Math.floor(log.duration_seconds / 60)} min)`,
+        created_at: log.completed_at,
+        metadata: { routine_id: log.routine_id, duration_seconds: log.duration_seconds }
+      })),
+      ...workoutLogs.map(log => ({
+        id: log.id,
+        action_type: 'workout',
+        xp_earned: log.xp_earned,
+        description: `${log.workout_type} workout (${log.duration_min} min)${log.notes ? ': ' + log.notes : ''}`,
+        created_at: log.completed_at,
+        metadata: { workout_type: log.workout_type, duration_min: log.duration_min }
+      })),
+      ...mealLogs.map(log => ({
+        id: log.id,
+        action_type: 'meal',
+        xp_earned: log.xp_earned,
+        description: `Logged ${log.meal_type} (${log.calories} cal)`,
+        created_at: log.completed_at,
+        metadata: { meal_type: log.meal_type, calories: log.calories }
+      }))
+    ];
+
+    // Sort by date and limit
+    const sortedLogs = allLogs
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit);
 
     res.json({
-      logs,
+      logs: sortedLogs,
       total_xp: user?.xp_points || 0,
-      count: logs.length
+      count: sortedLogs.length
     });
   } catch (error: any) {
+    console.error('Error fetching XP logs:', error);
     res.status(500).json({ error: error.message });
   }
 });

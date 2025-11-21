@@ -135,20 +135,7 @@ const logWarmup = async (req: Request, res: Response) => {
       userId
     );
 
-    // Create XP event for history tracking
-    try {
-      await prisma.xpEvent.create({
-        data: {
-          user_id: userId,
-          action_key: 'warmup',
-          xp_awarded: XP_REWARDS.WARMUP,
-          metadata: { session_id: sessionId, routine_id: 'session-based' }
-        }
-      });
-    } catch (xpEventError) {
-      console.warn('Failed to create XP event (table may not exist):', xpEventError);
-    }
-
+    // Note: XP history is tracked via warmup_logs table (xp_earned field)
     // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
     // await updateUserStreak(userId);
 
@@ -191,20 +178,7 @@ const logWorkout = async (req: Request, res: Response) => {
       userId
     );
 
-    // Create XP event for history tracking
-    try {
-      await prisma.xpEvent.create({
-        data: {
-          user_id: userId,
-          action_key: 'workout',
-          xp_awarded: XP_REWARDS.WORKOUT,
-          metadata: { workout_type: workoutType, duration_min: durationMin, notes }
-        }
-      });
-    } catch (xpEventError) {
-      console.warn('Failed to create XP event (table may not exist):', xpEventError);
-    }
-
+    // Note: XP history is tracked via workout_logs table (xp_earned field)
     // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
     // await updateUserStreak(userId);
 
@@ -260,20 +234,7 @@ const logMeal = async (req: Request, res: Response) => {
       userId
     );
 
-    // Create XP event for history tracking
-    try {
-      await prisma.xpEvent.create({
-        data: {
-          user_id: userId,
-          action_key: 'meal',
-          xp_awarded: XP_REWARDS.MEAL,
-          metadata: { plan_id: planId, meal_id: 'plan-based', meal_type: 'lunch' }
-        }
-      });
-    } catch (xpEventError) {
-      console.warn('Failed to create XP event (table may not exist):', xpEventError);
-    }
-
+    // Note: XP history is tracked via meal_logs table (xp_earned field)
     // Note: Streak update is done in the raw SQL above to avoid schema mismatch issues
     // await updateUserStreak(userId);
 
