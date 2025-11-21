@@ -185,8 +185,17 @@ export default function ReferralsPage() {
                   // If no referrals yet, show unranked
                   if (userStats.total_referrals === 0) return 'Unranked';
                   
-                  // Otherwise show N/A
-                  return 'N/A';
+                  // Calculate rank based on leaderboard position
+                  if (leaderboard.length > 0) {
+                    const rank = leaderboard.filter(entry => entry.referral_count > userStats.total_referrals).length + 1;
+                    return `#${rank}`;
+                  }
+                  
+                  // If user has referrals but no leaderboard data, assume rank 1
+                  if (userStats.total_referrals > 0) return '#1';
+                  
+                  // Otherwise show unranked
+                  return 'Unranked';
                 })()}
               </div>
               <div className="text-sm text-gray-400">Your Rank</div>
