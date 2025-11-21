@@ -431,12 +431,12 @@ export default function DashboardPage() {
               
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-400">Burn Multiplier:</span>
-                <span className="text-2xl font-bold text-orange-400">🔥 {getBurnMultiplier(user.payment_tier)}x</span>
+                <span className="text-2xl font-bold text-orange-400">🔥 {getBurnMultiplier(user.payment_tier) || 1.0}x</span>
               </div>
               
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-400">Current Streak:</span>
-                <span className="text-2xl font-bold text-yellow-400">⚡ {user.current_streak}/{getStreakCap(user.payment_tier)} days</span>
+                <span className="text-2xl font-bold text-yellow-400">⚡ {user.current_streak || 0}/{getStreakCap(user.payment_tier) || 7} days</span>
               </div>
             </div>
           </div>

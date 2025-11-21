@@ -168,11 +168,22 @@ export default function UserStatsPage() {
       APEX: { min: 50000, max: 999999 },
     };
 
+    // Handle null/undefined tier
+    if (!tier || !thresholds[tier]) {
+      tier = 'MINTED';
+    }
+
     const range = thresholds[tier];
     if (!range) return 0;
 
-    const progress = ((xp - range.min) / (range.max - range.min)) * 100;
-    return Math.min(Math.max(progress, 0), 100);
+    // Ensure xp is a valid number
+    const validXP = isNaN(xp) ? 0 : xp;
+    
+    const progress = ((validXP - range.min) / (range.max - range.min)) * 100;
+    const finalProgress = Math.min(Math.max(progress, 0), 100);
+    
+    // Return 0 if result is NaN
+    return isNaN(finalProgress) ? 0 : finalProgress;
   };
 
   const calculateXPNeeded = (xp: number, tier: string): number => {
@@ -184,8 +195,16 @@ export default function UserStatsPage() {
       APEX: 0,
     };
 
+    // Handle null/undefined tier
+    if (!tier || !thresholds[tier]) {
+      tier = 'MINTED';
+    }
+
     const nextThreshold = thresholds[tier];
-    return Math.max(nextThreshold - xp, 0);
+    const validXP = isNaN(xp) ? 0 : xp;
+    const needed = Math.max(nextThreshold - validXP, 0);
+    
+    return isNaN(needed) ? 0 : needed;
   };
 
   if (loading) {
