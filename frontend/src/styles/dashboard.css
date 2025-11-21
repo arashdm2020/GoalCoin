@@ -1,0 +1,97 @@
+/* Dashboard Quick Actions Alignment Fix */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.quick-action-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(17, 24, 39, 0.5);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(75, 85, 99, 1);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.quick-action-card:hover {
+  border-color: var(--hover-color, rgba(75, 85, 99, 1));
+  background: var(--hover-bg, rgba(17, 24, 39, 0.8));
+}
+
+.quick-action-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.quick-action-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-action-title {
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.quick-action-description {
+  font-size: 0.875rem;
+  color: rgba(156, 163, 175, 1);
+}
+
+/* Color variants */
+.quick-action-card.orange {
+  --hover-color: rgba(249, 115, 22, 0.5);
+  --hover-bg: rgba(249, 115, 22, 0.05);
+}
+
+.quick-action-card.blue {
+  --hover-color: rgba(59, 130, 246, 0.5);
+  --hover-bg: rgba(59, 130, 246, 0.05);
+}
+
+.quick-action-card.green {
+  --hover-color: rgba(34, 197, 94, 0.5);
+  --hover-bg: rgba(34, 197, 94, 0.05);
+}
+
+.quick-action-card.purple {
+  --hover-color: rgba(168, 85, 247, 0.5);
+  --hover-bg: rgba(168, 85, 247, 0.05);
+}
+
+.quick-action-card.yellow {
+  --hover-color: rgba(234, 179, 8, 0.5);
+  --hover-bg: rgba(234, 179, 8, 0.05);
+}
+
+.quick-action-card.pink {
+  --hover-color: rgba(236, 72, 153, 0.5);
+  --hover-bg: rgba(236, 72, 153, 0.05);
+}
