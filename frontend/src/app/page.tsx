@@ -83,7 +83,7 @@ export default function Home() {
           </div>
 
           {/* Pricing Tiers */}
-          <div className="mb-8">
+          <div id="pricing" className="mb-8">
             <h3 className="text-3xl font-bold mb-6">Choose Your Challenge Tier</h3>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {/* Tier 1: $19 - Base Member */}
@@ -120,9 +120,12 @@ export default function Home() {
                     <span className="text-sm font-semibold">1.00X XP Multiplier</span>
                   </div>
                 </div>
-                  <Link href="/auth" className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-center transition-all">
+                  <button 
+                    onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-center transition-all"
+                  >
                     Start Challenge
-                  </Link>
+                  </button>
                 </div>
               </div>
 
@@ -233,12 +236,12 @@ export default function Home() {
               Join thousands of members who are already crushing their fitness goals
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link 
-                href="/auth"
+              <button 
+                onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
                 className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold py-4 px-12 rounded-lg hover:opacity-90 transition-all shadow-lg text-lg"
               >
                 Start Your 90-Day Challenge
-              </Link>
+              </button>
               <Link 
                 href="/auth"
                 className="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-12 rounded-lg transition-all border border-gray-700"

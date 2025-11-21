@@ -89,14 +89,16 @@ export const mealService = {
 
       // Award XP via XP service
       const xpService = require('./xpService').xpService;
-      await xpService.awardXP({
+      const xpResult = await xpService.awardXP({
         userId,
-        actionKey: 'meal',
+        actionKey: 'meal_log',
         metadata: {
           meal_id: mealId,
           meal_log_id: mealLog.id,
         },
       });
+
+      console.log('[MEAL-SERVICE] XP award result:', xpResult);
 
       // Update user's last activity - using unsafe raw query to bypass schema validation
       await prisma.$executeRawUnsafe(
@@ -107,7 +109,7 @@ export const mealService = {
       return {
         success: true,
         message: 'Meal logged successfully!',
-        xp_awarded: xpReward,
+        xp_awarded: xpResult.xpEarned,
         log: mealLog,
       };
     } catch (error) {

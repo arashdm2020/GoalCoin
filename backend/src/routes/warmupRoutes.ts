@@ -152,9 +152,30 @@ router.post('/complete', authMiddleware, async (req: Request, res: Response) => 
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
     const { xpService } = require('../services/xpService');
+    const { streakService } = require('../services/streakService');
+    
+    // Check if already completed today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const existingLog = await prisma.warmupLog.findFirst({
+      where: {
+        user_id: userId,
+        completed_at: {
+          gte: today,
+        },
+      },
+    });
+
+    if (existingLog) {
+      return res.status(400).json({ 
+        error: 'Warmup already completed today',
+        message: 'You can only complete one warmup session per day'
+      });
+    }
     
     // Log warmup
-    await prisma.warmupLog.create({
+    const warmupLog = await prisma.warmupLog.create({
       data: {
         user_id: userId,
         routine_name: routine_name || 'Quick Warmup',
@@ -163,22 +184,29 @@ router.post('/complete', authMiddleware, async (req: Request, res: Response) => 
       }
     });
     
-    // Award XP
-    const xpEarned = Math.floor((duration_seconds || 300) / 60) * 10; // 10 XP per minute
-    await xpService.awardXP({
+    // Award XP using correct action key
+    const xpResult = await xpService.awardXP({
       userId,
-      actionKey: 'warmup_completed',
-      metadata: { routine_name, duration_seconds, xp_earned: xpEarned }
+      actionKey: 'warmup_session',
+      metadata: { 
+        routine_name, 
+        duration_seconds, 
+        warmup_log_id: warmupLog.id 
+      }
     });
+    
+    // Update streak
+    await streakService.updateUserStreak(userId);
     
     res.json({
       success: true,
-      xp_earned: xpEarned,
-      message: 'Warmup completed successfully'
+      xp_earned: xpResult.xpEarned,
+      message: xpResult.message,
+      streak_updated: true
     });
   } catch (error: any) {
     console.error('Error completing warmup:', error);
-    res.status(500).json({ error: 'Failed to complete warmup' });
+    res.status(500).json({ error: 'Failed to complete warmup', details: error.message });
   }
 });
 

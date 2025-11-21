@@ -113,7 +113,7 @@ export const referralService = {
         monthly_referrals: monthlyReferrals,
         activated_referrals: activatedReferrals,
         conversion_rate: totalReferrals > 0 ? (activatedReferrals / totalReferrals) * 100 : 0,
-        current_month_rank: userRank || null,
+        current_month_rank: userRank > 0 ? userRank : null,
       };
     } catch (error) {
       console.error('Error getting user referral stats:', error);

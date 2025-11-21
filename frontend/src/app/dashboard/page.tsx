@@ -85,8 +85,15 @@ export default function DashboardPage() {
         if (data.user.challenge_start_date) {
           const startDate = new Date(data.user.challenge_start_date);
           const today = new Date();
-          const diffTime = Math.abs(today.getTime() - startDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const diffTime = today.getTime() - startDate.getTime();
+          const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+          setChallengeDay(Math.min(diffDays, 90));
+        } else {
+          // If no start date, use account creation date
+          const createdDate = new Date(data.user.created_at);
+          const today = new Date();
+          const diffTime = today.getTime() - createdDate.getTime();
+          const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
           setChallengeDay(Math.min(diffDays, 90));
         }
         
