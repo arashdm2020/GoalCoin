@@ -109,7 +109,7 @@ router.get('/streak', authMiddleware, async (req: Request, res: Response) => {
  */
 router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).user.id;
     
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -146,7 +146,7 @@ router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
  */
 router.post('/complete', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).user.id;
     const { routine_name, duration_seconds } = req.body;
     
     const { PrismaClient } = require('@prisma/client');
