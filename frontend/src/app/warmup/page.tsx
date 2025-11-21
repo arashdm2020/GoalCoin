@@ -128,16 +128,17 @@ export default function WarmupPage() {
       
       if (response.ok) {
         const data = await response.json();
-        showSuccess(`Warm-up completed! +${data.xp_earned || 50} XP earned`);
+        showSuccess(`Warm-up completed! +${data.xp_earned || 10} XP earned`);
         
         // Refresh stats
         await fetchWarmupData();
       } else {
-        throw new Error('Failed to complete warmup');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to complete warmup' }));
+        throw new Error(errorData.message || errorData.error || 'Failed to complete warmup');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error completing warmup:', error);
-      showError('Failed to complete warm-up');
+      showError(error.message || 'Failed to complete warm-up');
     } finally {
       setCompleting(false);
       setSelectedRoutine(null);
