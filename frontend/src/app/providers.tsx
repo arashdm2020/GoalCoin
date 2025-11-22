@@ -8,7 +8,7 @@ import { injected, walletConnect } from '@wagmi/connectors';
 const queryClient = new QueryClient();
 
 // WalletConnect project ID - get from https://cloud.walletconnect.com
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id';
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'c7fcdfa01ace740d702c0028052800af';
 
 // Build connectors array - supports both desktop (injected) and mobile (WalletConnect)
 const baseConnectors = [

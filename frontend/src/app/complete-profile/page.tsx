@@ -104,9 +104,15 @@ export default function CompleteProfilePage() {
       }
       
       // On desktop, check if Web3 wallet is installed
-      if (!isMobile && (!ethereum || !ethereum.isMetaMask)) {
+      if (!isMobile && !ethereum) {
         setError('Please install a Web3 wallet (MetaMask recommended)');
         window.open('https://metamask.io/download/', '_blank');
+        return;
+      }
+      
+      // If ethereum exists, proceed with connection (works with MetaMask and other wallets)
+      if (!ethereum) {
+        setError('No Web3 wallet detected');
         return;
       }
 
