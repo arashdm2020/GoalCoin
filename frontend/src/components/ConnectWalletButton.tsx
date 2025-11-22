@@ -108,8 +108,18 @@ export function ConnectWalletButton({ onConnect }: ConnectWalletButtonProps = {}
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      // Use the first available connector (MetaMask or Injected)
-      const connector = connectors.find((c) => c.name === 'MetaMask') || connectors[0];
+      // On mobile, prefer WalletConnect; on desktop, prefer injected (MetaMask)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      let connector;
+      if (isMobile) {
+        // Try WalletConnect first on mobile
+        connector = connectors.find((c) => c.name === 'WalletConnect') || connectors[0];
+      } else {
+        // Try MetaMask/Injected first on desktop
+        connector = connectors.find((c) => c.name === 'MetaMask' || c.name === 'Injected') || connectors[0];
+      }
+      
       if (connector) {
         connect({ connector });
       }

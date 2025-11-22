@@ -3,12 +3,27 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, createConfig, http } from 'wagmi';
 import { polygonMumbai } from 'wagmi/chains';
-import { injected } from '@wagmi/core';
+import { injected, walletConnect } from '@wagmi/connectors';
 
 const queryClient = new QueryClient();
 
-// Build connectors array - injected() handles MetaMask and other injected wallets automatically
-const baseConnectors = [injected()];
+// WalletConnect project ID - get from https://cloud.walletconnect.com
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id';
+
+// Build connectors array - supports both desktop (injected) and mobile (WalletConnect)
+const baseConnectors = [
+  injected(), // MetaMask extension for desktop
+  walletConnect({ 
+    projectId,
+    metadata: {
+      name: 'GoalCoin',
+      description: 'Sports-Driven Web3 Fitness Platform',
+      url: 'https://goal-coin.vercel.app',
+      icons: ['https://goal-coin.vercel.app/favicon.ico']
+    },
+    showQrModal: true // Shows QR code modal for mobile wallet connection
+  })
+];
 
 const config = createConfig({
   chains: [polygonMumbai],

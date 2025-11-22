@@ -81,10 +81,19 @@ export default function CompleteProfilePage() {
 
   const handleConnectWallet = async () => {
     try {
-      // Check if MetaMask is installed
+      // Check if on mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const { ethereum } = window as any;
       
-      if (!ethereum || !ethereum.isMetaMask) {
+      // On mobile, guide user to use MetaMask app browser or WalletConnect
+      if (isMobile && (!ethereum || !ethereum.isMetaMask)) {
+        setError('On mobile, please use MetaMask app browser or scan QR code with your wallet app');
+        // User can use WalletConnect via the ConnectWalletButton component
+        return;
+      }
+      
+      // On desktop, check if MetaMask is installed
+      if (!isMobile && (!ethereum || !ethereum.isMetaMask)) {
         setError('Please install MetaMask wallet first');
         window.open('https://metamask.io/download/', '_blank');
         return;
