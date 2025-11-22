@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useConnect } from 'wagmi';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
 
 interface MobileWalletConnectProps {
   onSuccess?: (address: string) => void;
@@ -10,7 +10,7 @@ interface MobileWalletConnectProps {
 
 export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectProps) {
   const [isConnecting, setIsConnecting] = useState(false);
-  const { connect, connectors } = useConnect();
+  const { open } = useWeb3Modal();
 
   // Helper function to send logs to backend
   const sendLogToBackend = async (message: string, data?: any) => {
@@ -31,28 +31,17 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
 
   const handleConnect = async () => {
     await sendLogToBackend('🔵 Button clicked!');
-    await sendLogToBackend('🔵 Available connectors', { connectors: connectors.map(c => c.name) });
     
     setIsConnecting(true);
     
     try {
-      // Find WalletConnect connector
-      const walletConnectConnector = connectors.find((c) => c.name === 'WalletConnect');
+      await sendLogToBackend('🔵 Opening Web3Modal...');
       
-      await sendLogToBackend('🔵 WalletConnect connector found', { found: !!walletConnectConnector });
+      // Open Web3Modal - this will show QR code for mobile wallets
+      open();
       
-      if (walletConnectConnector) {
-        await sendLogToBackend('🔵 Attempting to connect...');
-        
-        // This will open the WalletConnect modal with QR code
-        await connect({ connector: walletConnectConnector });
-        
-        await sendLogToBackend('✅ Connect function called successfully');
-      } else {
-        const errorMsg = 'WalletConnect not available. Please refresh the page.';
-        await sendLogToBackend('❌ WalletConnect not available', { allConnectors: connectors.map(c => c.name) });
-        onError?.(errorMsg);
-      }
+      await sendLogToBackend('✅ Web3Modal opened successfully');
+      
     } catch (error: any) {
       await sendLogToBackend('❌ Error occurred', {
         message: error?.message,
@@ -60,14 +49,7 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
         code: error?.code,
       });
       
-      // Handle specific error cases
-      if (error?.message?.includes('Connection request reset')) {
-        onError?.('Connection cancelled. Please try again.');
-      } else if (error?.message?.includes('User rejected')) {
-        onError?.('Connection rejected. Please approve in your wallet.');
-      } else {
-        onError?.('Failed to connect. Please try again.');
-      }
+      onError?.('Failed to open wallet connection. Please try again.');
     } finally {
       await sendLogToBackend('🔵 Setting isConnecting to false');
       setIsConnecting(false);

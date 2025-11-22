@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
+    "@web3modal/react": "^2.7.1",
+    "@web3modal/wagmi": "^5.1.11",
     "chart.js": "^4.5.1",
     "lucide-react": "^0.554.0",
     "next": "16.0.1",
