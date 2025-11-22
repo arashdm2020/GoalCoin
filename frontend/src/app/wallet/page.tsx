@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useToast } from '../../hooks/useToastNotification';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import ConnectWalletButton from '../../components/ConnectWalletButton';
+import { ConnectWalletButton } from '../../components/ConnectWalletButton';
 
 interface User {
   id: string;
