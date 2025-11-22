@@ -274,66 +274,42 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Wallet Information */}
+            {/* Wallet Quick Access */}
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-white mb-6">Wallet Information</h3>
+              <h3 className="text-xl font-bold text-white mb-6">Wallet</h3>
               <div className="space-y-4">
                 {user.wallet ? (
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-2">Connected Wallet</label>
-                    <div className="p-4 bg-gray-800/50 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <p className="text-white font-mono text-sm truncate">
-                            {user.wallet.slice(0, 6)}...{user.wallet.slice(-4)}
-                          </p>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(user.wallet!);
-                              showSuccess('Wallet address copied!');
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors flex-shrink-0"
-                            title="Copy address"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          </button>
-                        </div>
-                        <p className="text-green-400 text-xs flex-shrink-0">✓ Connected</p>
+                    <div className="p-4 bg-gray-800/50 rounded-lg mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-400 text-sm">Connected Wallet</span>
+                        <span className="text-green-400 text-xs">✓ Active</span>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => router.push('/link-wallet')}
-                          className="flex-1 px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded transition-colors"
-                        >
-                          Change Wallet
-                        </button>
-                        <button
-                          onClick={() => {
-                            setConfirmDialog({
-                              isOpen: true,
-                              title: 'Disconnect Wallet',
-                              message: 'Are you sure you want to disconnect your wallet?',
-                              onConfirm: () => {
-                                // TODO: Implement disconnect logic
-                                showSuccess('Wallet disconnected');
-                              },
-                            });
-                          }}
-                          className="flex-1 px-3 py-2 text-sm bg-red-900/50 hover:bg-red-900 text-red-200 rounded transition-colors"
-                        >
-                          Disconnect
-                        </button>
-                      </div>
+                      <p className="text-white font-mono text-sm">
+                        {user.wallet.slice(0, 6)}...{user.wallet.slice(-4)}
+                      </p>
                     </div>
+                    <button
+                      onClick={() => router.push('/wallet')}
+                      className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      Manage Wallet Settings
+                    </button>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
                     <p className="text-gray-400 mb-4">No wallet connected</p>
                     <button
-                      onClick={() => router.push('/link-wallet')}
-                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                      onClick={() => router.push('/wallet')}
+                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium"
                     >
                       Connect Wallet
                     </button>
