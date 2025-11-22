@@ -209,6 +209,7 @@ export default function CompleteProfilePage() {
         body: JSON.stringify({
           handle,
           country_code: countryCode,
+          ...(wallet && { wallet }), // Include wallet if connected
         }),
       });
 
