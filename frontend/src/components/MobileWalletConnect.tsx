@@ -22,13 +22,26 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
       if (walletConnectConnector) {
         // This will open the WalletConnect modal with QR code
         // User can scan with any wallet app (MetaMask, Trust, Rainbow, etc.)
-        connect({ connector: walletConnectConnector });
+        await connect({ connector: walletConnectConnector });
+        
+        // Success - connection initiated
+        console.log('WalletConnect modal opened successfully');
       } else {
-        onError?.('WalletConnect not available. Please try again.');
+        const errorMsg = 'WalletConnect not available. Please refresh the page.';
+        console.error(errorMsg);
+        onError?.(errorMsg);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error connecting wallet:', error);
-      onError?.('Failed to connect wallet. Please try again.');
+      
+      // Handle specific error cases
+      if (error?.message?.includes('Connection request reset')) {
+        onError?.('Connection cancelled. Please try again.');
+      } else if (error?.message?.includes('User rejected')) {
+        onError?.('Connection rejected. Please approve in your wallet.');
+      } else {
+        onError?.('Failed to connect. Please try again.');
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -71,9 +84,17 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
           <li>Click the button above</li>
           <li>A QR code will appear</li>
           <li>Open your wallet app (MetaMask, Trust, etc.)</li>
-          <li>Scan the QR code</li>
+          <li>Tap the scan icon in your wallet</li>
+          <li>Scan the QR code on screen</li>
           <li>Approve the connection in your wallet</li>
         </ol>
+      </div>
+
+      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+        <p className="text-yellow-400 text-xs">
+          💡 <strong>Tip:</strong> If your wallet app doesn't open automatically, don't worry! 
+          Just open it manually and use the scan feature to scan the QR code.
+        </p>
       </div>
 
       <div className="text-center pt-2">

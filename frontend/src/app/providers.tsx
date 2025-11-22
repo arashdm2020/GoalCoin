@@ -21,7 +21,13 @@ const baseConnectors = [
       url: 'https://goal-coin.vercel.app',
       icons: ['https://goal-coin.vercel.app/favicon.ico']
     },
-    showQrModal: true // Shows QR code modal for mobile wallet connection
+    showQrModal: true, // Shows QR code modal for mobile wallet connection
+    qrModalOptions: {
+      themeMode: 'dark',
+      themeVariables: {
+        '--wcm-z-index': '9999'
+      }
+    }
   })
 ];
 
