@@ -13,26 +13,35 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
   const { connect, connectors } = useConnect();
 
   const handleConnect = async () => {
+    console.log('🔵 [WALLET-CONNECT] Button clicked!');
+    console.log('🔵 [WALLET-CONNECT] Available connectors:', connectors.map(c => c.name));
+    
     setIsConnecting(true);
     
     try {
       // Find WalletConnect connector
       const walletConnectConnector = connectors.find((c) => c.name === 'WalletConnect');
       
+      console.log('🔵 [WALLET-CONNECT] WalletConnect connector found:', !!walletConnectConnector);
+      console.log('🔵 [WALLET-CONNECT] Connector details:', walletConnectConnector);
+      
       if (walletConnectConnector) {
+        console.log('🔵 [WALLET-CONNECT] Attempting to connect...');
+        
         // This will open the WalletConnect modal with QR code
-        // User can scan with any wallet app (MetaMask, Trust, Rainbow, etc.)
         await connect({ connector: walletConnectConnector });
         
-        // Success - connection initiated
-        console.log('WalletConnect modal opened successfully');
+        console.log('✅ [WALLET-CONNECT] Connect function called successfully');
       } else {
         const errorMsg = 'WalletConnect not available. Please refresh the page.';
-        console.error(errorMsg);
+        console.error('❌ [WALLET-CONNECT]', errorMsg);
+        console.error('❌ [WALLET-CONNECT] All connectors:', connectors);
         onError?.(errorMsg);
       }
     } catch (error: any) {
-      console.error('Error connecting wallet:', error);
+      console.error('❌ [WALLET-CONNECT] Error:', error);
+      console.error('❌ [WALLET-CONNECT] Error message:', error?.message);
+      console.error('❌ [WALLET-CONNECT] Error stack:', error?.stack);
       
       // Handle specific error cases
       if (error?.message?.includes('Connection request reset')) {
@@ -43,6 +52,7 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
         onError?.('Failed to connect. Please try again.');
       }
     } finally {
+      console.log('🔵 [WALLET-CONNECT] Setting isConnecting to false');
       setIsConnecting(false);
     }
   };

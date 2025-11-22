@@ -35,11 +35,15 @@ export default function CompleteProfilePage() {
 
   // Listen for wallet connection from WalletConnect
   useEffect(() => {
+    console.log('🟢 [COMPLETE-PROFILE] useEffect triggered - isConnected:', isConnected, 'address:', address);
+    
     if (isConnected && address) {
-      console.log('[WALLET-CONNECT] Wallet connected:', address);
+      console.log('✅ [COMPLETE-PROFILE] Wallet connected:', address);
       setWallet(address);
       setError('');
       showSuccess('Wallet connected successfully!');
+    } else {
+      console.log('⚪ [COMPLETE-PROFILE] Not connected yet');
     }
   }, [isConnected, address]);
 
