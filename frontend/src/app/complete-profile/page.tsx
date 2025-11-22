@@ -90,39 +90,15 @@ export default function CompleteProfilePage() {
     }
   };
 
+  // Desktop wallet connection using window.ethereum
   const handleConnectWallet = async () => {
     try {
-      // Check if on mobile device
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const { ethereum } = window as any;
       
-      // On mobile, try to open wallet app directly via deep link
-      if (isMobile && (!ethereum || !ethereum.isMetaMask)) {
-        // Try to open MetaMask app with deep link
-        const currentUrl = window.location.href;
-        const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
-        
-        // Attempt to open MetaMask app
-        window.location.href = metamaskDeepLink;
-        
-        // Show message after attempting to open
-        setTimeout(() => {
-          setError('Opening wallet app... If it doesn\'t open, please use your wallet app browser or WalletConnect');
-        }, 1000);
-        
-        return;
-      }
-      
-      // On desktop, check if Web3 wallet is installed
-      if (!isMobile && !ethereum) {
-        setError('Please install a Web3 wallet (MetaMask recommended)');
-        window.open('https://metamask.io/download/', '_blank');
-        return;
-      }
-      
-      // If ethereum exists, proceed with connection (works with MetaMask and other wallets)
+      // Check if Web3 wallet is installed (desktop only)
       if (!ethereum) {
-        setError('No Web3 wallet detected');
+        setError('Please install MetaMask or use the mobile wallet option below');
+        window.open('https://metamask.io/download/', '_blank');
         return;
       }
 
@@ -171,9 +147,7 @@ export default function CompleteProfilePage() {
       if (accounts && accounts.length > 0) {
         setWallet(accounts[0]);
         setError('');
-        
-        // Show success message with network info
-        showSuccess('Wallet connected to Polygon Network! You can now use USDT on Polygon for payments.');
+        showSuccess('Wallet connected to Polygon Network!');
       }
     } catch (err: any) {
       console.error('Wallet connection error:', err);
@@ -381,29 +355,16 @@ export default function CompleteProfilePage() {
                 </p>
                 
                 {!wallet ? (
-                  <>
-                    {/* Show MobileWalletConnect on mobile, regular button on desktop */}
-                    {typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
-                      <MobileWalletConnect
-                        onSuccess={(address) => {
-                          setWallet(address);
-                          showSuccess('Wallet connected successfully!');
-                        }}
-                        onError={(error) => {
-                          setError(error);
-                          showError(error);
-                        }}
-                      />
-                    ) : (
-                      <button
-                        onClick={handleConnectWallet}
-                        className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-black font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                      >
-                        <span>🔗</span>
-                        Connect Wallet (Polygon)
-                      </button>
-                    )}
-                  </>
+                  <MobileWalletConnect
+                    onSuccess={(address) => {
+                      setWallet(address);
+                      showSuccess('Wallet connected successfully!');
+                    }}
+                    onError={(error) => {
+                      setError(error);
+                      showError(error);
+                    }}
+                  />
                 ) : (
                   <div className="bg-green-500/10 border border-green-500 rounded-lg p-4">
                     <div className="flex items-center gap-3">
