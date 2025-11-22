@@ -74,4 +74,25 @@ router.post('/test-connect', async (req, res) => {
   }
 });
 
+// Frontend log endpoint for mobile debugging
+router.post('/log', async (req, res) => {
+  try {
+    const { source, message, data, timestamp } = req.body;
+    
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`📱 [FRONTEND-LOG] ${source}`);
+    console.log(`📱 [MESSAGE] ${message}`);
+    if (data) {
+      console.log(`📱 [DATA]`, JSON.stringify(data, null, 2));
+    }
+    console.log(`📱 [TIME] ${timestamp}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error logging frontend message:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export { router as debugRoutes };

@@ -12,9 +12,26 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
   const [isConnecting, setIsConnecting] = useState(false);
   const { connect, connectors } = useConnect();
 
+  // Helper function to send logs to backend
+  const sendLogToBackend = async (message: string, data?: any) => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://goalcoin.onrender.com';
+      await fetch(`${backendUrl}/api/debug/log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'MobileWalletConnect',
+          message,
+          data,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch(() => {}); // Ignore errors
+    } catch (e) {}
+  };
+
   const handleConnect = async () => {
-    console.log('🔵 [WALLET-CONNECT] Button clicked!');
-    console.log('🔵 [WALLET-CONNECT] Available connectors:', connectors.map(c => c.name));
+    await sendLogToBackend('🔵 Button clicked!');
+    await sendLogToBackend('🔵 Available connectors', { connectors: connectors.map(c => c.name) });
     
     setIsConnecting(true);
     
@@ -22,26 +39,26 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
       // Find WalletConnect connector
       const walletConnectConnector = connectors.find((c) => c.name === 'WalletConnect');
       
-      console.log('🔵 [WALLET-CONNECT] WalletConnect connector found:', !!walletConnectConnector);
-      console.log('🔵 [WALLET-CONNECT] Connector details:', walletConnectConnector);
+      await sendLogToBackend('🔵 WalletConnect connector found', { found: !!walletConnectConnector });
       
       if (walletConnectConnector) {
-        console.log('🔵 [WALLET-CONNECT] Attempting to connect...');
+        await sendLogToBackend('🔵 Attempting to connect...');
         
         // This will open the WalletConnect modal with QR code
         await connect({ connector: walletConnectConnector });
         
-        console.log('✅ [WALLET-CONNECT] Connect function called successfully');
+        await sendLogToBackend('✅ Connect function called successfully');
       } else {
         const errorMsg = 'WalletConnect not available. Please refresh the page.';
-        console.error('❌ [WALLET-CONNECT]', errorMsg);
-        console.error('❌ [WALLET-CONNECT] All connectors:', connectors);
+        await sendLogToBackend('❌ WalletConnect not available', { allConnectors: connectors.map(c => c.name) });
         onError?.(errorMsg);
       }
     } catch (error: any) {
-      console.error('❌ [WALLET-CONNECT] Error:', error);
-      console.error('❌ [WALLET-CONNECT] Error message:', error?.message);
-      console.error('❌ [WALLET-CONNECT] Error stack:', error?.stack);
+      await sendLogToBackend('❌ Error occurred', {
+        message: error?.message,
+        name: error?.name,
+        code: error?.code,
+      });
       
       // Handle specific error cases
       if (error?.message?.includes('Connection request reset')) {
@@ -52,7 +69,7 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
         onError?.('Failed to connect. Please try again.');
       }
     } finally {
-      console.log('🔵 [WALLET-CONNECT] Setting isConnecting to false');
+      await sendLogToBackend('🔵 Setting isConnecting to false');
       setIsConnecting(false);
     }
   };
