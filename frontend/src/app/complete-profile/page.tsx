@@ -33,6 +33,16 @@ export default function CompleteProfilePage() {
     checkProfileStatus();
   }, []);
 
+  // Listen for wallet connection from WalletConnect
+  useEffect(() => {
+    if (isConnected && address) {
+      console.log('[WALLET-CONNECT] Wallet connected:', address);
+      setWallet(address);
+      setError('');
+      showSuccess('Wallet connected successfully!');
+    }
+  }, [isConnected, address]);
+
   const checkProfileStatus = async () => {
     try {
       const token = localStorage.getItem('auth_token');

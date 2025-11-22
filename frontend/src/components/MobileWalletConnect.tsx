@@ -51,49 +51,51 @@ export function MobileWalletConnect({ onSuccess, onError }: MobileWalletConnectP
     <div className="space-y-4">
       <div className="text-center mb-4">
         <p className="text-gray-400 text-sm mb-2">
-          Scan QR code with your wallet app
+          Connect your MetaMask wallet
         </p>
         <p className="text-gray-500 text-xs">
-          Works with MetaMask, Trust Wallet, Rainbow, and 200+ wallets
+          Scan QR code with MetaMask mobile app
         </p>
       </div>
 
-      {/* Single WalletConnect Button */}
+      {/* MetaMask Connect Button */}
       <button
         onClick={handleConnect}
         disabled={isConnecting}
-        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg"
+        className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-black font-bold py-4 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg"
       >
-        <span className="text-2xl">�</span>
+        <span className="text-2xl">🦊</span>
         <div className="text-center">
-          <div className="font-bold text-lg">Connect Mobile Wallet</div>
+          <div className="font-bold text-lg">Connect MetaMask</div>
           <div className="text-xs opacity-90">Scan QR code to connect</div>
         </div>
       </button>
 
       {isConnecting && (
         <div className="text-center py-4">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           <p className="text-gray-400 text-sm mt-2">Opening connection modal...</p>
         </div>
       )}
 
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-        <p className="text-blue-400 text-sm font-medium mb-2">📲 How to connect:</p>
+        <p className="text-blue-400 text-sm font-medium mb-2">📲 How to connect MetaMask:</p>
         <ol className="text-gray-300 text-xs space-y-1 list-decimal list-inside">
-          <li>Click the button above</li>
-          <li>A QR code will appear</li>
-          <li>Open your wallet app (MetaMask, Trust, etc.)</li>
-          <li>Tap the scan icon in your wallet</li>
-          <li>Scan the QR code on screen</li>
-          <li>Approve the connection in your wallet</li>
+          <li>Click "Connect MetaMask" button above</li>
+          <li>A QR code modal will appear</li>
+          <li>Open MetaMask app on your phone</li>
+          <li>Tap the scan icon (📷) in MetaMask</li>
+          <li>Scan the QR code on this screen</li>
+          <li>Approve the connection in MetaMask</li>
+          <li>You'll be returned to this page automatically</li>
         </ol>
       </div>
 
       <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
         <p className="text-yellow-400 text-xs">
-          💡 <strong>Tip:</strong> If your wallet app doesn't open automatically, don't worry! 
-          Just open it manually and use the scan feature to scan the QR code.
+          💡 <strong>Important:</strong> After approving in MetaMask, wait a few seconds. 
+          Your wallet address will appear on this page automatically.
         </p>
       </div>
 
